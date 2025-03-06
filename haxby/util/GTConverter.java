@@ -2,11 +2,15 @@ package haxby.util;
 
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
+import java.time.Duration;
+import java.util.Date;
 import java.util.function.Function;
 
 import org.geomapapp.geom.MapProjection;
 import org.geomapapp.geom.UTM;
+import org.geomapapp.geom.UTMProjection;
 import org.geomapapp.grid.Grid2D;
+import org.geomapapp.grid.ImportGrid.GridFile;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
@@ -17,7 +21,7 @@ import org.opengis.referencing.operation.Matrix;
 import org.opengis.referencing.operation.Projection;
 
 /**
- * This class converts Grid2D objects into arrays that GeoTools can use.
+ * This class converts between GeoMapApp's internally defined Grid2D objects and GeoTools's GridCoverage2D objects.
  */
 public class GTConverter {
 	
@@ -51,6 +55,11 @@ public class GTConverter {
 		public double getdy() { return dy; }
 	}
 	
+	/**
+	 * Converts a GeoMapApp Grid2D into an array that GeoTools can use.
+	 * @param grid the grid to convert
+	 * @return information necessary for GeoTools to create its own type of grid
+	 */
 	public static GridInfo getArr(Grid2D grid) {
 		if(grid instanceof Grid2D.Image) {
 			System.out.println("This is an image! No conversion this time!");
@@ -66,7 +75,17 @@ public class GTConverter {
 		return new GridInfo(ret, bounds);
 	}
 	
-	public static Grid2DWrapper getGrid(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal) {
+	/**
+	 * Converts a GeoTools grid into a GeoMapApp Grid2D.Double
+	 * @param geotoolsGrid the data
+	 * @param proj the map projection of the data
+	 * @param hasNoData true iff this grid has a "No Data" value defined
+	 * @param noDataVal The "No Data" value; ignored if hasNoData is false
+	 * @param xDir the sign of the x scale value
+	 * @param yDir the sign of the y scale value
+	 * @return information to plot the grid in GeoMapApp
+	 */
+	public static Grid2DWrapper getGrid(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal, int xDir, int yDir) {
 		GridGeometry2D geom = geotoolsGrid.getGridGeometry();
 		GridEnvelope2D env = geom.getGridRange2D();
 		Matrix m = ((AffineTransform2D)geom.getGridToCRS2D()).getMatrix();
@@ -74,22 +93,23 @@ public class GTConverter {
 				yOffset = m.getElement(1, 2),
 				dx = m.getElement(0, 0),
 				dy = m.getElement(1, 1);
-		Rectangle rect = new Rectangle((int)xOffset, (int)yOffset, env.width, env.height);
-		Grid2D.Double grid = new Grid2D.Double(rect, proj);
+		Grid2D.Double grid = new Grid2D.Double(env, proj);
 		GridCoordinates2D low = env.getLow(), high = env.getHigh();
 		double lowest = Double.MAX_VALUE, highest = -Double.MAX_VALUE;
 		Function <Double, Boolean> isData = (hasNoData)?(x -> x != noDataVal):(x -> !Double.isNaN(x));
 		//TODO consider multithreading for larger grids
 		for(int y = low.y; y < high.y; y++) {
+			int realY = (yDir < 0)?(y):(high.y-y-1+low.y);
 			for(int x = low.x; x < high.x; x++) {
-				GridCoordinates2D pt = new GridCoordinates2D(x,y);
+				int realX = (xDir > 0)?(x):(high.x-x-1+low.x);
+				GridCoordinates2D pt = new GridCoordinates2D(realX, realY);
 				//try {
 					double[] vals = geotoolsGrid.evaluate(pt, (double[])null);
 					if(isData.apply(vals[0])) {
 						//System.out.println("("+x + ", "+y+"): "+vals[0]);
 						if(vals[0] < lowest) lowest = vals[0];
 						if(vals[0] > highest) highest = vals[0];
-						grid.setValue(x+(int)xOffset, y+(int)yOffset, vals[0]);
+						grid.setValue(x, y, vals[0]);
 					}
 					else {
 						grid.setValue(x, y, Double.NaN);
@@ -106,13 +126,15 @@ public class GTConverter {
 		String epsgPrjStr = String.valueOf(crs.getIdentifiers().toArray()[0]);
 		if(epsgPrjStr.startsWith("EPSG:")) {
 			String code = epsgPrjStr.substring(5);
+			//UTM projections
 			if(code.startsWith("326") || code.startsWith("327")) {
 				int whichHemisphere = code.startsWith("326")? MapProjection.NORTH : MapProjection.SOUTH;
 				int whichZone = Integer.parseInt(code.substring(3));
 				UTM utm = new UTM(whichZone, 2, whichHemisphere);
 				return utm;
 			}
-			else if(code.equals("3857")) {
+			//geographic projection
+			else if(code.equals("4326")) {
 				//TODO
 			}
 		}

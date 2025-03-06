@@ -35,19 +35,23 @@ import org.geomapapp.geom.MapProjection;
 import org.geomapapp.geom.Mercator;
 import org.geomapapp.geom.MercatorProjection;
 import org.geomapapp.geom.ProjectionDialog;
+import org.geomapapp.geom.UTM;
 import org.geomapapp.geom.UTMProjection;
 import org.geomapapp.gis.shape.ESRIShapefile;
 import org.geomapapp.gis.shape.ShapeSuite;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
+import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.imageio.geotiff.GeoTiffIIOMetadataDecoder;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.Envelope2D;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.Matrix;
 import org.opengis.referencing.operation.Projection;
 import org.geotools.referencing.crs.DefaultProjectedCRS;
+import org.geotools.referencing.operation.transform.AffineTransform2D;
 
 import haxby.map.MapApp;
 import haxby.proj.PolarStereo;
@@ -227,6 +231,62 @@ public class ImportGrid implements Runnable {
 		//determine whether logging is selected in Preferences
 		MapApp app = (MapApp) suite.map.getApp();
 		log = app.logGridImports;
+	}
+	
+	class GeotiffGridFile implements GridFile {
+		private GridCoverage2D gridCoverage;
+		private Grid2D grid;
+		private GridEnvelope2D env;
+		private double[] _wesn;
+		private MapProjection proj;
+		GeoTiffIIOMetadataDecoder mdd;
+		
+		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn) {
+			grid = null;
+			_wesn = null;
+			gridCoverage = gcIn;
+			env = envIn;
+			proj = projIn;
+			mdd = mddIn;
+		}
+		
+		public Grid2D getGrid() {
+			if(null == grid) {
+				GridGeometry2D geom = gridCoverage.getGridGeometry();
+				Matrix m = ((AffineTransform2D)geom.getGridToCRS2D()).getMatrix();
+				double xOffset = m.getElement(0, 2),
+						yOffset = m.getElement(1, 2),
+						dx = m.getElement(0, 0),
+						dy = m.getElement(1, 1);
+				double posDx = Math.abs(dx), posDy = Math.abs(dy);
+				int signDx = (int)(posDx/dx), signDy = (int)(posDy/dy); 
+				UTMProjection proj2 = new UTMProjection(xOffset, yOffset, posDx, posDy, (UTM)proj);
+				double[] gridWesn = getGridWESN(proj2, new Rectangle(0, 0, env.width, env.height));
+				double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
+						dy2 = (gridWesn[3] - gridWesn[2])/env.height;
+				if(dxMin > dx2) dxMin = dx2;
+				if(dyMin > dy2) dyMin = dy2;
+				Date start = new Date();
+				GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, proj2, mdd.hasNoData(), mdd.hasNoData()?mdd.getNoData():Double.NaN, signDx, signDy);
+				Date end = new Date();
+				long durMillis = end.getTime() - start.getTime();
+				if(durMillis > 1000) {
+					Duration elapsed = Duration.ofMillis(durMillis);
+					System.out.println("Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase());
+				}
+				else {
+					System.out.println("Took " + durMillis + "ms");
+				}
+				if(zMin > tmp.getLowest()) zMin = tmp.getLowest();
+				if(zMax < tmp.getHighest()) zMax = tmp.getHighest();
+				grid = tmp.data;
+				_wesn = gridWesn;
+			}
+			return grid;
+		}
+		public double[] getWesn() {
+			return _wesn;
+		}
 	}
 
 	void begin() {
@@ -532,12 +592,12 @@ public class ImportGrid implements Runnable {
 		add_offset = new double[files.length]; 
 		area.setText(name);
 		area.update(area.getGraphics());
-		List<Grid2D> converted = new ArrayList<>(files.length);
-		//List<GridFile> gridFiles = new ArrayList<>(files.length);
-		double furthestWest = 180, furthestEast = 180, furthestNorth = -90, furthestSouth = 90;
-		double lowest = Double.MAX_VALUE, highest = -Double.MAX_VALUE;
+		double furthestWest = Double.MAX_VALUE, furthestEast = -Double.MAX_VALUE, furthestNorth = -Double.MAX_VALUE, furthestSouth = Double.MAX_VALUE;
 		displayWaitingDots();
 		dxMin = dyMin = Double.MAX_VALUE;
+		zMin = Double.MAX_VALUE;
+		zMax = -Double.MAX_VALUE;
+		GridFile[] gridFiles = new GridFile[files.length];
 		for(currentIndex = 0; currentIndex < files.length; currentIndex++) {
 			File file = files[currentIndex];
 			//read the file with GeoTools
@@ -552,63 +612,25 @@ public class ImportGrid implements Runnable {
 			System.out.println("Converting " + size + " cells to GMA's internal format");
 			//assume for now it's not too big
 			DirectPosition lowerCorner = coordRange.getLowerCorner(), upperCorner = coordRange.getUpperCorner();
-			double fw = lowerCorner.getOrdinate(0), fs = lowerCorner.getOrdinate(1),
-				   fe = upperCorner.getOrdinate(0), fn = upperCorner.getOrdinate(1);
-			if(fw < furthestWest) furthestWest = fw;
-			if(fe > furthestEast) furthestEast = fe;
-			if(fs < furthestSouth) furthestSouth = fs;
-			if(fn > furthestNorth) furthestNorth = fn;
 			//convert the file to Grid2D
 			//get the projection first
 			CoordinateReferenceSystem crs = gridCoverage.getGridGeometry().getCoordinateReferenceSystem();
-			//String epsgPrjStr = String.valueOf(crs.getIdentifiers().toArray()[0]).substring(5);
-			//Projection tmpProj = ((DefaultProjectedCRS) crs).getConversionFromBase();
-			//String projName = String.valueOf(tmpProj.getMethod().getName()).toLowerCase();
-			//int projInt = projName.contains("mercator") ? MapProjection.MERCATOR : (projName.contains("north") ? MapProjection.NORTH : MapProjection.SOUTH);
-			MapProjection proj = GTConverter.getGmaProj(crs);
-			Date start = new Date();
-			GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, proj, mdd.hasNoData(), mdd.hasNoData()?mdd.getNoData():Double.NaN);
-			Date end = new Date();
-			long durMillis = end.getTime() - start.getTime();
-			if(durMillis > 1000) {
-				Duration elapsed = Duration.ofMillis(durMillis);
-				System.out.println("Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase());
-			}
-			else {
-				System.out.println("Took " + durMillis + "ms");
-			}
-			converted.add(tmp.data);
-			if(tmp.getLowest() < lowest) lowest = tmp.getLowest();
-			if(tmp.getHighest() > highest) highest = tmp.getHighest();
-			zScale[currentIndex] = pd.getZScale();
-			add_offset[currentIndex] = pd.getOffset();
-			double[] tempWesn = tmp.data.getWESN();
-			double dx = (tempWesn[1]-tempWesn[0])/tmp.data.bounds.width;
-			double dy = (tempWesn[3]-tempWesn[2])/tmp.data.bounds.height;
-			if(dx < dxMin) dxMin = dx;
-			if(dy < dyMin) dyMin = dy;
-			/*CoordinateReferenceSystem crs = gridCoverage.getGridGeometry().getCoordinateReferenceSystem();
-			Projection tmpProj = ((DefaultProjectedCRS) crs).getConversionFromBase();
-			String projName = String.valueOf(tmpProj.getMethod().getName()).toLowerCase();
-			int projInt = projName.contains("mercator") ? MapProjection.MERCATOR : (projName.contains("north") ? MapProjection.NORTH : MapProjection.SOUTH);
-			Mercator m = new Mercator(upperCorner.getOrdinate(0), lowerCorner.getOrdinate(1), dx, dy, (int)(tmp.getHighest()-tmp.getLowest()));
-			MapProjection mp = new MercatorProjection(upperCorner.getOrdinate(0), lowerCorner.getOrdinate(1), dx*2, dy*2, m);*/
+			final MapProjection proj = GTConverter.getGmaProj(crs);
+			gridFiles[currentIndex] = new GeotiffGridFile(gridCoverage, env, proj, mdd);
+			gridFiles[currentIndex].getGrid();
+			double[] curWesn = ((GeotiffGridFile)gridFiles[currentIndex]).getWesn();
+			if(furthestWest > curWesn[0]) furthestWest = curWesn[0];
+			if(furthestEast < curWesn[1]) furthestEast = curWesn[1];
+			if(furthestSouth > curWesn[2]) furthestSouth = curWesn[2];
+			if(furthestNorth < curWesn[3]) furthestNorth = curWesn[3];
 		}
-		zMin = lowest;
-		zMax = highest;
 		mostWest = furthestWest;
 		mostEast = furthestEast;
 		mostSouth = furthestSouth;
 		mostNorth = furthestNorth;
-		GridFile[] gridFiles = converted.stream().map(x -> new GridFile() {
-			public Grid2D getGrid() {
-				return x;
-			}
-		}).toArray(GridFile[]::new);
-		//TODO create GridFile array here
 		pd.setWESNRange(furthestWest, furthestEast, furthestSouth, furthestNorth);
 		wesn = new double[] {furthestWest, furthestEast, furthestSouth, furthestNorth};
-		pd.setMinMaxZ(lowest, highest);
+		pd.setMinMaxZ(zMin, zMax);
 		waiting = false;
 		tileGrids(name, files, gridFiles, 360./640);
 		MapApp.sendLogMessage("Imported_GeoTIFF_Grid&name="+name+"&WESN="+wesn[0]+","+wesn[1]+","+wesn[2]+","+wesn[3]);

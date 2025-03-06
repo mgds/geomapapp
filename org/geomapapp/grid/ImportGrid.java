@@ -259,8 +259,9 @@ public class ImportGrid implements Runnable {
 						dx = m.getElement(0, 0),
 						dy = m.getElement(1, 1);
 				double posDx = Math.abs(dx), posDy = Math.abs(dy);
-				int signDx = (int)(posDx/dx), signDy = (int)(posDy/dy); 
-				UTMProjection proj2 = new UTMProjection(xOffset, yOffset, posDx, posDy, (UTM)proj);
+				int signDx = (int)(posDx/dx), signDy = (int)(posDy/dy);
+				double tileOffsetX = dx/2, tileOffsetY = dy/2;
+				UTMProjection proj2 = new UTMProjection(xOffset-tileOffsetX, yOffset-tileOffsetY, posDx, posDy, (UTM)proj);
 				double[] gridWesn = getGridWESN(proj2, new Rectangle(0, 0, env.width, env.height));
 				double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
 						dy2 = (gridWesn[3] - gridWesn[2])/env.height;

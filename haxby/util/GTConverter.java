@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.function.Function;
 
 import org.geomapapp.geom.MapProjection;
+import org.geomapapp.geom.RectangularProjection;
 import org.geomapapp.geom.UTM;
 import org.geomapapp.geom.UTMProjection;
 import org.geomapapp.grid.Grid2D;
@@ -15,7 +16,9 @@ import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.geometry.Envelope2D;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
+import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.Matrix;
 import org.opengis.referencing.operation.Projection;
@@ -122,7 +125,8 @@ public class GTConverter {
 		return new Grid2DWrapper(grid, lowest, highest, xOffset, yOffset, dx, dy);
 	}
 	
-	public static MapProjection getGmaProj(CoordinateReferenceSystem crs) {
+	public static MapProjection getGmaProj(GridGeometry2D geom) {
+		CoordinateReferenceSystem crs = geom.getCoordinateReferenceSystem();
 		String epsgPrjStr = String.valueOf(crs.getIdentifiers().toArray()[0]);
 		if(epsgPrjStr.startsWith("EPSG:")) {
 			String code = epsgPrjStr.substring(5);
@@ -135,7 +139,12 @@ public class GTConverter {
 			}
 			//geographic projection
 			else if(code.equals("4326")) {
-				//TODO
+				Envelope2D coordRange = geom.getEnvelope2D();
+				GridEnvelope2D gridRange = geom.getGridRange2D();
+				DirectPosition low = coordRange.getLowerCorner(), high = coordRange.getUpperCorner();
+				RectangularProjection rp = new RectangularProjection(new double[] {low.getOrdinate(0), high.getOrdinate(0), low.getOrdinate(1), high.getOrdinate(1)}, gridRange.width, gridRange.height);
+				rp.setRange(1);
+				return rp;
 			}
 		}
 		System.err.println("Unknown projection: " + epsgPrjStr);

@@ -35,6 +35,7 @@ import org.geomapapp.geom.MapProjection;
 import org.geomapapp.geom.Mercator;
 import org.geomapapp.geom.MercatorProjection;
 import org.geomapapp.geom.ProjectionDialog;
+import org.geomapapp.geom.RectangularProjection;
 import org.geomapapp.geom.UTM;
 import org.geomapapp.geom.UTMProjection;
 import org.geomapapp.gis.shape.ESRIShapefile;
@@ -261,27 +262,52 @@ public class ImportGrid implements Runnable {
 				double posDx = Math.abs(dx), posDy = Math.abs(dy);
 				int signDx = (int)(posDx/dx), signDy = (int)(posDy/dy);
 				double tileOffsetX = dx/2, tileOffsetY = dy/2;
-				UTMProjection proj2 = new UTMProjection(xOffset-tileOffsetX, yOffset-tileOffsetY, posDx, posDy, (UTM)proj);
-				double[] gridWesn = getGridWESN(proj2, new Rectangle(0, 0, env.width, env.height));
-				double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
-						dy2 = (gridWesn[3] - gridWesn[2])/env.height;
-				if(dxMin > dx2) dxMin = dx2;
-				if(dyMin > dy2) dyMin = dy2;
-				Date start = new Date();
-				GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, proj2, mdd.hasNoData(), mdd.hasNoData()?mdd.getNoData():Double.NaN, signDx, signDy);
-				Date end = new Date();
-				long durMillis = end.getTime() - start.getTime();
-				if(durMillis > 1000) {
-					Duration elapsed = Duration.ofMillis(durMillis);
-					System.out.println("Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase());
+				if(proj instanceof UTM) {
+					UTMProjection proj2 = new UTMProjection(xOffset-tileOffsetX, yOffset-tileOffsetY, posDx, posDy, (UTM)proj);
+					double[] gridWesn = getGridWESN(proj2, new Rectangle(0, 0, env.width, env.height));
+					double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
+							dy2 = (gridWesn[3] - gridWesn[2])/env.height;
+					if(dxMin > dx2) dxMin = dx2;
+					if(dyMin > dy2) dyMin = dy2;
+					Date start = new Date();
+					GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, proj2, mdd.hasNoData(), mdd.hasNoData()?mdd.getNoData():Double.NaN, signDx, signDy);
+					Date end = new Date();
+					long durMillis = end.getTime() - start.getTime();
+					if(durMillis > 1000) {
+						Duration elapsed = Duration.ofMillis(durMillis);
+						System.out.println("Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase());
+					}
+					else {
+						System.out.println("Took " + durMillis + "ms");
+					}
+					if(zMin > tmp.getLowest()) zMin = tmp.getLowest();
+					if(zMax < tmp.getHighest()) zMax = tmp.getHighest();
+					grid = tmp.data;
+					_wesn = gridWesn;
 				}
 				else {
-					System.out.println("Took " + durMillis + "ms");
+					RectangularProjection rproj = (RectangularProjection)proj;
+					double[] gridWesn = getGridWESN(rproj, env);
+					double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
+							dy2 = (gridWesn[3] - gridWesn[2])/env.height;
+					if(dxMin > dx2) dxMin = dx2;
+					if(dyMin > dy2) dyMin = dy2;
+					Date start = new Date();
+					GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, rproj, mdd.hasNoData(), mdd.hasNoData()?mdd.getNoData():Double.NaN, signDx, signDy);
+					Date end = new Date();
+					long durMillis = end.getTime() - start.getTime();
+					if(durMillis > 1000) {
+						Duration elapsed = Duration.ofMillis(durMillis);
+						System.out.println("Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase());
+					}
+					else {
+						System.out.println("Took " + durMillis + "ms");
+					}
+					if(zMin > tmp.getLowest()) zMin = tmp.getLowest();
+					if(zMax < tmp.getHighest()) zMax = tmp.getHighest();
+					grid = tmp.data;
+					_wesn = gridWesn;
 				}
-				if(zMin > tmp.getLowest()) zMin = tmp.getLowest();
-				if(zMax < tmp.getHighest()) zMax = tmp.getHighest();
-				grid = tmp.data;
-				_wesn = gridWesn;
 			}
 			return grid;
 		}
@@ -615,8 +641,7 @@ public class ImportGrid implements Runnable {
 			DirectPosition lowerCorner = coordRange.getLowerCorner(), upperCorner = coordRange.getUpperCorner();
 			//convert the file to Grid2D
 			//get the projection first
-			CoordinateReferenceSystem crs = gridCoverage.getGridGeometry().getCoordinateReferenceSystem();
-			final MapProjection proj = GTConverter.getGmaProj(crs);
+			final MapProjection proj = GTConverter.getGmaProj(gridCoverage.getGridGeometry());
 			gridFiles[currentIndex] = new GeotiffGridFile(gridCoverage, env, proj, mdd);
 			gridFiles[currentIndex].getGrid();
 			double[] curWesn = ((GeotiffGridFile)gridFiles[currentIndex]).getWesn();

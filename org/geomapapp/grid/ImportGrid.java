@@ -287,13 +287,17 @@ public class ImportGrid implements Runnable {
 				}
 				else {
 					RectangularProjection rproj = (RectangularProjection)proj;
-					double[] gridWesn = getGridWESN(rproj, env);
+					double[] projWesn = rproj.getWESN();
+					projWesn[0] -= tileOffsetX;
+					projWesn[2] += tileOffsetY;
+					RectangularProjection rproj2 = new RectangularProjection(projWesn, rproj.getWidth(), rproj.getHeight());
+					double[] gridWesn = getGridWESN(rproj2, env);
 					double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
 							dy2 = (gridWesn[3] - gridWesn[2])/env.height;
 					if(dxMin > dx2) dxMin = dx2;
 					if(dyMin > dy2) dyMin = dy2;
 					Date start = new Date();
-					GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, rproj, mdd.hasNoData(), mdd.hasNoData()?mdd.getNoData():Double.NaN, signDx, signDy);
+					GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, rproj2, mdd.hasNoData(), mdd.hasNoData()?mdd.getNoData():Double.NaN, signDx, signDy);
 					Date end = new Date();
 					long durMillis = end.getTime() - start.getTime();
 					if(durMillis > 1000) {

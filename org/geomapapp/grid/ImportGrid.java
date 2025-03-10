@@ -288,8 +288,10 @@ public class ImportGrid implements Runnable {
 				else {
 					RectangularProjection rproj = (RectangularProjection)proj;
 					double[] projWesn = rproj.getWESN();
-					projWesn[0] -= tileOffsetX;
-					projWesn[2] += tileOffsetY;
+					projWesn[0] += tileOffsetX;
+					projWesn[2] -= tileOffsetY;
+					projWesn[1] -= tileOffsetX;
+					projWesn[3] += tileOffsetY;
 					RectangularProjection rproj2 = new RectangularProjection(projWesn, rproj.getWidth(), rproj.getHeight());
 					double[] gridWesn = getGridWESN(rproj2, env);
 					double dx2 = (gridWesn[1] - gridWesn[0])/env.width,

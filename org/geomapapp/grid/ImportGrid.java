@@ -240,15 +240,23 @@ public class ImportGrid implements Runnable {
 		private GridEnvelope2D env;
 		private double[] _wesn;
 		private MapProjection proj;
-		GeoTiffIIOMetadataDecoder mdd;
+		private GeoTiffIIOMetadataDecoder mdd;
+		private boolean flip;
+		private String name;
 		
-		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn) {
+		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn, String nameIn) {
+			this(gcIn, envIn, projIn, mddIn, nameIn, false);
+		}
+		
+		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn, String nameIn, boolean shouldFlip) {
 			grid = null;
 			_wesn = null;
 			gridCoverage = gcIn;
 			env = envIn;
 			proj = projIn;
 			mdd = mddIn;
+			flip = shouldFlip;
+			name = nameIn;
 		}
 		
 		public Grid2D getGrid() {
@@ -262,28 +270,9 @@ public class ImportGrid implements Runnable {
 				double posDx = Math.abs(dx), posDy = Math.abs(dy);
 				int signDx = (int)(posDx/dx), signDy = (int)(posDy/dy);
 				double tileOffsetX = dx/2, tileOffsetY = dy/2;
+				MapProjection proj2;
 				if(proj instanceof UTM) {
-					UTMProjection proj2 = new UTMProjection(xOffset-tileOffsetX, yOffset-tileOffsetY, posDx, posDy, (UTM)proj);
-					double[] gridWesn = getGridWESN(proj2, new Rectangle(0, 0, env.width, env.height));
-					double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
-							dy2 = (gridWesn[3] - gridWesn[2])/env.height;
-					if(dxMin > dx2) dxMin = dx2;
-					if(dyMin > dy2) dyMin = dy2;
-					Date start = new Date();
-					GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, proj2, mdd.hasNoData(), mdd.hasNoData()?mdd.getNoData():Double.NaN, signDx, signDy);
-					Date end = new Date();
-					long durMillis = end.getTime() - start.getTime();
-					if(durMillis > 1000) {
-						Duration elapsed = Duration.ofMillis(durMillis);
-						System.out.println("Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase());
-					}
-					else {
-						System.out.println("Took " + durMillis + "ms");
-					}
-					if(zMin > tmp.getLowest()) zMin = tmp.getLowest();
-					if(zMax < tmp.getHighest()) zMax = tmp.getHighest();
-					grid = tmp.data;
-					_wesn = gridWesn;
+					proj2 = new UTMProjection(xOffset-tileOffsetX, yOffset-tileOffsetY, posDx, posDy, (UTM)proj);
 				}
 				else {
 					RectangularProjection rproj = (RectangularProjection)proj;
@@ -292,34 +281,59 @@ public class ImportGrid implements Runnable {
 					projWesn[2] -= tileOffsetY;
 					projWesn[1] -= tileOffsetX;
 					projWesn[3] += tileOffsetY;
-					RectangularProjection rproj2 = new RectangularProjection(projWesn, rproj.getWidth(), rproj.getHeight());
-					double[] gridWesn = getGridWESN(rproj2, env);
-					double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
-							dy2 = (gridWesn[3] - gridWesn[2])/env.height;
-					if(dxMin > dx2) dxMin = dx2;
-					if(dyMin > dy2) dyMin = dy2;
-					Date start = new Date();
-					GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, rproj2, mdd.hasNoData(), mdd.hasNoData()?mdd.getNoData():Double.NaN, signDx, signDy);
-					Date end = new Date();
-					long durMillis = end.getTime() - start.getTime();
-					if(durMillis > 1000) {
-						Duration elapsed = Duration.ofMillis(durMillis);
-						System.out.println("Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase());
-					}
-					else {
-						System.out.println("Took " + durMillis + "ms");
-					}
-					if(zMin > tmp.getLowest()) zMin = tmp.getLowest();
-					if(zMax < tmp.getHighest()) zMax = tmp.getHighest();
-					grid = tmp.data;
-					_wesn = gridWesn;
+					proj2 = new RectangularProjection(projWesn, rproj.getWidth(), rproj.getHeight());
 				}
+				double nanValue = mdd.hasNoData()?mdd.getNoData():Double.NaN;
+				pd.setNoData(nanValue);
+				double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
+				GridCoordinates2D low = env.getLow(), high = env.getHigh();
+				for(int y = low.y; y < high.y; y++) {
+					for(int x = low.x; x < high.x; x++) {
+						double[] vals = gridCoverage.evaluate(new GridCoordinates2D(x, y), (double[])null);
+						if(!Double.isNaN(vals[0]) && vals[0] != nanValue) {
+							if(vals[0] < minZ) minZ = vals[0];
+							if(vals[0] > maxZ) maxZ = vals[0];
+						}
+					}
+				}
+				pd.setFloorCeilingZ(minZ, maxZ);
+				pd.setMinMaxZ(minZ, maxZ);
+				pd.showPixelNodeCheckBox(true);
+				pd.setDx(dx);
+				pd.setDy(dy);
+				MapProjection tmpProj = getProjection(name, proj, new double[] {xOffset, xOffset+dx*env.width, yOffset+dy*env.height, yOffset}, env.width, env.height);
+				boolean hasNoData = mdd.hasNoData();
+				if(hasNoData) hasNoData = !Double.isNaN(pd.getNoData());
+				if(hasNoData) nanValue = pd.getNoData();
+				else nanValue = Double.NaN;
+				double[] gridWesn = getGridWESN(tmpProj, new Rectangle(0, 0, env.width, env.height));
+				flip = pd.getFlipGrid();
+				double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
+						dy2 = (gridWesn[3] - gridWesn[2])/env.height;
+				if(dxMin > dx2) dxMin = dx2;
+				if(dyMin > dy2) dyMin = dy2;
+				Date start = new Date();
+				GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, tmpProj, hasNoData, nanValue, signDx, flip?(-signDy):signDy);
+				Date end = new Date();
+				long durMillis = end.getTime() - start.getTime();
+				if(durMillis > 1000) {
+					Duration elapsed = Duration.ofMillis(durMillis);
+					System.out.println("Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase());
+				}
+				else {
+					System.out.println("Took " + durMillis + "ms");
+				}
+				if(zMin > tmp.getLowest()) zMin = tmp.getLowest();
+				if(zMax < tmp.getHighest()) zMax = tmp.getHighest();
+				grid = tmp.data;
+				_wesn = gridWesn;
 			}
 			return grid;
 		}
 		public double[] getWesn() {
 			return _wesn;
 		}
+		public String getName() { return name; }
 	}
 
 	void begin() {
@@ -626,19 +640,23 @@ public class ImportGrid implements Runnable {
 		area.setText(name);
 		area.update(area.getGraphics());
 		double furthestWest = Double.MAX_VALUE, furthestEast = -Double.MAX_VALUE, furthestNorth = -Double.MAX_VALUE, furthestSouth = Double.MAX_VALUE;
+		waiting = true;
 		displayWaitingDots();
 		dxMin = dyMin = Double.MAX_VALUE;
 		zMin = Double.MAX_VALUE;
 		zMax = -Double.MAX_VALUE;
 		GridFile[] gridFiles = new GridFile[files.length];
+		flipGrid = new boolean[files.length];
+		pd.showFlipGridCheckBox(true);
 		for(currentIndex = 0; currentIndex < files.length; currentIndex++) {
 			File file = files[currentIndex];
 			//read the file with GeoTools
 			GeoTiffReader reader = new GeoTiffReader(file);
 			GeoTiffIIOMetadataDecoder mdd = reader.getMetadata();
 			GridCoverage2D gridCoverage = reader.read(null);
-			Envelope2D coordRange = gridCoverage.getGridGeometry().getEnvelope2D();
-			GridEnvelope2D env = gridCoverage.getGridGeometry().getGridRange2D();
+			GridGeometry2D geom = gridCoverage.getGridGeometry();
+			Envelope2D coordRange = geom.getEnvelope2D();
+			GridEnvelope2D env = geom.getGridRange2D();
 			GridCoordinates2D low = env.getLow(), high = env.getHigh();
 			int size = (high.x - low.x + 1) * (high.y - low.y + 1);
 			//TODO determine what the max size is before it gets to take too long to process
@@ -647,8 +665,8 @@ public class ImportGrid implements Runnable {
 			DirectPosition lowerCorner = coordRange.getLowerCorner(), upperCorner = coordRange.getUpperCorner();
 			//convert the file to Grid2D
 			//get the projection first
-			final MapProjection proj = GTConverter.getGmaProj(gridCoverage.getGridGeometry());
-			gridFiles[currentIndex] = new GeotiffGridFile(gridCoverage, env, proj, mdd);
+			final MapProjection proj = GTConverter.getGmaProj(geom);
+			gridFiles[currentIndex] = new GeotiffGridFile(gridCoverage, env, proj, mdd, file.getName());
 			gridFiles[currentIndex].getGrid();
 			double[] curWesn = ((GeotiffGridFile)gridFiles[currentIndex]).getWesn();
 			if(furthestWest > curWesn[0]) furthestWest = curWesn[0];

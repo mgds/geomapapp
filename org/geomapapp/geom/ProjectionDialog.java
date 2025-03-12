@@ -250,6 +250,7 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 		nodePanel.add(new JLabel("Number of Nodes:"));
 		nodePanel.add(nxLabel);
 		nodePanel.add(nyLabel);
+		nodePanel.add(new JLabel("Increments:"));
 		nodePanel.add(dxLabel);
 		nodePanel.add(dyLabel);
 		panel1.add(nodePanel);
@@ -829,9 +830,6 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 		nxLabel.setText("nx: " + width);
 		nyLabel.setText("ny: " + height);
 		
-		dxLabel.setText("dx: " + dx);
-		dyLabel.setText("dy: " + dy);
-		
 		this.width = width;
 		this.height = height;
 		this.zScale.setText(defaultZScale+"");
@@ -847,6 +845,12 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 		}
 
 		setProjection();
+		if(!switchToGridAlignment.isVisible()) {
+			if(dx == 0.0) setDx((wesn[1]-wesn[0])/width);
+			if(dy == 0.0) setDy((wesn[3]-wesn[2])/height);
+		}
+		dxLabel.setText("dx: " + dx);
+		dyLabel.setText("dy: " + dy);
 		// GMA 1.6.6: Add grid name to window title
 		int ok = JOptionPane.showConfirmDialog( comp, panel, "Confirm Projection & Bounds: " +
 							name.getText(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE );

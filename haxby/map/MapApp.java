@@ -101,6 +101,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.geomapapp.credit.Credit;
 import org.geomapapp.db.dsdp.DSDPDemo;
+import org.geomapapp.geom.MapProjection;
 import org.geomapapp.gis.shape.ESRIShapefile;
 import org.geomapapp.grid.Grid2DOverlay;
 import org.geomapapp.grid.GridComposer;
@@ -187,7 +188,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.4.10"; //02/13/2025
+	public final static String VERSION = "3.7.4.11"; //03/06/2025
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -823,6 +824,12 @@ public class MapApp implements ActionListener,
 	}
 	public JFrame getFrame() {
 		return frame;
+	}
+	public MapProjection getProjection() {
+		if(null != map) {
+			return map.getProjection();
+		}
+		return null;
 	}
 	protected void checkVersion() {
 		if (AT_SEA) {

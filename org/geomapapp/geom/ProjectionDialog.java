@@ -53,7 +53,8 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 				zScale;
 	JCheckBox applyForAll,
 			  editSingle,
-			  flipGrid;
+			  flipGrid,
+			  switchToGridAlignment;
 	JButton resetToOriginalZ,
 			fileInfo;
 	JLabel name,
@@ -67,7 +68,9 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 		   maxMinE,
 		   fileName,
 		   nxLabel,
-		   nyLabel;
+		   nyLabel,
+		   dxLabel,
+		   dyLabel;
 	JLabel minZTitle = new JLabel("Min z: ");				// single grid import
 	JLabel maxZTitle = new JLabel("Max z: ");				// single grid import
 	JLabel floorZTitle = new JLabel("Min Z:    ");			// multi grid import
@@ -87,6 +90,7 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 	double ceilingZ = 0.0;
 	double[] wesn;
 	double[] wesnRangeAllGrids;
+	double dx, dy;
 	JPanel panel,
 		   panel1,
 		   panel2,
@@ -171,6 +175,10 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 		flipGrid.setVisible(false);
 		panel1.add(flipGrid);
 		
+		switchToGridAlignment = new JCheckBox("Tick to force grid node registration (default: pixel registration)");
+		switchToGridAlignment.setVisible(false);
+		panel1.add(switchToGridAlignment);
+		
 		panel1f = new JPanel( new GridLayout(0,2) );
 		panel1f.add ( new JLabel("Data type:") );
 		dataType = new JTextField("Elevation",5);
@@ -236,10 +244,15 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 
 		nxLabel = new JLabel("");
 		nyLabel = new JLabel("");
+		dxLabel = new JLabel("");
+		dyLabel = new JLabel("");
 		JPanel nodePanel = new JPanel( new GridLayout(0, 3));
 		nodePanel.add(new JLabel("Number of Nodes:"));
 		nodePanel.add(nxLabel);
 		nodePanel.add(nyLabel);
+		nodePanel.add(new JLabel("Increments:"));
+		nodePanel.add(dxLabel);
+		nodePanel.add(dyLabel);
 		panel1.add(nodePanel);
 		
 		//Edit z actions on select and unselect
@@ -476,6 +489,14 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 	
 	public void showFlipGridCheckBox(Boolean tf) {
 		flipGrid.setVisible(tf);
+	}
+	
+	public boolean shouldSwitchRegistration() {
+		return switchToGridAlignment.isSelected();
+	}
+	
+	public void showPixelNodeCheckBox(boolean shouldShow) {
+		switchToGridAlignment.setVisible(shouldShow);
 	}
 	
 	public void setInitialZScale( String inputInitialZScale ) {
@@ -745,6 +766,12 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 	}
 
 	public MapProjection getProjection(Component comp, double[] wesn, double defaultZScale, int width, int height, MapProjection inputProj) {
+		if(switchToGridAlignment.isVisible()) {
+			wesn[0] -= dx/2;
+			wesn[1] -= dx/2;
+			wesn[2] -= dy/2;
+			wesn[3] -= dy/2;
+		}
 		// Check whether the projection looks like UTM, based on the x and y_range values 
 		this.wesn = wesn;
 		if (wesn[1] > 360 || wesn[3] > 90) {
@@ -812,8 +839,18 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 			type.setSelectedIndex(UTM_PROJECTION);
 			zone.setText(((UTMProjection) inputProj).getUTM().getZone() + "");
 		}
+		else if (inputProj instanceof UTM) {
+			type.setSelectedIndex(UTM_PROJECTION);
+			zone.setText(((UTM)inputProj).getZone()+"");
+		}
 
 		setProjection();
+		if(!switchToGridAlignment.isVisible()) {
+			if(dx == 0.0) setDx((wesn[1]-wesn[0])/width);
+			if(dy == 0.0) setDy((wesn[3]-wesn[2])/height);
+		}
+		dxLabel.setText("dx: " + formatForLabel(dx));
+		dyLabel.setText("dy: " + formatForLabel(dy));
 		// GMA 1.6.6: Add grid name to window title
 		int ok = JOptionPane.showConfirmDialog( comp, panel, "Confirm Projection & Bounds: " +
 							name.getText(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE );
@@ -840,6 +877,14 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 					minEdit.setText(String.valueOf(dMin));
 				}
 			}
+		}
+		
+		if(shouldSwitchRegistration()) {
+			wesn[0] += dx/2;
+			wesn[1] += dx/2;
+			wesn[2] += dy/2;
+			wesn[3] += dy/2;
+			this.wesn = wesn;
 		}
 
 		MapProjection proj = getProjection();
@@ -1042,5 +1087,37 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 
 	public Double getNoData() {
 		return noData;
+	}
+	
+	public void setDx(double newDx) {
+		dx = newDx;
+	}
+	
+	public double getDx() {
+		return dx;
+	}
+	
+	public void setDy(double newDy) {
+		dy = newDy;
+	}
+	
+	public double getDy() {
+		return dy;
+	}
+	
+	private String formatForLabel(double d) {
+		return String.format("%.6f", d).replaceAll("0*$", "").replaceAll("\\.$", "");
+	}
+	
+	public void setUtmHemisphere(int newHemisphere) {
+		if(newHemisphere == MapProjection.NORTH) {
+			northRB.setSelected(true);
+		}
+		else if(newHemisphere == MapProjection.SOUTH) {
+			southRB.setSelected(true);
+		}
+		else {
+			((newHemisphere%2 == MapProjection.SOUTH%2)?southRB:northRB).setSelected(true);
+		}
 	}
 }

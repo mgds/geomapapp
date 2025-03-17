@@ -9,8 +9,13 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
@@ -28,14 +33,31 @@ import javax.swing.filechooser.FileFilter;
 import org.geomapapp.geom.CylindricalProjection;
 import org.geomapapp.geom.MapProjection;
 import org.geomapapp.geom.Mercator;
+import org.geomapapp.geom.MercatorProjection;
 import org.geomapapp.geom.ProjectionDialog;
+import org.geomapapp.geom.RectangularProjection;
+import org.geomapapp.geom.UTM;
 import org.geomapapp.geom.UTMProjection;
 import org.geomapapp.gis.shape.ESRIShapefile;
 import org.geomapapp.gis.shape.ShapeSuite;
+import org.geotools.coverage.grid.GridCoordinates2D;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridEnvelope2D;
+import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.coverage.grid.io.imageio.geotiff.GeoTiffIIOMetadataDecoder;
+import org.geotools.gce.geotiff.GeoTiffReader;
+import org.geotools.geometry.Envelope2D;
+import org.opengis.geometry.DirectPosition;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.Matrix;
+import org.opengis.referencing.operation.Projection;
+import org.geotools.referencing.crs.DefaultProjectedCRS;
+import org.geotools.referencing.operation.transform.AffineTransform2D;
 
 import haxby.map.MapApp;
 import haxby.proj.PolarStereo;
 import haxby.util.FilesUtil;
+import haxby.util.GTConverter;
 import haxby.util.GeneralUtils;
 import haxby.util.PathUtil;
 
@@ -46,6 +68,7 @@ public class ImportGrid implements Runnable {
 		"ESRI Binary grid files ( .hdr / .flt )",
 		"GRD98 grid files ( .G98, big-endian )", // GMA 1.6.6
 		"ASCII Polar Grid file ( .asc )",
+		"GeoTIFF (.tif or .tiff)", //GMA 3.7.5
 	};
 
 	private static Map<Integer, FileFilter> gridFilter = new HashMap<Integer, FileFilter>();
@@ -123,6 +146,17 @@ public class ImportGrid implements Runnable {
 				return "Polar Projection ASCII Grids ( *.asc)";
 			}
 		});
+		
+		gridFilter.put(5, new FileFilter() {
+			public boolean accept(File f) {
+				if(f.isDirectory()) return true;
+				String extension = f.getName().toLowerCase().substring(f.getName().lastIndexOf(".")+1);
+				return extension.equals("tif") || extension.equals("tiff");
+			}
+			public String getDescription() {
+				return "GeoTIFF grids (*.tif, *.tiff)";
+			}
+		});
 	}
 
 	JFrame frame;
@@ -198,6 +232,107 @@ public class ImportGrid implements Runnable {
 		//determine whether logging is selected in Preferences
 		MapApp app = (MapApp) suite.map.getApp();
 		log = app.logGridImports;
+	}
+	
+	class GeotiffGridFile implements GridFile {
+		private GridCoverage2D gridCoverage;
+		private Grid2D grid;
+		private GridEnvelope2D env;
+		private double[] _wesn;
+		private MapProjection proj;
+		private GeoTiffIIOMetadataDecoder mdd;
+		private boolean flip;
+		private String name;
+		
+		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn, String nameIn) {
+			this(gcIn, envIn, projIn, mddIn, nameIn, false);
+		}
+		
+		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn, String nameIn, boolean shouldFlip) {
+			grid = null;
+			_wesn = null;
+			gridCoverage = gcIn;
+			env = envIn;
+			proj = projIn;
+			mdd = mddIn;
+			flip = shouldFlip;
+			name = nameIn;
+		}
+		
+		public Grid2D getGrid() {
+			if(null == grid) {
+				GridGeometry2D geom = gridCoverage.getGridGeometry();
+				Matrix m = ((AffineTransform2D)geom.getGridToCRS2D()).getMatrix();
+				double xOffset = m.getElement(0, 2),
+						yOffset = m.getElement(1, 2),
+						dx = m.getElement(0, 0),
+						dy = m.getElement(1, 1);
+				double posDx = Math.abs(dx), posDy = Math.abs(dy);
+				int signDx = (int)(posDx/dx), signDy = (int)(posDy/dy);
+				double tileOffsetX = dx/2, tileOffsetY = dy/2;
+				MapProjection proj2;
+				if(proj instanceof UTM) {
+					pd.setUtmHemisphere(((UTM)proj).getHemisphere());
+					proj2 = new UTMProjection(xOffset-tileOffsetX, yOffset-tileOffsetY, posDx, posDy, (UTM)proj);
+				}
+				else {
+					RectangularProjection rproj = (RectangularProjection)proj;
+					double[] projWesn = rproj.getWESN();
+					projWesn[0] += tileOffsetX;
+					projWesn[2] -= tileOffsetY;
+					projWesn[1] -= tileOffsetX;
+					projWesn[3] += tileOffsetY;
+					proj2 = new RectangularProjection(projWesn, rproj.getWidth(), rproj.getHeight());
+				}
+				double nanValue = mdd.hasNoData()?mdd.getNoData():Double.NaN;
+				pd.setNoData(nanValue);
+				double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
+				GridCoordinates2D low = env.getLow(), high = env.getHigh();
+				for(int y = low.y; y < high.y; y++) {
+					for(int x = low.x; x < high.x; x++) {
+						double[] vals = gridCoverage.evaluate(new GridCoordinates2D(x, y), (double[])null);
+						if(!Double.isNaN(vals[0]) && vals[0] != nanValue) {
+							if(vals[0] < minZ) minZ = vals[0];
+							if(vals[0] > maxZ) maxZ = vals[0];
+						}
+					}
+				}
+				pd.setMinMaxZ(minZ, maxZ);
+				pd.showPixelNodeCheckBox(true);
+				pd.setDx(dx);
+				pd.setDy(dy);
+				MapProjection tmpProj = getProjection(name, proj, new double[] {xOffset, xOffset+dx*env.width, yOffset+dy*env.height, yOffset}, env.width, env.height);
+				boolean hasNoData = !Double.isNaN(pd.getNoData());
+				if(hasNoData) nanValue = pd.getNoData();
+				else nanValue = Double.NaN;
+				double[] gridWesn = getGridWESN(tmpProj, new Rectangle(0, 0, env.width, env.height));
+				flip = pd.getFlipGrid();
+				double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
+						dy2 = (gridWesn[3] - gridWesn[2])/env.height;
+				if(dxMin > dx2) dxMin = dx2;
+				if(dyMin > dy2) dyMin = dy2;
+				Date start = new Date();
+				GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, tmpProj, hasNoData, nanValue, signDx, flip?(-signDy):signDy);
+				Date end = new Date();
+				long durMillis = end.getTime() - start.getTime();
+				if(durMillis > 1000) {
+					Duration elapsed = Duration.ofMillis(durMillis);
+					System.out.println("Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase());
+				}
+				else {
+					System.out.println("Took " + durMillis + "ms");
+				}
+				if(zMin > tmp.getLowest()) zMin = tmp.getLowest();
+				if(zMax < tmp.getHighest()) zMax = tmp.getHighest();
+				grid = tmp.data;
+				_wesn = gridWesn;
+			}
+			return grid;
+		}
+		public double[] getWesn() {
+			return _wesn;
+		}
+		public String getName() { return name; }
 	}
 
 	void begin() {
@@ -298,6 +433,14 @@ public class ImportGrid implements Runnable {
 					try {
 						openPolarASC(choice);
 					} catch (IOException e) {
+						showFormatError(choice[0].getName());
+					}
+				case 5:
+					try {
+						//GMA 3.7.5: added Geotiff grid import
+						openGeotiff(choice);
+					}
+					catch(IOException e) {
 						showFormatError(choice[0].getName());
 					}
 				default:
@@ -482,6 +625,67 @@ public class ImportGrid implements Runnable {
 		}
 		
 	}
+	
+	void openGeotiff(File[] files) throws IOException {
+		if(files.length == 0) return;
+		if(files.length < 1) pd.setFloorCeilingZ(Double.MIN_VALUE, Double.MAX_VALUE);
+		String name = files[0].getParentFile().getName();
+		if(1 == files.length) {
+			name = files[0].getName();
+			name = name.substring(0, name.lastIndexOf("."));
+		}
+		zScale = new double[files.length];
+		zScale[0] = 1;
+		add_offset = new double[files.length]; 
+		area.setText(name);
+		area.update(area.getGraphics());
+		double furthestWest = Double.MAX_VALUE, furthestEast = -Double.MAX_VALUE, furthestNorth = -Double.MAX_VALUE, furthestSouth = Double.MAX_VALUE;
+		waiting = true;
+		displayWaitingDots();
+		dxMin = dyMin = Double.MAX_VALUE;
+		zMin = Double.MAX_VALUE;
+		zMax = -Double.MAX_VALUE;
+		GridFile[] gridFiles = new GridFile[files.length];
+		flipGrid = new boolean[files.length];
+		pd.showFlipGridCheckBox(true);
+		for(currentIndex = 0; currentIndex < files.length; currentIndex++) {
+			File file = files[currentIndex];
+			//read the file with GeoTools
+			GeoTiffReader reader = new GeoTiffReader(file);
+			GeoTiffIIOMetadataDecoder mdd = reader.getMetadata();
+			GridCoverage2D gridCoverage = reader.read(null);
+			GridGeometry2D geom = gridCoverage.getGridGeometry();
+			Envelope2D coordRange = geom.getEnvelope2D();
+			GridEnvelope2D env = geom.getGridRange2D();
+			GridCoordinates2D low = env.getLow(), high = env.getHigh();
+			int gridWidth = high.x-low.x+1, gridHeight = high.y-low.y+1;
+			int size = gridWidth * gridHeight;
+			//TODO determine what the max size is before it gets to take too long to process
+			System.out.println("Converting " + size + " cells (" + gridWidth + "x" + gridHeight + ") to GMA's internal format");
+			//assume for now it's not too big
+			DirectPosition lowerCorner = coordRange.getLowerCorner(), upperCorner = coordRange.getUpperCorner();
+			//convert the file to Grid2D
+			//get the projection first
+			final MapProjection proj = GTConverter.getGmaProj(geom);
+			gridFiles[currentIndex] = new GeotiffGridFile(gridCoverage, env, proj, mdd, file.getName());
+			gridFiles[currentIndex].getGrid();
+			double[] curWesn = ((GeotiffGridFile)gridFiles[currentIndex]).getWesn();
+			if(furthestWest > curWesn[0]) furthestWest = curWesn[0];
+			if(furthestEast < curWesn[1]) furthestEast = curWesn[1];
+			if(furthestSouth > curWesn[2]) furthestSouth = curWesn[2];
+			if(furthestNorth < curWesn[3]) furthestNorth = curWesn[3];
+		}
+		mostWest = furthestWest;
+		mostEast = furthestEast;
+		mostSouth = furthestSouth;
+		mostNorth = furthestNorth;
+		pd.setWESNRange(furthestWest, furthestEast, furthestSouth, furthestNorth);
+		wesn = new double[] {furthestWest, furthestEast, furthestSouth, furthestNorth};
+		pd.setMinMaxZ(zMin, zMax);
+		waiting = false;
+		tileGrids(name, files, gridFiles, 360./640);
+		MapApp.sendLogMessage("Imported_GeoTIFF_Grid&name="+name+"&WESN="+wesn[0]+","+wesn[1]+","+wesn[2]+","+wesn[3]);
+	}
 
 	void openPolarASC(File[] files)  throws IOException {
 		String name = files[0].getParentFile().getName();
@@ -660,6 +864,8 @@ public class ImportGrid implements Runnable {
 				}
 			}
 			waiting = false;
+			pd.setDx(gridP.spacing[0]);
+			pd.setDy(gridP.spacing[1]);
 			final MapProjection proj = getProjection(files[k].getName(), gridP.getProjection(), gridWESN, gridP.dimension[0], gridP.dimension[1]);
 			if ( proj == null ) {
 				return;
@@ -1402,6 +1608,7 @@ public class ImportGrid implements Runnable {
 	}
 	
 	private void showFormatError (String filename) {
+		waiting = false;
 		String msg = "Unable to open " + filename + ". <br>Incompatible file format."
 				+ "<html><br>See <a href=\""+PathUtil.getPath("PUBLIC_HOME_PATH")+"FAQ.html#ImportingData\">"
 				+ "GeoMapApp FAQ</a> for supported formats.</html> ";

@@ -849,8 +849,8 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 			if(dx == 0.0) setDx((wesn[1]-wesn[0])/width);
 			if(dy == 0.0) setDy((wesn[3]-wesn[2])/height);
 		}
-		dxLabel.setText("dx: " + dx);
-		dyLabel.setText("dy: " + dy);
+		dxLabel.setText("dx: " + formatForLabel(dx));
+		dyLabel.setText("dy: " + formatForLabel(dy));
 		// GMA 1.6.6: Add grid name to window title
 		int ok = JOptionPane.showConfirmDialog( comp, panel, "Confirm Projection & Bounds: " +
 							name.getText(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE );
@@ -1103,5 +1103,21 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 	
 	public double getDy() {
 		return dy;
+	}
+	
+	private String formatForLabel(double d) {
+		return String.format("%.6f", d).replaceAll("0*$", "").replaceAll("\\.$", "");
+	}
+	
+	public void setUtmHemisphere(int newHemisphere) {
+		if(newHemisphere == MapProjection.NORTH) {
+			northRB.setSelected(true);
+		}
+		else if(newHemisphere == MapProjection.SOUTH) {
+			southRB.setSelected(true);
+		}
+		else {
+			((newHemisphere%2 == MapProjection.SOUTH%2)?southRB:northRB).setSelected(true);
+		}
 	}
 }

@@ -272,6 +272,7 @@ public class ImportGrid implements Runnable {
 				double tileOffsetX = dx/2, tileOffsetY = dy/2;
 				MapProjection proj2;
 				if(proj instanceof UTM) {
+					pd.setUtmHemisphere(((UTM)proj).getHemisphere());
 					proj2 = new UTMProjection(xOffset-tileOffsetX, yOffset-tileOffsetY, posDx, posDy, (UTM)proj);
 				}
 				else {
@@ -296,14 +297,12 @@ public class ImportGrid implements Runnable {
 						}
 					}
 				}
-				pd.setFloorCeilingZ(minZ, maxZ);
 				pd.setMinMaxZ(minZ, maxZ);
 				pd.showPixelNodeCheckBox(true);
 				pd.setDx(dx);
 				pd.setDy(dy);
 				MapProjection tmpProj = getProjection(name, proj, new double[] {xOffset, xOffset+dx*env.width, yOffset+dy*env.height, yOffset}, env.width, env.height);
-				boolean hasNoData = mdd.hasNoData();
-				if(hasNoData) hasNoData = !Double.isNaN(pd.getNoData());
+				boolean hasNoData = !Double.isNaN(pd.getNoData());
 				if(hasNoData) nanValue = pd.getNoData();
 				else nanValue = Double.NaN;
 				double[] gridWesn = getGridWESN(tmpProj, new Rectangle(0, 0, env.width, env.height));
@@ -629,6 +628,7 @@ public class ImportGrid implements Runnable {
 	
 	void openGeotiff(File[] files) throws IOException {
 		if(files.length == 0) return;
+		if(files.length < 1) pd.setFloorCeilingZ(Double.MIN_VALUE, Double.MAX_VALUE);
 		String name = files[0].getParentFile().getName();
 		if(1 == files.length) {
 			name = files[0].getName();
@@ -658,9 +658,10 @@ public class ImportGrid implements Runnable {
 			Envelope2D coordRange = geom.getEnvelope2D();
 			GridEnvelope2D env = geom.getGridRange2D();
 			GridCoordinates2D low = env.getLow(), high = env.getHigh();
-			int size = (high.x - low.x + 1) * (high.y - low.y + 1);
+			int gridWidth = high.x-low.x+1, gridHeight = high.y-low.y+1;
+			int size = gridWidth * gridHeight;
 			//TODO determine what the max size is before it gets to take too long to process
-			System.out.println("Converting " + size + " cells to GMA's internal format");
+			System.out.println("Converting " + size + " cells (" + gridWidth + "x" + gridHeight + ") to GMA's internal format");
 			//assume for now it's not too big
 			DirectPosition lowerCorner = coordRange.getLowerCorner(), upperCorner = coordRange.getUpperCorner();
 			//convert the file to Grid2D
@@ -863,6 +864,8 @@ public class ImportGrid implements Runnable {
 				}
 			}
 			waiting = false;
+			pd.setDx(gridP.spacing[0]);
+			pd.setDy(gridP.spacing[1]);
 			final MapProjection proj = getProjection(files[k].getName(), gridP.getProjection(), gridWESN, gridP.dimension[0], gridP.dimension[1]);
 			if ( proj == null ) {
 				return;
@@ -1605,6 +1608,7 @@ public class ImportGrid implements Runnable {
 	}
 	
 	private void showFormatError (String filename) {
+		waiting = false;
 		String msg = "Unable to open " + filename + ". <br>Incompatible file format."
 				+ "<html><br>See <a href=\""+PathUtil.getPath("PUBLIC_HOME_PATH")+"FAQ.html#ImportingData\">"
 				+ "GeoMapApp FAQ</a> for supported formats.</html> ";

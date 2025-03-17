@@ -137,8 +137,8 @@ public class GTConverter {
 				UTM utm = new UTM(whichZone, 2, whichHemisphere);
 				return utm;
 			}
-			//geographic projection
-			else if(code.equals("4326")) {
+			//assume geographic projection
+			else {
 				Envelope2D coordRange = geom.getEnvelope2D();
 				GridEnvelope2D gridRange = geom.getGridRange2D();
 				DirectPosition low = coordRange.getLowerCorner(), high = coordRange.getUpperCorner();

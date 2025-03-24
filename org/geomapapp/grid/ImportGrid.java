@@ -302,6 +302,9 @@ public class ImportGrid implements Runnable {
 				pd.setDx(dx);
 				pd.setDy(dy);
 				MapProjection tmpProj = getProjection(name, proj, new double[] {xOffset, xOffset+dx*env.width, yOffset+dy*env.height, yOffset}, env.width, env.height);
+				if(null == tmpProj) {
+					return null;
+				}
 				boolean hasNoData = !Double.isNaN(pd.getNoData());
 				if(hasNoData) nanValue = pd.getNoData();
 				else nanValue = Double.NaN;
@@ -668,23 +671,30 @@ public class ImportGrid implements Runnable {
 			//get the projection first
 			final MapProjection proj = GTConverter.getGmaProj(geom);
 			gridFiles[currentIndex] = new GeotiffGridFile(gridCoverage, env, proj, mdd, file.getName());
-			gridFiles[currentIndex].getGrid();
+			if(null == gridFiles[currentIndex].getGrid()) {
+				System.out.println("Cancelled  import of " + file.getName());
+				area.setText(area.getText() + "\nCancelled import of " + file.getName());
+				continue;
+			}
 			double[] curWesn = ((GeotiffGridFile)gridFiles[currentIndex]).getWesn();
 			if(furthestWest > curWesn[0]) furthestWest = curWesn[0];
 			if(furthestEast < curWesn[1]) furthestEast = curWesn[1];
 			if(furthestSouth > curWesn[2]) furthestSouth = curWesn[2];
 			if(furthestNorth < curWesn[3]) furthestNorth = curWesn[3];
 		}
-		mostWest = furthestWest;
-		mostEast = furthestEast;
-		mostSouth = furthestSouth;
-		mostNorth = furthestNorth;
-		pd.setWESNRange(furthestWest, furthestEast, furthestSouth, furthestNorth);
-		wesn = new double[] {furthestWest, furthestEast, furthestSouth, furthestNorth};
-		pd.setMinMaxZ(zMin, zMax);
+		if(furthestWest <= furthestEast) {
+			mostWest = furthestWest;
+			mostEast = furthestEast;
+			mostSouth = furthestSouth;
+			mostNorth = furthestNorth;
+			pd.setWESNRange(furthestWest, furthestEast, furthestSouth, furthestNorth);
+			wesn = new double[] {furthestWest, furthestEast, furthestSouth, furthestNorth};
+			pd.setMinMaxZ(zMin, zMax);
+			waiting = false;
+			tileGrids(name, files, gridFiles, 360./640);
+			MapApp.sendLogMessage("Imported_GeoTIFF_Grid&name="+name+"&WESN="+wesn[0]+","+wesn[1]+","+wesn[2]+","+wesn[3]);
+		}
 		waiting = false;
-		tileGrids(name, files, gridFiles, 360./640);
-		MapApp.sendLogMessage("Imported_GeoTIFF_Grid&name="+name+"&WESN="+wesn[0]+","+wesn[1]+","+wesn[2]+","+wesn[3]);
 	}
 
 	void openPolarASC(File[] files)  throws IOException {

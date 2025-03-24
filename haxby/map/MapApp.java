@@ -40,6 +40,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.net.Authenticator;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
@@ -3798,6 +3799,7 @@ public class MapApp implements ActionListener,
 	}
 
 	public static void main( String[] args) {
+		fixVendorNameIssue(com.sun.media.imageioimpl.common.PackageUtil.class, "Sun", "1.1", "JAI");
 		//fixes issue with column sorting
 		System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
 		createMapApp(args);
@@ -5229,6 +5231,21 @@ public class MapApp implements ActionListener,
 			con.getResponseCode();
 		} catch (Exception e) {
 			System.out.println("message NOT logged: " + message);
+			e.printStackTrace();
+		}
+	}
+	
+	public static void fixVendorNameIssue(Class<?> clazz, String vendor, String version, String specTitle) {
+		try {
+			Field vendorField = clazz.getDeclaredField("vendor");
+			vendorField.setAccessible(true);
+			vendorField.set(null, vendor);
+			
+			Field versionField = clazz.getDeclaredField("version");
+			versionField.setAccessible(true);
+			versionField.set(null, version);
+		}
+		catch(Exception e) {
 			e.printStackTrace();
 		}
 	}

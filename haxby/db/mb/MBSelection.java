@@ -21,6 +21,7 @@ public class MBSelection implements ActionListener, ItemListener, MouseListener 
 	DefaultListModel cruisesListModel;
 	JButton downloadB;
 	JPanel dialogPane;
+	JLabel updateDate;
 
 	public MBSelection( MBTracks tracks ) {
 		this.tracks = tracks;
@@ -29,7 +30,7 @@ public class MBSelection implements ActionListener, ItemListener, MouseListener 
 	void initDialog() {
 		JPanel panel = new JPanel(new GridLayout(0, 1));
 		
-		JLabel updateDate = new JLabel("<html>Last update date: " + VersionUtil.getReleaseDate("GMRT") + "</html>", SwingConstants.CENTER);
+		updateDate = new JLabel("<html>Portal content last updated: " + VersionUtil.getReleaseDate("GMRT") + "</html>", SwingConstants.CENTER);
 		updateDate.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
 		panel.add(updateDate);
 

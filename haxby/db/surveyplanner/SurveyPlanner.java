@@ -265,6 +265,8 @@ public class SurveyPlanner extends JFrame implements Database, MouseListener, Mo
 		SurveyLine.setIsStraightLine(false);
 		if(didLoadGMRT()) {
 			spSel.gridToggle.doClick();
+			spSel.gridToggle.setSelected(false);
+			setLoadedGMRT(false);
 		}
 		dig = new Digitizer(map);
 		spSel = new SurveyPlannerSelector(this, dig);

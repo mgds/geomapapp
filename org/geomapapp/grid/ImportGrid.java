@@ -64,11 +64,11 @@ import haxby.util.PathUtil;
 public class ImportGrid implements Runnable {
 	private static String[] supportedGrids = new String[] {
 		"NetCDF grid (example: .grd  or .nc)", // .grd or .nc
+		"GeoTIFF (.tif or .tiff)",
 		"ESRI ASCII grid files ( .asc )",
 		"ESRI Binary grid files ( .hdr / .flt )",
 		"GRD98 grid files ( .G98, big-endian )", // GMA 1.6.6
 		"ASCII Polar Grid file ( .asc )",
-		"GeoTIFF (.tif or .tiff)", //GMA 3.7.5
 	};
 
 	private static Map<Integer, FileFilter> gridFilter = new HashMap<Integer, FileFilter>();
@@ -94,7 +94,7 @@ public class ImportGrid implements Runnable {
 			}
 		});
 
-		gridFilter.put(new Integer(1), new FileFilter() {
+		gridFilter.put(new Integer(2), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".asc") )return false;
@@ -107,7 +107,7 @@ public class ImportGrid implements Runnable {
 			}
 		});
 
-		gridFilter.put(new Integer(2), new FileFilter() {
+		gridFilter.put(new Integer(3), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".hdr") )return false;
@@ -121,7 +121,7 @@ public class ImportGrid implements Runnable {
 		});
 
 //		***** GMA 1.6.6: Add new filter for GEODAS grids
-		gridFilter.put(new Integer(3), new FileFilter() {
+		gridFilter.put(new Integer(4), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".g98") )return false;
@@ -134,7 +134,7 @@ public class ImportGrid implements Runnable {
 			}
 		});
 
-		gridFilter.put(new Integer(4), new FileFilter() {
+		gridFilter.put(new Integer(5), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".asc") )return false;
@@ -147,7 +147,7 @@ public class ImportGrid implements Runnable {
 			}
 		});
 		
-		gridFilter.put(5, new FileFilter() {
+		gridFilter.put(1, new FileFilter() {
 			public boolean accept(File f) {
 				if(f.isDirectory()) return true;
 				String extension = f.getName().toLowerCase().substring(f.getName().lastIndexOf(".")+1);
@@ -410,21 +410,21 @@ public class ImportGrid implements Runnable {
 						showFormatError(choice[0].getName());
 					}
 					break;
-				case 1:
+				case 2:
 					try {
 						openESRI_ASCII(choice);
 					} catch (IOException e) {
 						showFormatError(choice[0].getName());
 					}
 					break;
-				case 2:
+				case 3:
 					try {
 						openESRI_Binary(choice);
 					} catch (IOException e) {
 						showFormatError(choice[0].getName());
 					}
 					break;
-				case 3:
+				case 4:
 					try {
 						// GMA 1.6.6: Added GRD98 grid format option
 						openGRD98(choice);
@@ -432,13 +432,13 @@ public class ImportGrid implements Runnable {
 						showFormatError(choice[0].getName());
 					}
 					break;
-				case 4:
+				case 5:
 					try {
 						openPolarASC(choice);
 					} catch (IOException e) {
 						showFormatError(choice[0].getName());
 					}
-				case 5:
+				case 1:
 					try {
 						//GMA 3.7.5: added Geotiff grid import
 						openGeotiff(choice);

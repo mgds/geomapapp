@@ -30,7 +30,7 @@ public class MBSelection implements ActionListener, ItemListener, MouseListener 
 	void initDialog() {
 		JPanel panel = new JPanel(new GridLayout(0, 1));
 		
-		updateDate = new JLabel("<html>Portal content last updated: " + VersionUtil.getReleaseDate("GMRT") + "</html>", SwingConstants.CENTER);
+		updateDate = new JLabel("<html><body><center>Portal content last updated: " + VersionUtil.getReleaseDate("GMRT") + "</center></body></html>", SwingConstants.CENTER);
 		updateDate.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
 		panel.add(updateDate);
 

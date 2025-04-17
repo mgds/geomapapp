@@ -352,7 +352,7 @@ public class Digitizer implements Database,
 				LineSegmentsObject obj = (LineSegmentsObject) table.getModel();
 				profile.setLine( obj );
 				if (isSurveyPlanner && !((MapApp)map.getApp()).getMapTools().getGridDialog().isDialogVisible()) {
-					((MapApp)map.getApp()).getMapTools().getGridDialog().getToggle().doClick();
+					((MapApp)map.getApp()).getMapTools().getGridDialog().getToggle().setSelected(true);
 					didLoadGMRT = true;
 				}
 				graph.setPoints( profile, 0 );

@@ -75,7 +75,7 @@ public class PreviewCruise
     	PoleMapServer.base[1] = tilesPath + "/NP_320/";
       }
     
-
+    MapApp.setup();
     MapApp mapApp = MapApp.createMapApp(new String[0]);
     
 

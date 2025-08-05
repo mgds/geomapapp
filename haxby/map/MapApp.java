@@ -189,7 +189,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.5"; //03/28/2025
+	public final static String VERSION = "3.7.5.1"; //08/05/2025
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -3798,10 +3798,14 @@ public class MapApp implements ActionListener,
 		return app;
 	}
 
-	public static void main( String[] args) {
+	public static void setup() {
 		fixVendorNameIssue(com.sun.media.imageioimpl.common.PackageUtil.class, "Sun", "1.1", "JAI");
 		//fixes issue with column sorting
 		System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
+	}
+
+	public static void main( String[] args) {
+		setup();
 		createMapApp(args);
 	}
 

@@ -106,11 +106,11 @@ public class FocalMechanismSolutionDB implements Database {
 			url = URLFactory.url(dateRangeURL);
 			BufferedReader in = new BufferedReader(new InputStreamReader( url.openStream() ));
 
-			if(in.ready()) {
+			//if(in.ready()) {
 				// Get Dataset Information
 				startDate = in.readLine();
 				endDate = in.readLine();
-			}
+			//}
 			in.close();
 		} catch(Exception e) {
 			System.out.println("check dates #1");

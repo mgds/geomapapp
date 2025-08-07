@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.StringTokenizer;
 
@@ -176,22 +177,30 @@ public class GMADownload {
 		if(later.isSelected()) return;
 
 		// Switch from pointing to downloading file accroding to system and to point to webpage for download for that OS.
-		String name = "UnixInstall.html";
+		String name = "MapApp/";
 		//String name = "GeoMapApp.jar";
 		if ( jar.isSelected() ) {
 			//name = "GeoMapApp.jar";
-			name = "UnixInstall.html";
+			name += "GeoMapApp.jar";
 		}
 		else if ( exe.isSelected() ) {
 			//name = "GeoMapApp.exe";
-			name = "MSInstall.html";
+			name += "GeoMapApp.exe";
 		}
 		else if ( app.isSelected() ) {
 			//name = "GeoMapApp.dmg";
-			name = "MacInstall.html";
+			name += "GeoMapApp-" + newVersion + "-";
+			String whichArch = System.getProperty("os.arch");
+			if(whichArch.equals("aarch64")) {
+				name += "Silicon";
+			}
+			else {
+				name += "Intel";
+			}
+			name += ".dmg";
 		}
 
-		String urlName = PathUtil.getPath("PUBLIC_HOME_PATH") + name;
+		String urlName = PathUtil.getPath("ROOT_PATH") + name;
 		if(pane == JOptionPane.OK_OPTION) {
 		try {
 			BrowseURL.browseURL(urlName);

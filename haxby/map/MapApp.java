@@ -537,7 +537,7 @@ public class MapApp implements ActionListener,
 		
 		try {
 			getProxies();
-			fetchCacheMenus = getMenusCache(); // add menu cache dir
+			if(!AT_SEA) fetchCacheMenus = getMenusCache(); // add menu cache dir
 			startNewZoomHistory();			//start history dir
 		} catch (IOException e1) {
 			e1.printStackTrace();

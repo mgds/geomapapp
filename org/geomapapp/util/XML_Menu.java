@@ -345,10 +345,12 @@ public class XML_Menu {
 		if(MapApp.ReadMenusCache == false ) {
 			Transformer transformer;
 			try {
-				transformer = TransformerFactory.newInstance().newTransformer();
-				Result outputRoot = new StreamResult(menusCacheFileFirst);
-				Source input = new DOMSource(dom);
-				transformer.transform(input, outputRoot);
+				if(!MapApp.AT_SEA) {
+					transformer = TransformerFactory.newInstance().newTransformer();
+					Result outputRoot = new StreamResult(menusCacheFileFirst);
+					Source input = new DOMSource(dom);
+					transformer.transform(input, outputRoot);
+				}
 			} catch (TransformerConfigurationException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

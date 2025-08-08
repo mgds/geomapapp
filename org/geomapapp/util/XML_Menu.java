@@ -345,10 +345,12 @@ public class XML_Menu {
 		if(MapApp.ReadMenusCache == false ) {
 			Transformer transformer;
 			try {
-				transformer = TransformerFactory.newInstance().newTransformer();
-				Result outputRoot = new StreamResult(menusCacheFileFirst);
-				Source input = new DOMSource(dom);
-				transformer.transform(input, outputRoot);
+				if(!MapApp.AT_SEA) {
+					transformer = TransformerFactory.newInstance().newTransformer();
+					Result outputRoot = new StreamResult(menusCacheFileFirst);
+					Source input = new DOMSource(dom);
+					transformer.transform(input, outputRoot);
+				}
 			} catch (TransformerConfigurationException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -698,10 +700,12 @@ public class XML_Menu {
 									dom = db.parse(URLFactory.url(sub_layer.layer_url).openStream());
 									Transformer transformer;
 									try {
-										transformer = TransformerFactory.newInstance().newTransformer();
-										Result outputRoot = new StreamResult(new File(GMARoot.getRoot() + File.separator + "menus_cache" + File.separator + "menus" + File.separator + parseURL[parseURL.length - 1]));
-										Source input = new DOMSource(dom);
-										transformer.transform(input, outputRoot);
+										if(!MapApp.AT_SEA) {
+											transformer = TransformerFactory.newInstance().newTransformer();
+											Result outputRoot = new StreamResult(new File(GMARoot.getRoot() + File.separator + "menus_cache" + File.separator + "menus" + File.separator + parseURL[parseURL.length - 1]));
+											Source input = new DOMSource(dom);
+											transformer.transform(input, outputRoot);
+										}
 									} catch (TransformerConfigurationException e) {
 										// TODO Auto-generated catch block
 										e.printStackTrace();

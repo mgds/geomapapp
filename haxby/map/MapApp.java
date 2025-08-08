@@ -189,7 +189,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.5.2"; //08/07/2025
+	public final static String VERSION = "3.7.5.3"; //08/08/2025
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -537,7 +537,7 @@ public class MapApp implements ActionListener,
 		
 		try {
 			getProxies();
-			fetchCacheMenus = getMenusCache(); // add menu cache dir
+			if(!AT_SEA) fetchCacheMenus = getMenusCache(); // add menu cache dir
 			startNewZoomHistory();			//start history dir
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -1401,7 +1401,7 @@ public class MapApp implements ActionListener,
 			List<XML_Menu> menuLayers = null;
 
 			// Check the cache to determine where to fetch xml menus
-			if(fetchCacheMenus == true) {
+			if(fetchCacheMenus) {
 				mainMenuFile = new File( menusCacheDir2, "main_menu.xml");
 				//mainMenuURL = PathUtil.getPath("MENU_PATH",MapApp.BASE_URL+"/gma_menus/main_menu.xml"); // 3.5.2 and older
 				mainMenuURL = PathUtil.getPath("NEW_MENU_PATH_2015",MapApp.BASE_URL+"/gma_menus/main_menu_new_2015.xml");
@@ -1426,7 +1426,7 @@ public class MapApp implements ActionListener,
 					}
 				}
 				//System.out.println("true");
-			} else if(fetchCacheMenus == false) {
+			} else {
 				//mainMenuURL = PathUtil.getPath("MENU_PATH",MapApp.BASE_URL+"/gma_menus/main_menu.xml"); // 3.5.2 and older
 				mainMenuURL = PathUtil.getPath("NEW_MENU_PATH_2015",MapApp.BASE_URL+"/gma_menus/main_menu_new_2015.xml");
 				menuLayers = XML_Menu.parse(mainMenuURL);
@@ -3798,10 +3798,14 @@ public class MapApp implements ActionListener,
 		return app;
 	}
 
-	public static void main( String[] args) {
+	public static void setup() {
 		fixVendorNameIssue(com.sun.media.imageioimpl.common.PackageUtil.class, "Sun", "1.1", "JAI");
 		//fixes issue with column sorting
 		System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
+	}
+
+	public static void main( String[] args) {
+		setup();
 		createMapApp(args);
 	}
 

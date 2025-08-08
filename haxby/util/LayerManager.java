@@ -959,12 +959,13 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			lmFrame.toFront();
 			if (activeWindow != null) activeWindow.requestFocus();
 		}
+		map.removeOverlay(layerPanel.layer);
 	}
 
 	public void doRemove(LayerPanel layerPanel) {
 		MapApp app = (MapApp) map.getApp();
 
-		if ( layerPanel.layer instanceof Grid2DOverlay ) {
+		if ( layerPanel.layer instanceof Grid2DOverlay) {
 			app.getMapTools().getGridDialog().dispose((Grid2DOverlay)layerPanel.layer);
 		}
 		

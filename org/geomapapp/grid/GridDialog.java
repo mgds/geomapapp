@@ -8,6 +8,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
@@ -33,6 +35,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JToggleButton;
+import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -314,7 +317,37 @@ public class GridDialog implements ItemListener, WindowListener {
 		dialog = new JFrame("Loaded Grids");
 
 		dialog.addWindowListener(this);
-		dialog.setLocationRelativeTo(null);
+		dialog.addComponentListener(new ComponentListener() {
+
+			volatile Timer resizeTimer;
+
+			public void componentMoved(ComponentEvent evt) {
+			}
+
+			@Override
+			public void componentHidden(ComponentEvent arg0) {
+			}
+
+			@Override
+			public void componentResized(ComponentEvent e) {
+				if(null == resizeTimer || !resizeTimer.isRunning()) {
+					resizeTimer = new Timer(100, new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent event) {
+							dialog.pack();
+							//dialog.repaint();
+							resizeTimer.stop();
+						}
+					});
+				}
+				resizeTimer.restart();
+			}
+
+			@Override
+			public void componentShown(ComponentEvent e) {
+			}
+		});
+		dialog.setLocationRelativeTo(owner);
 
 		Box panel = Box.createHorizontalBox();
 

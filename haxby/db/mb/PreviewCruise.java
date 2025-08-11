@@ -82,6 +82,7 @@ public class PreviewCruise
     
     XMap map = mapApp.getMap();
     final MBTracks tracks = new MBTracks(map, 4000, cruiseDir + "/mb_control");
+    tracks.setDBName(cruiseID + " MB Tracklines");
     mapApp.addProcessingTask(tracks.getDBName(), new Runnable()
     {
       public void run()

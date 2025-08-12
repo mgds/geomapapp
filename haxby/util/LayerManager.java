@@ -1418,10 +1418,10 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 						((JCheckBoxMenuItem)XML_Menu.commandToMenuItemHash.get("layer_manager_cmd")).setSelected(true);
 					}
 
-					Window parent = lmFrame.getOwner();
-					int x = lmFrame.getLocation().x;
-					x += lmFrame.getWidth();
-					int y = lmFrame.getLocation().y;
+					Window parent = ((MapApp)map.getApp()).getFrame();
+					int x = parent.getLocation().x;
+					x += parent.getWidth();
+					int y = parent.getLocation().y;
 					if (!lmFrame.isVisible()){
 
 						lmFrame.setLocation(x, y-200);

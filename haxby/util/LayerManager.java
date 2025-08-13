@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -1422,9 +1423,13 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 					int x = parent.getLocation().x;
 					x += parent.getWidth();
 					int y = parent.getLocation().y;
+					Rectangle bounds = parent.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
+					if(x + lmFrame.getWidth() > bounds.width+bounds.x) {
+						x = bounds.width + bounds.x - lmFrame.getWidth();
+					}
 					if (!lmFrame.isVisible()){
 
-						lmFrame.setLocation(x, y-200);
+						lmFrame.setLocation(x, y);
 					}
 					Window activeWindow = FocusManager.getCurrentManager().getActiveWindow();
 

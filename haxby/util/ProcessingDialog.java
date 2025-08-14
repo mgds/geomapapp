@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,7 +35,6 @@ public class ProcessingDialog extends JDialog {
 		super((JFrame) null, "Processing...", false);
 		this.owner = owner;
 		this.map = map;
-		
 
 		// shutteling progress bar for macs
 		if (System.getProperty("os.name").toLowerCase().contains("mac")) {

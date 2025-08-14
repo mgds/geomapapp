@@ -58,7 +58,7 @@ public class ProcessingDialog extends JDialog {
 		}
 
 		if (owner != null)	{
-			setLocation(owner.getX() + 60, owner.getY() + 90);
+			setLocation(owner.getX() + 60, owner.getY() + ((haxby.map.XMap)map).getMapTools().getTools().getHeight() + 52);
 		}
 		super.setVisible(tf);
 

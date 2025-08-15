@@ -490,8 +490,12 @@ public class GMAProfile implements Overlay, XYPoints {
 					}
 				}
 			}
-		}	
-		if(!dialog.isVisible())dialog.setVisible(true);
+		}
+		if(!dialog.isVisible()) {
+			dialog.setLocation(map.getX(), map.getY()+150);
+			dialog.setVisible(true);
+		}
+		dialog.toFront();
 
 		int dpi = Toolkit.getDefaultToolkit().getScreenResolution();
 		DecimalFormat fmt = new DecimalFormat("#.#");

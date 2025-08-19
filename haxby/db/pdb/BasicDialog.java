@@ -15,9 +15,15 @@ public class BasicDialog extends JPanel
 	JToggleButton[] alterations;
 	SimpleBorder on, off;
 	public BasicDialog(PDB pdb) {
-		super(new GridLayout(1,0, 5, 5));
+		super(new GridBagLayout());
 		this.pdb = pdb;
 		init();
+	}
+	private void setNewSize(Container c, Dimension d) {
+		c.setMinimumSize(d);
+		c.setMaximumSize(d);
+		c.setPreferredSize(d);
+		c.setSize(d);
 	}
 	void init() {
 		PDBMaterial.load();
@@ -43,10 +49,25 @@ public class BasicDialog extends JPanel
 		if(  PDBMaterial.size() > max ) max = PDBMaterial.size();
 		if(  n > max ) max = n;
 		if(max < PDBRockType.size()) max = PDBRockType.size();
+		int min = PDBMaterial.size();
+		if(min > n) min = n;
+		if(min > PDBRockType.size()) min = PDBRockType.size();
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 3;
+		gbc.gridheight = 1;
+		gbc.weightx = 15;
+		gbc.weighty = 0;
 
 		// Material section
 		materials = new JToggleButton[PDBMaterial.size()];
-		JPanel panel = new JPanel(new GridLayout(0, 1));
+		JPanel panel = new JPanel(new GridLayout(0, 1,0,0));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		Dimension panelSize = new Dimension(200, 300);
+		JScrollPane scroller = new JScrollPane(panel);
+		//setNewSize(panel, panelSize);
+		setNewSize(scroller, panelSize);
 		JLabel label = new JLabel("<html><b>Material</b></html>");
 		panel.setBorder( lb );
 		label.setForeground( Color.black );
@@ -62,12 +83,13 @@ public class BasicDialog extends JPanel
 			materials[i].setActionCommand("material");
 			materials[i].setSelected( true );
 			materials[i].setBorder(on);
+			materials[i].setSize(getPreferredSize());
 		}
-		for(int i=materials.length ; i<max ; i++) {
-			label = new JLabel("");
-			label.setBorder(lb1);
-			panel.add(label);
-		}
+//		for(int i=materials.length ; i<max ; i++) {
+//			label = new JLabel("");
+//			label.setBorder(lb1);
+//			panel.add(label);
+//		}
 
 		// Add buttons
 		JRadioButton buttonS = new JRadioButton("Select All");
@@ -88,11 +110,14 @@ public class BasicDialog extends JPanel
 
 		panel.add(buttonS);
 		panel.add(buttonC);
-		add( panel );
+		((GridBagLayout)getLayout()).setConstraints(scroller, gbc);
+		add( scroller );
 
 		// Data Type section
 		dataTypes = new JToggleButton[dt.dataCode.length];
 		panel = new JPanel(new GridLayout(0, 1));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		scroller = new JScrollPane(panel);
 		label = new JLabel("<html><b>Data Type</b></html>");
 		panel.setBorder( lb );
 		label.setForeground( Color.black );
@@ -109,11 +134,11 @@ public class BasicDialog extends JPanel
 			dataTypes[i].setSelected( true );
 			dataTypes[i].setBorder(on);
 		}
-		for(int i = dataTypes.length; i < max; i++) {
-			label = new JLabel("");
-			label.setBorder(lb1);
-			panel.add(label);
-		}
+//		for(int i = dataTypes.length; i < max; i++) {
+//			label = new JLabel("");
+//			label.setBorder(lb1);
+//			panel.add(label);
+//		}
 
 		// Add buttons
 		JRadioButton buttonS2 = new JRadioButton("Select All");
@@ -133,11 +158,15 @@ public class BasicDialog extends JPanel
 		panel.add(buttonS2);
 		panel.add(buttonC2);
 
-		add( panel );
+		gbc = new GridBagConstraints(gbc.gridx+(int)gbc.weightx, gbc.gridy, gbc.gridwidth, gbc.gridheight, gbc.weightx, gbc.weighty, gbc.anchor, gbc.fill, gbc.insets, gbc.ipadx, gbc.ipady);
+		((GridBagLayout)getLayout()).setConstraints(scroller, gbc);
+		setNewSize(scroller, panelSize);
+		add( scroller );
 
 		// Rocktype section
 		rockTypes = new JToggleButton[PDBRockType.size()];
 		panel = new JPanel(new GridLayout(0, 1));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		label = new JLabel("<html><b>Rock Type</b></html>");
 		panel.setBorder( lb );
 		label.setForeground( Color.black );
@@ -155,11 +184,11 @@ public class BasicDialog extends JPanel
 			rockTypes[i].setSelected( true );
 			rockTypes[i].setBorder(on);
 		}
-		for(int i = rockTypes.length; i < max; i++) {
-			label = new JLabel("");
-			label.setBorder(lb1);
-			panel.add(label);
-		}
+//		for(int i = rockTypes.length; i < max; i++) {
+//			label = new JLabel("");
+//			label.setBorder(lb1);
+//			panel.add(label);
+//		}
 
 		// Add buttons
 		JRadioButton buttonS3 = new JRadioButton("Select All");
@@ -178,7 +207,11 @@ public class BasicDialog extends JPanel
 
 		panel.add(buttonS3);
 		panel.add(buttonC3);
-		add( panel );
+		scroller = new JScrollPane(panel);
+		gbc = new GridBagConstraints(gbc.gridx+(int)gbc.weightx, gbc.gridy, gbc.gridwidth, gbc.gridheight, gbc.weightx, gbc.weighty, gbc.anchor, gbc.fill, gbc.insets, gbc.ipadx, gbc.ipady);
+		((GridBagLayout)getLayout()).setConstraints(scroller, gbc);
+		setNewSize(scroller, panelSize);
+		add( scroller );
 
 /*
 		alterations = new JToggleButton[PDBAlteration.size()];
@@ -219,6 +252,8 @@ public class BasicDialog extends JPanel
 */
 		Font font = new Font("SansSerif", Font.PLAIN, 10);
 		setFonts(this, font);
+		Dimension bigger = new Dimension(panelSize.width*3, panelSize.height);
+		setNewSize(this, bigger);
 	}
 	public void setFonts( Container c, Font font) {
 		Component[] comp = c.getComponents();

@@ -9,6 +9,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.Polygon;
@@ -48,6 +50,7 @@ import java.util.List;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -1080,13 +1083,23 @@ public class PDB implements Database,
 		selectedIndices = new int[0];
 	//	dialog = new PDBSelectionDialog( this );
 		dialog = new JPanel( new BorderLayout() );
+		dialog.setLayout(new BoxLayout(dialog, BoxLayout.Y_AXIS));
 
 		//Set a min size width and height
-		dialog.setMinimumSize(new Dimension(438, 1000));
-		dialog.setPreferredSize(new Dimension(438, 1000));
+		dialog.setMinimumSize(new Dimension(438, 100));
+		dialog.setPreferredSize(new Dimension(438, 200));
+		//dialog.setMaximumSize(new Dimension(438, 500));
 		
-
-		JPanel p = new JPanel(new GridLayout(0,1));
+		GridBagLayout layout = new GridBagLayout();
+		JPanel p = new JPanel(layout);
+		p.setBorder(BorderFactory.createLineBorder(Color.red));
+		Dimension pSize = new Dimension(dialog.getSize().width, 200);
+		p.setSize(pSize);
+		p.setPreferredSize(pSize);
+		p.setMinimumSize(pSize);
+		//p.setMaximumSize(new Dimension(pSize.width, pSize.height*3));
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.anchor = GridBagConstraints.FIRST_LINE_START;
 
 		
 		try {
@@ -1103,6 +1116,7 @@ public class PDB implements Database,
 				textDate.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
 
 				p.add(textDate);
+				layout.setConstraints(textDate, gbc);
 			//}
 			in.close();
 		} catch(Exception e) {
@@ -1112,7 +1126,10 @@ public class PDB implements Database,
 		
 		
 		//Group Graph, Color, Lasso Data Options together
-		JPanel p2 = new JPanel(new GridLayout(1,0));
+		layout = new GridBagLayout();
+		JPanel p2 = new JPanel(layout);
+		gbc = new GridBagConstraints();
+		gbc.anchor = GridBagConstraints.FIRST_LINE_START;
 
 		JButton graph = new JButton("Graph Data");
 		final PDB pdb = this;
@@ -1121,6 +1138,7 @@ public class PDB implements Database,
 				new PDBGraphDialog((JFrame)map.getTopLevelAncestor(),pdb);
 			}
 		});
+		//layout.setConstraints(graph, gbc);
 		p2.add(graph);
 		JButton color = new JButton("Color Data");
 		color.addActionListener(new ActionListener() {
@@ -1128,9 +1146,19 @@ public class PDB implements Database,
 				pdb.color();
 			}
 		});
+		//layout.setConstraints(color, gbc);
 		p2.add(color);
-		p2.add(createLassoPanel());
+		p2.setBorder(BorderFactory.createLineBorder(Color.blue));
+		JPanel lassoPanel = createLassoPanel();
+		//layout.setConstraints(lassoPanel, gbc);
+		p2.add(lassoPanel);
+		layout = (GridBagLayout)p.getLayout();
+		gbc.gridy = 0;
+		gbc.gridheight = 1;
+		gbc.anchor = GridBagConstraints.FIRST_LINE_START;
+		layout.setConstraints(p2, gbc);
 		p.add(p2);
+		p.setSize(pSize);
 
 		// Save Combo Box
 		save = new JComboBox(saveOptions);
@@ -1171,13 +1199,18 @@ public class PDB implements Database,
 		dataDisplay.addTab("Analyses",null, sp3, "Lists the individual geochemical " + 
 				"analyses for each sample associated with the displayed stations.");
 
-		dialog.add( p, "North" );
-		dialog.add( new PDBSelectionDialog( this ), "Center");
+		dialog.add( p );
+		PDBSelectionDialog pdbsd = new PDBSelectionDialog(this);
+		pdbsd.setPreferredSize(new Dimension(450, 330));
+		pdbsd.setMinimumSize(pdbsd.getPreferredSize());
+		pdbsd.setMaximumSize(pdbsd.getPreferredSize());
+		pdbsd.setSize(pdbsd.getPreferredSize());
+		dialog.add( pdbsd);
 		//Group Graph, Color, Lasso Data Options together
 		JPanel p2a = new JPanel(new GridLayout(1,0));
 
 		p2a.add( new SendToPetDB(dataDisplay));
-		dialog.add(p2a, "South");
+		dialog.add(p2a);
 
 		loaded = true;
 		return true;

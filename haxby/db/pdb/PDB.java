@@ -12,6 +12,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -1082,8 +1083,19 @@ public class PDB implements Database,
 		initTable();
 		selectedIndices = new int[0];
 	//	dialog = new PDBSelectionDialog( this );
-		dialog = new JPanel( new BorderLayout() );
-		dialog.setLayout(new BoxLayout(dialog, BoxLayout.Y_AXIS));
+		dialog = new JPanel(new GridBagLayout());
+		GridBagConstraints dialogConstraints = new GridBagConstraints(
+				0,
+				0,
+				GridBagConstraints.REMAINDER,
+				1,
+				0.5,
+				0.5,
+				GridBagConstraints.PAGE_START,
+				GridBagConstraints.HORIZONTAL,
+				new Insets(0,0,0,0),
+				0, 0
+				);
 
 		//Set a min size width and height
 		dialog.setMinimumSize(new Dimension(438, 100));
@@ -1091,13 +1103,14 @@ public class PDB implements Database,
 		//dialog.setMaximumSize(new Dimension(438, 500));
 		
 		GridBagLayout layout = new GridBagLayout();
-		JPanel p = new JPanel(layout);
+		JPanel p = new JPanel();
+		//p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 		p.setBorder(BorderFactory.createLineBorder(Color.red));
-		Dimension pSize = new Dimension(dialog.getSize().width, 200);
-		p.setSize(pSize);
+		Dimension pSize = new Dimension(dialog.getSize().width, 100);
+//		p.setSize(pSize);
 		p.setPreferredSize(pSize);
 		p.setMinimumSize(pSize);
-		//p.setMaximumSize(new Dimension(pSize.width, pSize.height*3));
+//		p.setMaximumSize(new Dimension(pSize.width, pSize.height*3));
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.anchor = GridBagConstraints.FIRST_LINE_START;
 
@@ -1114,9 +1127,8 @@ public class PDB implements Database,
 				JLabel textDate = new JLabel(dateText, SwingConstants.CENTER);
 				textDate.setFont( new Font( "SansSerif", Font.PLAIN, 13));
 				textDate.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
-
 				p.add(textDate);
-				layout.setConstraints(textDate, gbc);
+				//textDate.setMinimumSize(new Dimension(100, pSize.width));
 			//}
 			in.close();
 		} catch(Exception e) {
@@ -1130,6 +1142,8 @@ public class PDB implements Database,
 		JPanel p2 = new JPanel(layout);
 		gbc = new GridBagConstraints();
 		gbc.anchor = GridBagConstraints.FIRST_LINE_START;
+		gbc.gridwidth = GridBagConstraints.RELATIVE;
+		gbc.gridheight = GridBagConstraints.REMAINDER;
 
 		JButton graph = new JButton("Graph Data");
 		final PDB pdb = this;
@@ -1152,13 +1166,8 @@ public class PDB implements Database,
 		JPanel lassoPanel = createLassoPanel();
 		//layout.setConstraints(lassoPanel, gbc);
 		p2.add(lassoPanel);
-		layout = (GridBagLayout)p.getLayout();
-		gbc.gridy = 0;
-		gbc.gridheight = 1;
-		gbc.anchor = GridBagConstraints.FIRST_LINE_START;
-		layout.setConstraints(p2, gbc);
 		p.add(p2);
-		p.setSize(pSize);
+		//p.setSize(pSize);
 
 		// Save Combo Box
 		save = new JComboBox(saveOptions);
@@ -1198,19 +1207,26 @@ public class PDB implements Database,
 		JScrollPane sp3 = new JScrollPane(getAnalysisTable());
 		dataDisplay.addTab("Analyses",null, sp3, "Lists the individual geochemical " + 
 				"analyses for each sample associated with the displayed stations.");
-
-		dialog.add( p );
+		dialog.setBorder(BorderFactory.createLineBorder(Color.green));
+		dialog.add( p, dialogConstraints );
+		dialogConstraints.gridy = dialogConstraints.gridy + 1;
+		dialogConstraints.weighty = 1;
 		PDBSelectionDialog pdbsd = new PDBSelectionDialog(this);
 		pdbsd.setPreferredSize(new Dimension(450, 330));
 		pdbsd.setMinimumSize(pdbsd.getPreferredSize());
 		pdbsd.setMaximumSize(pdbsd.getPreferredSize());
 		pdbsd.setSize(pdbsd.getPreferredSize());
-		dialog.add( pdbsd);
+		pdbsd.setBorder(BorderFactory.createLineBorder(Color.MAGENTA));
+		dialog.add( pdbsd, dialogConstraints );
+		dialogConstraints.gridy = dialogConstraints.gridy + 10;
 		//Group Graph, Color, Lasso Data Options together
-		JPanel p2a = new JPanel(new GridLayout(1,0));
-
-		p2a.add( new SendToPetDB(dataDisplay));
-		dialog.add(p2a);
+		JPanel p2a = new JPanel(new GridBagLayout());
+		SendToPetDB stpd = new SendToPetDB(dataDisplay);
+		p2a.add( stpd );
+		p2a.setBorder(BorderFactory.createLineBorder(Color.orange));
+		layout.setConstraints(stpd, gbc);
+		p2a.setSize(new Dimension(p2a.getWidth(), 50));
+		dialog.add(p2a, dialogConstraints);
 
 		loaded = true;
 		return true;

@@ -4912,6 +4912,7 @@ public class MapApp implements ActionListener,
 	public void addDBToDisplay( haxby.db.Database chosenDatabase ) {
 		dbLabel.setText( chosenDatabase.getDBName() );
 		dialog.add( chosenDatabase.getSelectionDialog(), "Center");
+		dialog.revalidate();
 		hPane.setRightComponent( dialogScroll );
 		if( chosenDatabase.getSelectionDialog() != null ) {
 			int w = chosenDatabase.getSelectionDialog().getPreferredSize().width;
@@ -4941,6 +4942,10 @@ public class MapApp implements ActionListener,
 			public void run() {
 				dbLabel.setText( cDB.getDBName() );
 				dialog.add( cDB.getSelectionDialog(), "Center");
+				dialog.revalidate();
+				dialogScroll.revalidate();
+				dialog.updateUI();
+				dialogScroll.updateUI();
 				hPane.setRightComponent( dialogScroll );
 
 				if( cDB.getSelectionDialog() != null ) {

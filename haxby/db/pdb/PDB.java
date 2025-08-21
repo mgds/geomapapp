@@ -1089,8 +1089,8 @@ public class PDB implements Database,
 				0,
 				GridBagConstraints.REMAINDER,
 				1,
-				0.5,
-				0.5,
+				1.0,
+				0.0,
 				GridBagConstraints.PAGE_START,
 				GridBagConstraints.HORIZONTAL,
 				new Insets(0,0,0,0),
@@ -1100,7 +1100,7 @@ public class PDB implements Database,
 		//Set a min size width and height
 		dialog.setMinimumSize(new Dimension(438, 100));
 		dialog.setPreferredSize(new Dimension(438, 200));
-		//dialog.setMaximumSize(new Dimension(438, 500));
+		dialog.setMaximumSize(new Dimension(438, 500));
 		
 		GridBagLayout layout = new GridBagLayout();
 		JPanel p = new JPanel();
@@ -1210,7 +1210,9 @@ public class PDB implements Database,
 		dialog.setBorder(BorderFactory.createLineBorder(Color.green));
 		dialog.add( p, dialogConstraints );
 		dialogConstraints.gridy = dialogConstraints.gridy + 1;
-		dialogConstraints.weighty = 1;
+		dialogConstraints.weighty = 0;
+		//dialogConstraints.fill = GridBagConstraints.BOTH;
+		//dialogConstraints.weighty = 1;
 		PDBSelectionDialog pdbsd = new PDBSelectionDialog(this);
 		pdbsd.setPreferredSize(new Dimension(450, 330));
 		pdbsd.setMinimumSize(pdbsd.getPreferredSize());
@@ -1218,16 +1220,24 @@ public class PDB implements Database,
 		pdbsd.setSize(pdbsd.getPreferredSize());
 		pdbsd.setBorder(BorderFactory.createLineBorder(Color.MAGENTA));
 		dialog.add( pdbsd, dialogConstraints );
-		dialogConstraints.gridy = dialogConstraints.gridy + 10;
+		dialogConstraints.gridy = GridBagConstraints.RELATIVE;
+		dialogConstraints.anchor = GridBagConstraints.PAGE_START;
+		dialogConstraints.weighty = 0.01;
+		//dialogConstraints.fill = GridBagConstraints.HORIZONTAL;
+		//dialogConstraints.weighty = 0;
 		//Group Graph, Color, Lasso Data Options together
 		JPanel p2a = new JPanel(new GridBagLayout());
 		SendToPetDB stpd = new SendToPetDB(dataDisplay);
-		p2a.add( stpd );
+		p2a.add( stpd, dialogConstraints );
 		p2a.setBorder(BorderFactory.createLineBorder(Color.orange));
 		layout.setConstraints(stpd, gbc);
 		p2a.setSize(new Dimension(p2a.getWidth(), 50));
 		dialog.add(p2a, dialogConstraints);
-
+		dialog.setPreferredSize(new Dimension(438, pdbsd.getSize().height + pSize.height + p.getSize().height));
+		dialog.setMaximumSize(dialog.getPreferredSize());
+		dialog.setSize(dialog.getPreferredSize());
+		dialog.revalidate();
+		dialog.updateUI();
 		loaded = true;
 		return true;
 	}

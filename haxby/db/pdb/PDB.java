@@ -68,6 +68,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -1075,7 +1076,7 @@ public class PDB implements Database,
 			PDBStation.setProgressDialog(dialogProgress);
 			PDBSample.setProgressDialog(dialogProgress);
 			dialogProgress.setSize(new Dimension(100, 10));
-			JLabel label = new JLabel("                                       ");
+			JLabel label = new JLabel("                                           ");
 			label.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
 			dialogProgress.add(label);
 			dialogProgress.pack();
@@ -1083,7 +1084,11 @@ public class PDB implements Database,
 			PDBDataType.load();		// Load Data Type
 			PDBStation.load();		// Load Stations
 			PDBSample.load();		// Load Sample
-			dialogProgress.setTitle("Generating the map display…");
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					dialogProgress.setTitle("Generating the map display…");
+				}
+			});
 		} catch (IOException ex) {
 			loaded = false;
 			System.err.println(ex.getMessage());

@@ -73,7 +73,7 @@ public class PDBDataType {
 				final int tnuoc = count;
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
-						dialog.setTitle("Reading the " + NumberFormatUtil.cardinalToOrdinal(tnuoc) + " data type");
+						dialog.setTitle("Reading the " + NumberFormatUtil.cardinalToOrdinal(tnuoc) + " data type…");
 					}
 				});
 			}

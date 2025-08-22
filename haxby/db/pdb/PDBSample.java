@@ -117,7 +117,7 @@ public class PDBSample {
 				final int sc = sampleCount;
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
-						dialog.setTitle("Loading the " + NumberFormatUtil.cardinalToOrdinal(sc) + " sample");
+						dialog.setTitle("Loading the " + NumberFormatUtil.cardinalToOrdinal(sc) + " sample…");
 					}
 				});
 			}

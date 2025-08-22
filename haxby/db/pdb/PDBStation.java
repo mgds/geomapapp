@@ -214,7 +214,7 @@ public class PDBStation {
 				final int tnuoc = count;
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
-						dialog.setTitle("Processing the " + NumberFormatUtil.cardinalToOrdinal(tnuoc) + " station");
+						dialog.setTitle("Processing the " + NumberFormatUtil.cardinalToOrdinal(tnuoc) + " station…");
 					}
 				});
 			}

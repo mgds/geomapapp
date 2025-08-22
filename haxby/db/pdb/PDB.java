@@ -9,7 +9,10 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -48,6 +51,7 @@ import java.util.List;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -64,6 +68,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -164,6 +169,8 @@ public class PDB implements Database,
 			sTable.updateUI();
 		}
 	};
+	
+	JDialog dialogProgress;
 
 	public PDB(XMap map) {
 		this.map = map;
@@ -1062,9 +1069,26 @@ public class PDB implements Database,
 					}
 				}
 			}
+			dialogProgress = new JDialog((Frame)null, "Loading PetDB");
+			dialogProgress.setLocationRelativeTo(map);
+			dialogProgress.setAlwaysOnTop(true);
+			PDBDataType.setProgressDialog(dialogProgress);
+			PDBStation.setProgressDialog(dialogProgress);
+			PDBSample.setProgressDialog(dialogProgress);
+			dialogProgress.setSize(new Dimension(100, 10));
+			JLabel label = new JLabel("                                           ");
+			label.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+			dialogProgress.add(label);
+			dialogProgress.pack();
+			dialogProgress.setVisible(true);
 			PDBDataType.load();		// Load Data Type
 			PDBStation.load();		// Load Stations
 			PDBSample.load();		// Load Sample
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					dialogProgress.setTitle("Generating the map display…");
+				}
+			});
 		} catch (IOException ex) {
 			loaded = false;
 			System.err.println(ex.getMessage());
@@ -1079,11 +1103,22 @@ public class PDB implements Database,
 		initTable();
 		selectedIndices = new int[0];
 	//	dialog = new PDBSelectionDialog( this );
-		dialog = new JPanel( new BorderLayout() );
+		dialog = new JPanel(new GridBagLayout());
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.anchor = GridBagConstraints.CENTER;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.gridheight = 1;
+		gbc.gridwidth = 1;
+		gbc.insets = new Insets(0, 0, 0, 0);
+		gbc.weightx = 1;
+		gbc.weighty = 0;
+		//dialog.setLayout(new BoxLayout(dialog, BoxLayout.Y_AXIS));
 
 		//Set a min size width and height
-		dialog.setMinimumSize(new Dimension(438, 1000));
-		dialog.setPreferredSize(new Dimension(438, 1000));
+		dialog.setMinimumSize(new Dimension(438, 1100));
+		dialog.setPreferredSize(new Dimension(438, 1100));
 		
 
 		JPanel p = new JPanel(new GridLayout(0,1));
@@ -1171,15 +1206,20 @@ public class PDB implements Database,
 		dataDisplay.addTab("Analyses",null, sp3, "Lists the individual geochemical " + 
 				"analyses for each sample associated with the displayed stations.");
 
-		dialog.add( p, "North" );
-		dialog.add( new PDBSelectionDialog( this ), "Center");
+		dialog.add( p, gbc );
+		gbc.gridy += 20;
 		//Group Graph, Color, Lasso Data Options together
 		JPanel p2a = new JPanel(new GridLayout(1,0));
 
 		p2a.add( new SendToPetDB(dataDisplay));
-		dialog.add(p2a, "South");
+		dialog.add(p2a, gbc);
+		gbc.gridy += 20;
+		gbc.weighty = 0.1;
+		dialog.add( new PDBSelectionDialog( this ), gbc);
+		dialog.revalidate();
 
 		loaded = true;
+		dialogProgress.setVisible(false);
 		return true;
 	}
 

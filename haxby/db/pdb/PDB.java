@@ -168,6 +168,8 @@ public class PDB implements Database,
 			sTable.updateUI();
 		}
 	};
+	
+	JDialog dialogProgress;
 
 	public PDB(XMap map) {
 		this.map = map;
@@ -1066,9 +1068,22 @@ public class PDB implements Database,
 					}
 				}
 			}
+			dialogProgress = new JDialog((Frame)null, "Loading PetDB");
+			dialogProgress.setLocationRelativeTo(map);
+			dialogProgress.setAlwaysOnTop(true);
+			PDBDataType.setProgressDialog(dialogProgress);
+			PDBStation.setProgressDialog(dialogProgress);
+			PDBSample.setProgressDialog(dialogProgress);
+			dialogProgress.setSize(new Dimension(100, 10));
+			JLabel label = new JLabel("                                       ");
+			label.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+			dialogProgress.add(label);
+			dialogProgress.pack();
+			dialogProgress.setVisible(true);
 			PDBDataType.load();		// Load Data Type
 			PDBStation.load();		// Load Stations
 			PDBSample.load();		// Load Sample
+			dialogProgress.setTitle("Generating the map display…");
 		} catch (IOException ex) {
 			loaded = false;
 			System.err.println(ex.getMessage());
@@ -1199,6 +1214,7 @@ public class PDB implements Database,
 		dialog.revalidate();
 
 		loaded = true;
+		dialogProgress.setVisible(false);
 		return true;
 	}
 

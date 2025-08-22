@@ -1,6 +1,7 @@
 package haxby.db.pdb;
 
 import haxby.map.MapApp;
+import haxby.util.NumberFormatUtil;
 import haxby.util.PathUtil;
 import haxby.util.URLFactory;
 
@@ -11,6 +12,9 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Vector;
+
+import javax.swing.JDialog;
+import javax.swing.SwingUtilities;
 
 public class PDBDataType {
 	/* FIXME: Lulin Song leave 'Age' and 'EM' here. It will be removed in the future when pdb_dataC code[i] matches the new list */
@@ -36,12 +40,17 @@ public class PDBDataType {
 	static byte[][] units;
 	static int[] order;
 	static boolean initiallized = false;
+	
+	private static JDialog dialog = null;
 
 	static String PETDB_PATH = PathUtil.getPath("PORTALS/PETDB_PATH",
 			MapApp.BASE_URL+"/data/portals/petdb/");
 
 	public PDBDataType() throws IOException {
 		if( !initiallized ) load();
+	}
+	static void setProgressDialog(JDialog dlg) {
+		dialog = dlg;
 	}
 	static void load() throws IOException {
 		if( initiallized ) return;
@@ -57,14 +66,24 @@ public class PDBDataType {
 		//first read the header
 		String s = in.readLine();
 		//then the data
+		int count = 0;
 		while( (s=in.readLine()) != null) {
+			count++;
+			if(null != dialog) {
+				final int tnuoc = count;
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						dialog.setTitle("Reading the " + NumberFormatUtil.cardinalToOrdinal(tnuoc) + " data type");
+					}
+				});
+			}
 			String [] results = s.split("\\t");
 			v.add( new String[] {results[0], 
 					results[1], 
 					results[2], 
 					results[3]} );
-			
 		}
+		count = 0;
 
 		try {
 			in.close();
@@ -88,6 +107,9 @@ public class PDBDataType {
 
 			if( units[i].equals("null") )units[i]=null;
 			order[i] = Integer.parseInt(ss[3]);
+			if(null != dialog) {
+				dialog.setTitle("Fully processed " + count + " data types of " + v.size());
+			}
 		}
 		initiallized = true;
 	}

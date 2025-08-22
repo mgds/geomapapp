@@ -9,9 +9,12 @@ import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import haxby.map.MapApp;
+import haxby.util.NumberFormatUtil;
 import haxby.util.PathUtil;
 import haxby.util.URLFactory;
 
@@ -23,6 +26,7 @@ public class PDBSample {
 	PDBBatch[] batch;
 	long rockType;
 	int specimenNumber;
+	private static JDialog dialog = null;
 	public static HashMap<String, PDBSample> idToSample = new HashMap<String, PDBSample>();
 
 	static String PETDB_PATH = PathUtil.getPath("PORTALS/PETDB_PATH",
@@ -82,6 +86,10 @@ public class PDBSample {
 		batch = null;
 	}
 	
+	static void setProgressDialog(JDialog dlg) {
+		dialog = dlg;
+	}
+	
 	public static void load() throws IOException {
 	//	URL url = URLFactory.url(PETDB_PATH + "June2014/pdb_dataC_new.txt");
 		URL url = URLFactory.url(PETDB_PATH + "petdb_latest/pdb_dataC_new.txt");
@@ -97,11 +105,22 @@ public class PDBSample {
 			String oneLine;
 			int maxref=0;
 			int maxmaterialshift=0;
+			
+		int sampleCount = 0;
 		while( true ) {
 			try{
 			oneLine = txtReader.readLine();
 			if(oneLine==null) break;
 			if(oneLine.startsWith("/*")==true) continue; /* skip first line. The data starts with second line. */
+			sampleCount++;
+			if(null != dialog) {
+				final int sc = sampleCount;
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						dialog.setTitle("Loading the " + NumberFormatUtil.cardinalToOrdinal(sc) + " sample");
+					}
+				});
+			}
 			String [] substrings = oneLine.split("\\t");
 			int index=0; /* substrings index */		
 			snum = Integer.parseInt(substrings[index++]); 

@@ -491,8 +491,9 @@ public class GMAProfile implements Overlay, XYPoints {
 				}
 			}
 		}
+		Point pt = ((MapApp)map.getApp()).getFrame().getLocation();
 		if(!dialog.isVisible()) {
-			dialog.setLocation(map.getX(), map.getY()+150);
+			dialog.setLocation(pt.x, pt.y+150);
 			dialog.setVisible(true);
 		}
 		dialog.toFront();

@@ -191,7 +191,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.5.9"; //08/22/2025
+	public final static String VERSION = "3.7.5.9"; //08/25/2025
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -880,6 +880,12 @@ public class MapApp implements ActionListener,
 			ex.printStackTrace();
 			// System.exit(0);
 		}*/
+	}
+	
+	public static boolean isJar() {
+		String str = String.valueOf(MapApp.class.getResource("MapApp.class"));
+		System.out.println(str);
+		return str.startsWith("jar:");
 	}
 
 	/*

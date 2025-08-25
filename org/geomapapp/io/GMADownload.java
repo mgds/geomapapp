@@ -139,7 +139,14 @@ public class GMADownload {
 		quitBtn.addActionListener(listener);
 		quitBtn.setPreferredSize(smallBtnSize);
 		gbc.insets = rightSide;
-		main.add(quitBtn, gbc);		
+		main.add(quitBtn, gbc);
+		
+		Dimension optimalSize = getUnion(quitBtn.getMinimumSize(), ignoreBtn.getMinimumSize(),
+				joinMailingListBtn.getMinimumSize(), whatsNewBtn.getMinimumSize());
+		whatsNewBtn.setPreferredSize(optimalSize);
+		joinMailingListBtn.setPreferredSize(optimalSize);
+		ignoreBtn.setPreferredSize(optimalSize);
+		quitBtn.setPreferredSize(optimalSize);
 
 		dialog.setTitle("New Version Available");
 		dialog.setModal(true);
@@ -221,6 +228,15 @@ public class GMADownload {
 	static void viewUpdates(String newVersion) {
 		String url = PathUtil.getPath("PUBLIC_HOME_PATH") + "eNewsletters/v" + newVersion.replace('.', '_') + ".html";
 		BrowseURL.browseURL( url );
+	}
+	
+	static Dimension getUnion(Dimension... dimensions) {
+		int width = 0, height = 0;
+		for(Dimension d : dimensions) {
+			if(width < d.width) width = d.width;
+			if(height < d.height) height = d.height; 
+		}
+		return new Dimension(width, height);
 	}
 
 }

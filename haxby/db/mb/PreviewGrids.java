@@ -74,6 +74,7 @@ public class PreviewGrids
     }
     
     int maxRes = 4096;
+    MapApp.setup();
     MapApp mapApp = MapApp.createMapApp(new String[0]);
     XMap map = mapApp.getMap();
     

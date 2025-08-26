@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -1371,6 +1372,28 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			}
 		}
 	}
+	
+	private void moveNearMainWindow() {
+		Window parent = ((MapApp)map.getApp()).getFrame();
+		Point loc = parent.getLocation();
+		int x = loc.x + parent.getWidth();
+		int y = loc.y;
+		Rectangle bounds = parent.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
+		if(x + lmFrame.getWidth() > bounds.width+bounds.x) {
+			x = bounds.width + bounds.x - lmFrame.getWidth();
+		}
+		lmFrame.setLocation(x, y);
+	}
+	
+	public void makeShown(boolean shouldShow) {
+		if(shouldShow && !lmFrame.isVisible()) {
+			moveNearMainWindow();
+			lmFrame.setVisible(shouldShow);
+		}
+		else {
+			lmFrame.setVisible(shouldShow);
+		}
+	}
 
 //	New overlays added at index 0, so "top/highest" overlay is always at index 0 in this class
 	public void propertyChange(PropertyChangeEvent evt) {
@@ -1418,22 +1441,8 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 					if ( XML_Menu.commandToMenuItemHash != null && XML_Menu.commandToMenuItemHash.contains("layer_manager_cmd") ) {
 						((JCheckBoxMenuItem)XML_Menu.commandToMenuItemHash.get("layer_manager_cmd")).setSelected(true);
 					}
-
-					Window parent = ((MapApp)map.getApp()).getFrame();
-					int x = parent.getLocation().x;
-					x += parent.getWidth();
-					int y = parent.getLocation().y;
-					Rectangle bounds = parent.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
-					if(x + lmFrame.getWidth() > bounds.width+bounds.x) {
-						x = bounds.width + bounds.x - lmFrame.getWidth();
-					}
-					if (!lmFrame.isVisible()){
-
-						lmFrame.setLocation(x, y);
-					}
 					Window activeWindow = FocusManager.getCurrentManager().getActiveWindow();
-
-					lmFrame.setVisible(true);
+					makeShown(true);
 					lmFrame.toFront();
 					if (activeWindow != null)
 						activeWindow.requestFocus();
@@ -1468,6 +1477,9 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 				}
 				//System.out.println("Opacity" + menuItem.opacity_value);
 				p = new LayerPanel(layer,layerName,layerURLString,true,menuItem);
+				if(!lmFrame.isVisible()) {
+					moveNearMainWindow();
+				}
 				if (evt.getPropertyName() != null) {
 					//p.layerName = evt.getPropertyName(); 
 				}
@@ -1535,15 +1547,15 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 					if ( XML_Menu.commandToMenuItemHash != null && XML_Menu.commandToMenuItemHash.contains("layer_manager_cmd") ) {
 						((JCheckBoxMenuItem)XML_Menu.commandToMenuItemHash.get("layer_manager_cmd")).setSelected(true);
 					}
-					Window parent = lmFrame.getOwner();
-					int x = lmFrame.getLocation().x;
-					x += lmFrame.getWidth();
-					int y = lmFrame.getLocation().y;
-					if (!lmFrame.isVisible()){
-						lmFrame.setLocation(x, y-200);
-					}
+//					Window parent = lmFrame.getOwner();
+//					int x = lmFrame.getLocation().x;
+//					x += lmFrame.getWidth();
+//					int y = lmFrame.getLocation().y;
+//					if (!lmFrame.isVisible()){
+//						lmFrame.setLocation(x, y-200);
+//					}
 					Window activeWindow = FocusManager.getCurrentManager().getActiveWindow();
-					lmFrame.setVisible(true);
+					makeShown(true);
 					lmFrame.toFront();
 					if (activeWindow != null)
 						activeWindow.requestFocus();

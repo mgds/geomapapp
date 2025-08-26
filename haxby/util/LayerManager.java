@@ -1419,7 +1419,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 					menu = XML_Menu.getXML_Menu(evt.getPropertyName());
 				//	p.layerName = evt.getPropertyName(); 
 				}
-				p = new LayerPanel(layer,evt.getPropertyName(),layerURLString,true,menu);
+				p = new LayerPanel(layer,evt.getPropertyName(),layerURLString,layer.shouldShow(),menu);
 				add(p,0);
 				this.layerPanels.add(0,p);
 				this.overlays.add(0,layer);

@@ -284,9 +284,12 @@ public class GridDialog implements ItemListener, WindowListener {
 
 		if (!dialog.isVisible()) {
 			Point point = owner.getLocation();
-			point.y = owner.getHeight() -200;
-			point.x = owner.getWidth() -500;
-			dialog.setLocation(point.x, point.y); //sets frame location
+			point.y += owner.getHeight() + 10;
+			Rectangle screenBounds = owner.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
+			if(point.y + dialog.getHeight() > screenBounds.y + screenBounds.height) {
+				point.y = screenBounds.y + screenBounds.height - dialog.getHeight();
+			}
+			dialog.setLocation(point); //sets frame location
 		}
 		dialog.setVisible(true);
 	}

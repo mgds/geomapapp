@@ -135,6 +135,7 @@ public class BaseMapSelect implements ActionListener {
 		Object defaultOption = options[0];
 		JOptionPane jop = new JOptionPane(panel, JOptionPane.PLAIN_MESSAGE, JOptionPane.YES_NO_OPTION, null, options, defaultOption);
 		JDialog dialog = jop.createDialog(devText + "Choose a Base Map Projection");
+		dialog.setLocationRelativeTo(MapApp.anchor);
 		dialog.setVisible(true);
 		Object val = jop.getValue();
 		boolean isOk = (val instanceof String)?(val.equals(defaultOption)):(val instanceof Integer && (Integer)val == JOptionPane.OK_OPTION);

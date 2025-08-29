@@ -11,6 +11,7 @@ import org.geomapapp.geom.RectangularProjection;
 import org.geomapapp.geom.UTM;
 import org.geomapapp.geom.UTMProjection;
 import org.geomapapp.grid.Grid2D;
+import org.geomapapp.grid.ImportGrid;
 import org.geomapapp.grid.ImportGrid.GridFile;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -88,7 +89,7 @@ public class GTConverter {
 	 * @param yDir the sign of the y scale value
 	 * @return information to plot the grid in GeoMapApp
 	 */
-	public static Grid2DWrapper getGrid(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal, int xDir, int yDir) {
+	public static Grid2DWrapper getGrid(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal, int xDir, int yDir, ImportGrid ig) {
 		GridGeometry2D geom = geotoolsGrid.getGridGeometry();
 		GridEnvelope2D env = geom.getGridRange2D();
 		Matrix m = ((AffineTransform2D)geom.getGridToCRS2D()).getMatrix();
@@ -100,11 +101,24 @@ public class GTConverter {
 		GridCoordinates2D low = env.getLow(), high = env.getHigh();
 		double lowest = Double.MAX_VALUE, highest = -Double.MAX_VALUE;
 		Function <Double, Boolean> isData = (hasNoData)?(x -> x != noDataVal):(x -> !Double.isNaN(x));
+		long cellsPerRow = high.x - low.x + 1;
+		long numRows = high.y - low.y + 1;
+		long numCells = numRows * cellsPerRow;
+		long howManyHundred = numCells/100;
 		//TODO consider multithreading for larger grids
 		for(int y = low.y; y < high.y; y++) {
 			int realY = (yDir < 0)?(y):(high.y-y-1+low.y);
 			for(int x = low.x; x < high.x; x++) {
+				
 				int realX = (xDir > 0)?(x):(high.x-x-1+low.x);
+				long whichCell = (x - low.x) + (y - low.y)*cellsPerRow;
+				if(whichCell % howManyHundred == 0) {
+					ig.showPercent((int)(whichCell/howManyHundred));
+				}
+				else if(x+1 == high.x && y+1 == high.y) {
+					ig.showPercent(100);
+				}
+				
 				GridCoordinates2D pt = new GridCoordinates2D(realX, realY);
 				//try {
 					double[] vals = geotoolsGrid.evaluate(pt, (double[])null);

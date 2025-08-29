@@ -138,10 +138,13 @@ public class DecimateXBG {
 			if (ig != null) {
 				ig.appendNewText( "\n"+ files.length +" files,\t" + corners.size() +" new tiles");	
 				ig.waiting = true;
-				ig.displayWaitingDots();
+				//ig.displayWaitingDots();
 			}
 			
 			for( int k=0 ; k<corners.size() ; k++) {
+				if(ig != null) {
+					ig.showPercent(100 * k / corners.size());
+				}
 				int[] xy = (int[]) corners.get(k);
 				int x0 = xy[0]*size;
 				int y0 = xy[1]*size;

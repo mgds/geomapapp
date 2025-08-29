@@ -95,11 +95,11 @@ public class ASC_Grid {
 		headerRead = true;
 	}
 
-	public Grid2D getGrid() throws IOException {
+	public Grid2D getGrid(ImportGrid ig) throws IOException {
 		if( grd!=null )return grd;
 
 		readHeader();
-		readGrid();
+		readGrid(ig);
 
 		grd = new Grid2D.Float( new java.awt.Rectangle(0,0,width,height), proj);
 		grd.setBuffer(grid);
@@ -149,7 +149,7 @@ public class ASC_Grid {
 		}
 	}
 	
-	public void readGrid() throws IOException {
+	public void readGrid(ImportGrid ig) throws IOException {
 		zMin = Double.MAX_VALUE;
 		zMax = -Double.MAX_VALUE;
 		BufferedReader in = new BufferedReader(
@@ -163,6 +163,7 @@ public class ASC_Grid {
 
 		grid = new float[width*height];
 		int i=0;
+		ig.appendNewText("\nReading " + filename + "… ");
 		while( true ) {
 			st = new StringTokenizer(s);
 			while( st.hasMoreTokens() && i<width*height) {
@@ -175,13 +176,21 @@ public class ASC_Grid {
 					zMax = Math.max(zMax, val);
 					grid[i++]=(float)val;
 				}
+				if(ig != null && (i % (grid.length/100) == 0 || i+1 >= grid.length)) {
+					ig.showPercent(i*100/grid.length);
+				}
 			}
 			if( (s=in.readLine())==null ) {
-				while (i < width * height)
+				while (i < width * height) {
 					grid[i++]=Float.NaN;
+					if(ig != null && (i % (grid.length/100) == 0 || i+1 >= grid.length)) {
+						ig.showPercent(100*i/grid.length);
+					}
+				}
 				break;
 			}
 		}
+		ig.showPercent(100);
 		in.close();
 	}
 	
@@ -192,7 +201,7 @@ public class ASC_Grid {
 		}
 		ASC_Grid asc = new ASC_Grid(new File(args[0]));
 		try {
-			Grid2D grd = asc.getGrid();
+			Grid2D grd = asc.getGrid(null);
 			double[] wesn = grd.getWESN();
 			System.out.println( wesn[0] +"\t"+ wesn[1] +"\t"+ wesn[2] +"\t"+ wesn[3] );
 		} catch(Exception e) {

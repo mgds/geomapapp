@@ -133,6 +133,7 @@ public class ViewShapes {
 //		GMA 1.4.8: Make "Layers" window a frame so it can be minimized
 //		dialog = new JDialog(top, "Layers");
 		dialog = new JFrame("Shapefile Manager");
+		if(!dialog.isVisible()) dialog.setLocation(((MapApp)map.getApp()).getFrame().getLocation());
 
 		split = new JSplitPane();
 		JScrollPane sp = new JScrollPane(table);

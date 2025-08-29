@@ -279,11 +279,11 @@ public class Grd {
 		return readGrd( fileName, null );
 	}
 	
-	public static Grid2D.Float readGrd( String fileName, MapProjection proj, GrdProperties grdP, boolean flipGrid) throws IOException {
-		return readGrd(fileName, proj, grdP, flipGrid, Double.NaN);
+	public static Grid2D.Float readGrd( String fileName, MapProjection proj, GrdProperties grdP, boolean flipGrid, ImportGrid ig) throws IOException {
+		return readGrd(fileName, proj, grdP, flipGrid, Double.NaN, ig);
 	}
 
-	public static Grid2D.Float readGrd( String fileName, MapProjection proj, GrdProperties grdP, boolean flipGrid, Double noData) throws IOException {
+	public static Grid2D.Float readGrd( String fileName, MapProjection proj, GrdProperties grdP, boolean flipGrid, Double noData, ImportGrid ig) throws IOException {
 		double[] x_range = grdP.x_range;
 		double[] y_range = grdP.y_range;
 		double[] z_range = grdP.z_range;
@@ -332,6 +332,11 @@ public class Grd {
 
 
 				try {
+					if(null != ig) {
+						ig.appendNewText("\nReading the grid from " + grdP.file + ". ");
+						ig.waiting = true;
+						ig.displayWaitingDots();
+					}
 					String zArrayType = variable.read().getElementType().toString();
 	//				System.out.println("Element type for z array: " + zArrayType);
 					if ( zArrayType.equals("float")) {
@@ -377,11 +382,14 @@ public class Grd {
 						short[] tmpShort = (short[])variable.read().copyTo1DJavaArray();
 						z = new float[tmpShort.length];
 						for (int i = 0; i < tmpShort.length; i++) {
+							if(z.length < 100 || (i+1) % (z.length/100) == 0) {
+								ig.showPercent(i * 100 / z.length);
+							}
 							z[i] = tmpShort[i];
 							if (z[i] == noData) 
 								z[i] = Float.NaN;
 						}
-	
+
 						if( add_offset!=0. || scaleFactor!=1. ) {
 							for( int k = 0; k < z.length; k++ ) {
 								if( Float.isNaN(z[k]) ) {
@@ -391,6 +399,10 @@ public class Grd {
 								z[k] = (float)tmp;
 							}
 						}
+					}
+					if(null != ig) {
+						ig.waiting = false;
+						ig.appendNewText("\nFinished reading " + grdP.file + ".");
 					}
 				} catch (OutOfMemoryError e) {
 
@@ -411,6 +423,7 @@ public class Grd {
 					//create an EditorPane to handle the html and hyperlink
 				    JEditorPane ep = GeneralUtils.makeEditorPane(msg);
 					JOptionPane.showMessageDialog(null,ep , "Out of Memory Error", JOptionPane.ERROR_MESSAGE);
+					if(null != ig) ig.waiting = false;
 					return null;
 				}
 			}

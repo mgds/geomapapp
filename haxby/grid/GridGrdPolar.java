@@ -92,7 +92,7 @@ public class GridGrdPolar {
 //					XGrid.getGrd1(file, sign);
 
 				GrdProperties gridP = new GrdProperties(sArr[0]);
-				Grid2D.Float grid = Grd.readGrd( sArr[0], null, gridP, false);
+				Grid2D.Float grid = Grd.readGrd( sArr[0], null, gridP, false, null);
 				
 				float[] gridZ = grid.getBuffer();
 				for(int i=0 ; i<gridZ.length ; i++) {

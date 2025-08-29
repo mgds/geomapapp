@@ -5,6 +5,7 @@ import haxby.util.PathUtil;
 import javax.imageio.ImageIO;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -127,20 +128,31 @@ public class BaseMapSelect implements ActionListener {
 		if(MapApp.BASE_URL.matches(MapApp.DEV_URL))
 			 devText = "**DEVELOPMENT MODE** ";
 		
-		int ok = JOptionPane.showOptionDialog( null, panel, devText + "Choose a Base Map Projection",
+		/*int ok = JOptionPane.showOptionDialog( MapApp.anchor, panel, devText + "Choose a Base Map Projection",
 				JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
 				options,
-				options[0]);
-		if(ok == JOptionPane.YES_OPTION) {
+				options[0]);*/
+		Object defaultOption = options[0];
+		JOptionPane jop = new JOptionPane(panel, JOptionPane.PLAIN_MESSAGE, JOptionPane.YES_NO_OPTION, null, options, defaultOption);
+		JDialog dialog = jop.createDialog(devText + "Choose a Base Map Projection");
+		dialog.setVisible(true);
+		Object val = jop.getValue();
+		boolean isOk = (val instanceof String)?(val.equals(defaultOption)):(val instanceof Integer && (Integer)val == JOptionPane.OK_OPTION);
+		//int ok = (Integer)jop.getValue();
+		MapApp.anchor = dialog;
+		/*devText + "Choose a Base Map Projection",
+				JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+				options,
+				options[0]);*/
+		int whichMap = -1;
+		if(isOk) {
 			for (i = 0; i < mapsTB.length; i++) {
 				if (mapsTB[i].isSelected())
-					ok = maps[i];
+					whichMap = maps[i];
 				mapsTB[i] = null;
 			}
-		}else {
-			ok = -1;
 		}
-		return ok;
+		return whichMap;
 	}
 
 	/*

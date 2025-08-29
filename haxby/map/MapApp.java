@@ -351,6 +351,8 @@ public class MapApp implements ActionListener,
 	public static JFileChooser chooser = null;
 	public static ArrayList<String> portal_commands;
 	
+	public static Component anchor = null;
+	
 	private JCheckBox loadAltTiles;
 	//private JTextField altTilesUrlTextField;
 
@@ -1142,7 +1144,8 @@ public class MapApp implements ActionListener,
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 		startup.pack();
 		Dimension win = startup.getSize();
-		startup.setLocation( (screen.width-win.width)/2, (screen.height-win.height)/2 );
+		//startup.setLocation( (screen.width-win.width)/2, (screen.height-win.height)/2 );
+		startup.setLocationRelativeTo(anchor);
 		startup.show();
 		Mercator proj = ProjectionFactory.getMercator( 640 );
 		double lat = proj.getLatitude( -260. );
@@ -1257,6 +1260,7 @@ public class MapApp implements ActionListener,
 			}
 		public void windowGainedFocus(WindowEvent e) {}
 		});
+		frame.setLocationRelativeTo(anchor);
 		return frame;
 	}
 
@@ -1501,6 +1505,8 @@ public class MapApp implements ActionListener,
 		}
 		frame.pack();
 		frame.setSize( 1000, 710 );
+		frame.setLocationRelativeTo(anchor);
+		anchor = frame;
 		frame.setVisible(true);
 		getGMARoot();
 	}

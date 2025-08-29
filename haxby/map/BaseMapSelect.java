@@ -127,7 +127,7 @@ public class BaseMapSelect implements ActionListener {
 		if(MapApp.BASE_URL.matches(MapApp.DEV_URL))
 			 devText = "**DEVELOPMENT MODE** ";
 		
-		int ok = JOptionPane.showOptionDialog( null, panel, devText + "Choose a Base Map Projection",
+		int ok = JOptionPane.showOptionDialog( MapApp.anchor, panel, devText + "Choose a Base Map Projection",
 				JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null,
 				options,
 				options[0]);

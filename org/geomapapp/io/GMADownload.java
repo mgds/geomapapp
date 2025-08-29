@@ -74,8 +74,8 @@ public class GMADownload {
 		GridBagConstraints gbc = new GridBagConstraints();
 		Dimension bigBtnSize = new Dimension(300, 50),
 				smallBtnSize = new Dimension(170, 30);
-		Insets leftSide = new Insets(0, 0, 0, 30),
-				rightSide = new Insets(0, 30, 0, 0);
+		Insets leftSide = new Insets(0, 0, 6, 30),
+				rightSide = new Insets(0, 30, 6, 0);
 		gbc.anchor = GridBagConstraints.PAGE_START;
 		gbc.fill = GridBagConstraints.BOTH;
 		gbc.gridheight = 1;
@@ -153,6 +153,7 @@ public class GMADownload {
 		dialog.setContentPane(main);
 		dialog.pack();
 		dialog.setLocationRelativeTo(null);
+		MapApp.anchor = dialog;
 		dialog.setVisible(true);
 	}
 

@@ -332,7 +332,7 @@ public class Grd {
 
 
 				try {
-					ig.appendNewText("\nReading the grid. ");
+					ig.appendNewText("\nReading the grid from " + grdP.file + ". ");
 					ig.waiting = true;
 					ig.displayWaitingDots();
 					String zArrayType = variable.read().getElementType().toString();
@@ -399,6 +399,7 @@ public class Grd {
 						}
 					}
 					ig.waiting = false;
+					ig.appendNewText("\nFinished reading " + grdP.file + ".");
 				} catch (OutOfMemoryError e) {
 
 		            MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();

@@ -1647,24 +1647,6 @@ public class ImportGrid implements Runnable {
 		};
 		new Thread(r).start();
 	}
-	protected void appendNewText_old(final String txt) {
-		Runnable runnable = new UpdateArea();
-		Thread thread = new Thread(runnable);
-		areaText = txt;
-		thread.start();
-	}	
-
-	class UpdateArea implements Runnable {
-		public void run() {
-			synchronized(areaText) {
-			synchronized(area) {
-			area.append(areaText);
-			area.setCaretPosition(area.getText().length() -1);
-			area.update(area.getGraphics());
-			}
-			}
-		}
-	}
 	
 	public void showPercent(int percent) {
 		if(1 > percent) {

@@ -332,9 +332,11 @@ public class Grd {
 
 
 				try {
-					ig.appendNewText("\nReading the grid from " + grdP.file + ". ");
-					ig.waiting = true;
-					ig.displayWaitingDots();
+					if(null != ig) {
+						ig.appendNewText("\nReading the grid from " + grdP.file + ". ");
+						ig.waiting = true;
+						ig.displayWaitingDots();
+					}
 					String zArrayType = variable.read().getElementType().toString();
 	//				System.out.println("Element type for z array: " + zArrayType);
 					if ( zArrayType.equals("float")) {
@@ -398,8 +400,10 @@ public class Grd {
 							}
 						}
 					}
-					ig.waiting = false;
-					ig.appendNewText("\nFinished reading " + grdP.file + ".");
+					if(null != ig) {
+						ig.waiting = false;
+						ig.appendNewText("\nFinished reading " + grdP.file + ".");
+					}
 				} catch (OutOfMemoryError e) {
 
 		            MemoryUsage heapUsage = memoryBean.getHeapMemoryUsage();
@@ -419,7 +423,7 @@ public class Grd {
 					//create an EditorPane to handle the html and hyperlink
 				    JEditorPane ep = GeneralUtils.makeEditorPane(msg);
 					JOptionPane.showMessageDialog(null,ep , "Out of Memory Error", JOptionPane.ERROR_MESSAGE);
-					ig.waiting = false;
+					if(null != ig) ig.waiting = false;
 					return null;
 				}
 			}

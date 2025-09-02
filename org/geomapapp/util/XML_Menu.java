@@ -174,7 +174,7 @@ public class XML_Menu {
 				zoom,
 				lonX,
 				latY;
-	public static final Font menuFont = new Font("Courier", Font.ITALIC, 20);
+	private static Font menuFont = new Font("SansSerif", Font.PLAIN, 16);
 
 	public RequestLayer[] layers;
 	public List<XML_Menu> child_layers = new LinkedList<XML_Menu>();
@@ -1560,5 +1560,13 @@ public class XML_Menu {
 			}
 		}
 		return null;
+	}
+
+	public static Font getMenuFont() {
+		return menuFont;
+	}
+
+	public static void setMenuFont(Font menuFont) {
+		XML_Menu.menuFont = menuFont;
 	}
 }

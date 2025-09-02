@@ -174,7 +174,7 @@ public class XML_Menu {
 				zoom,
 				lonX,
 				latY;
-	private static Font menuFont = new Font("SansSerif", Font.PLAIN, 16);
+	private static Font menuFont = new Font("Lucida Grande", Font.PLAIN, 14);
 
 	public RequestLayer[] layers;
 	public List<XML_Menu> child_layers = new LinkedList<XML_Menu>();

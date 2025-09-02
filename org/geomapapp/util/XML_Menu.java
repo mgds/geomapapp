@@ -1,6 +1,7 @@
 package org.geomapapp.util;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -173,6 +174,7 @@ public class XML_Menu {
 				zoom,
 				lonX,
 				latY;
+	private static Font menuFont = new Font("Arial", Font.PLAIN, 16);
 
 	public RequestLayer[] layers;
 	public List<XML_Menu> child_layers = new LinkedList<XML_Menu>();
@@ -1558,5 +1560,13 @@ public class XML_Menu {
 			}
 		}
 		return null;
+	}
+
+	public static Font getMenuFont() {
+		return menuFont;
+	}
+
+	public static void setMenuFont(Font menuFont) {
+		XML_Menu.menuFont = menuFont;
 	}
 }

@@ -62,6 +62,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Vector;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -76,6 +77,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
@@ -95,6 +97,7 @@ import javax.swing.JTextField;
 import javax.swing.JWindow;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
@@ -191,7 +194,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.5.12"; //08/28/2025
+	public final static String VERSION = "3.7.5.16"; //09/02/2025
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -270,7 +273,8 @@ public class MapApp implements ActionListener,
 	protected WMSViewServer wmsWindow;
 	protected String directory;
 	protected boolean[] tmpSides = new boolean[4];
-	protected JComboBox font;
+	protected JComboBox<String> font;
+	protected JComboBox<String> menuFont;
 
 	protected Vector servers;
 	protected JComboBox serverList;
@@ -283,6 +287,7 @@ public class MapApp implements ActionListener,
 	//public File historyFile = new File( historyDir, "zoom.txt"); //not used
 	protected File historyVersionFile = new File( historyDir, "version");
 	protected File menusCacheDir = new File( parentRoot, "menus_cache");
+	protected File menuFontFile = new File(menusCacheDir, "menu_font.txt");
 	protected File menusCacheFile = new File( menusCacheDir, "menu_updated.txt");
 	protected File menusCacheDir2 = new File(menusCacheDir, "menus");
 	protected File menusCacheFileFirst = new File( menusCacheDir2, "main_menu.xml");
@@ -313,6 +318,7 @@ public class MapApp implements ActionListener,
 	private static File DEFAULT_GRID_IMPORTS_LOGS_DIR = new File(System.getProperty("user.home") + "/Desktop/");
 	
 	protected JTextField fontSize;
+	protected JTextField menuFontSize;
 	protected JCheckBox[] side;
 	protected JCheckBox showTileNames;
 	protected JCheckBox gridsCB;
@@ -325,6 +331,8 @@ public class MapApp implements ActionListener,
 						clearPCache;
 	protected Font tmpFont,
 					defaultFont;
+	protected Font curMenuFont, defaultMenuFont;
+	private String menuFontDelimiter = ", ";
 	protected boolean[] dfltSides = new boolean[4];
 	protected boolean scroll = true;
 	protected boolean attached = true;
@@ -542,6 +550,12 @@ public class MapApp implements ActionListener,
 		try {
 			getProxies();
 			if(!AT_SEA) fetchCacheMenus = getMenusCache(); // add menu cache dir
+			defaultMenuFont = XML_Menu.getMenuFont();
+			curMenuFont = readMenuFont(); //get menu font
+			if(null == curMenuFont) {
+				curMenuFont = XML_Menu.getMenuFont();
+			}
+			setMenuFont(curMenuFont);
 			startNewZoomHistory();			//start history dir
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -586,6 +600,36 @@ public class MapApp implements ActionListener,
 			WWInit();
 		}
 		processBorder();
+	}
+	
+	private Font readMenuFont() {
+		boolean readFont = false;
+		Font f = null;
+		if(menuFontFile.exists()) {
+			try {
+				Scanner s = new Scanner(menuFontFile);
+				String fontStr = s.nextLine();
+				while(fontStr.trim().length() == 0 && !fontStr.contains(menuFontDelimiter) && s.hasNextLine()) {
+					fontStr = s.nextLine();
+				}
+				String[] fontInfo = fontStr.split(menuFontDelimiter);
+				f = new Font(fontInfo[0], Font.PLAIN, Integer.parseInt(fontInfo[1]));
+				readFont = true;
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+		if(!readFont) {
+			try {
+				f = XML_Menu.getMenuFont();
+				menuFontFile.createNewFile();
+				PrintStream ps = new PrintStream(menuFontFile);
+				ps.println(f.getName() + menuFontDelimiter + f.getSize());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return f;
 	}
 
 	public static boolean isDevMode() {
@@ -3180,7 +3224,8 @@ public class MapApp implements ActionListener,
 		JPanel fonts = new JPanel(new FlowLayout());
 		tmpFont = map.getMapBorder().getFont();
 
-		font = new JComboBox(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
+		String[] fontList = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+		font = new JComboBox<>(fontList);
 		font.setName("Font");
 		font.setSelectedItem(map.getMapBorder().getFont().getName());
 		fonts.add(font);
@@ -3251,6 +3296,25 @@ public class MapApp implements ActionListener,
 
 		// Tab Add Map Boarder
 		prefer.add("Map Border", mapbord);
+		
+		//Menu font
+		JPanel menuFontTab = new JPanel(new BorderLayout());
+		JPanel fontSelection = new JPanel(new FlowLayout());
+		
+		curMenuFont = UIManager.getFont("Menu.font");
+		menuFont = new JComboBox<>(fontList);
+		menuFont.setName("Menu Font");
+		menuFont.setSelectedItem(curMenuFont.getName());
+		fontSelection.add(menuFont);
+		
+		JLabel lblMenuFontSize = new JLabel("Size: ");
+		menuFontSize = new JTextField();
+		menuFontSize.setText(String.valueOf(curMenuFont.getSize()));
+		fontSelection.add(lblMenuFontSize);
+		fontSelection.add(menuFontSize);
+		menuFontTab.add(fontSelection);
+		prefer.add("Menu Font", menuFontTab);
+		
 
 		// Tab Coordinates
 		JPanel coordsTab = new JPanel(new BorderLayout());
@@ -3428,8 +3492,13 @@ public class MapApp implements ActionListener,
 		if ( defaultFont == null ) {
 			defaultFont = new Font("Arial",Font.PLAIN,10);
 		}
+		defaultMenuFont = XML_Menu.getMenuFont();
+		
 		font.setSelectedItem(defaultFont.getName());
 		fontSize.setText("" + defaultFont.getSize());
+		
+		menuFont.setSelectedItem(defaultMenuFont.getName());
+		menuFontSize.setText(String.valueOf(defaultMenuFont.getSize()));
 
 		map.scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		map.scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -3462,6 +3531,10 @@ public class MapApp implements ActionListener,
 
 		font.setSelectedItem(tmpFont.getName());
 		fontSize.setText("" + tmpFont.getSize());
+		
+		menuFont.setSelectedItem(curMenuFont.getName());
+		menuFontSize.setText(String.valueOf(curMenuFont.getSize()));
+		setMenuFont(curMenuFont);
 
 		map.getMapBorder().setFont(tmpFont);
 
@@ -3504,6 +3577,9 @@ public class MapApp implements ActionListener,
 	private void previewOps() {
 		Font theFont = new Font( (String) font.getSelectedItem(), Font.PLAIN, Integer.parseInt(fontSize.getText()));
 		map.getMapBorder().setFont(theFont);
+		
+		Font theMenuFont = new Font((String)menuFont.getSelectedItem(), Font.PLAIN, Integer.parseInt(menuFontSize.getText()));
+		setMenuFont(theMenuFont);
 
 		for (int i = 0; i < tmpSides.length; i++)
 			map.getMapBorder().setSide(i,side[i].isSelected());
@@ -3534,6 +3610,20 @@ public class MapApp implements ActionListener,
 
 	private void acceptOps() {
 		this.previewOps();
+		curMenuFont = new Font((String)menuFont.getSelectedItem(), Font.PLAIN, Integer.parseInt(menuFontSize.getText()));
+		String fontString = curMenuFont.getName() + menuFontDelimiter + curMenuFont.getSize();
+		if(null != menuFontFile) {
+			try {
+				if(!menuFontFile.exists()) {
+					menuFontFile.createNewFile();
+				}
+				PrintStream ps = new PrintStream(menuFontFile);
+				ps.println(fontString);
+			}
+			catch(IOException e) {
+				e.printStackTrace();
+			}
+		}
 //		***** GMA 1.6.2: Load server and proxy options and make currently selected options the default options so they are loaded when GeoMapApp restarts
 		if ( serverList != null && selectedServer != serverList.getSelectedIndex()) {
 			if ( ((String)serverList.getSelectedItem()).equals(DEV_URL) && inputDevPasswordText != null ) {
@@ -3764,6 +3854,48 @@ public class MapApp implements ActionListener,
 //			e.printStackTrace();
 		}
 	}
+	
+	public void setMenuFont(final Font newFont) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				UIManager.put("Menu.font", newFont);
+				UIManager.put("MenuItem.font", newFont);
+				UIManager.put("CheckBoxMenuItem.font", newFont);
+				if(null != menuBar) {
+					menuBar.setFont(newFont);
+					menuBar.updateUI();
+					menuBar.update(menuBar.getGraphics());
+					menuBar.invalidate();
+					menuBar.repaint();
+					//menuBar.setVisible(false);
+					//recursively change the menu fonts
+					Runnable r = new Runnable() {
+						private void changeFont(JComponent jc) {
+							if(null != jc) {
+								jc.setFont(newFont);
+								if(jc instanceof JMenu) {
+									JMenu jm = (JMenu)jc;
+									int numSubMenus = jm.getItemCount();
+									for(int i = 0; i < numSubMenus; i++) {
+										changeFont(jm.getItem(i));
+									}
+								}
+							}
+						}
+						public void run() {
+							int c = menuBar.getMenuCount();
+							for(int i = 0; i < c; i++) {
+								changeFont(menuBar.getMenu(i));
+							}
+						}
+					};
+					r.run();
+				}
+				//menuBar.setVisible(true);
+				System.out.println("Changed menu font to " + newFont);
+			}
+		});
+	}
 
 	public static MapApp createMapApp(String[] args) {		
 		findLaunchFile();
@@ -3780,6 +3912,10 @@ public class MapApp implements ActionListener,
 		}
 
 		com.Ostermiller.util.Browser.init();
+		
+		UIManager.put("Menu.font", XML_Menu.getMenuFont());
+		UIManager.put("MenuItem.font", XML_Menu.getMenuFont());
+		UIManager.put("CheckBoxMenuItem.font", XML_Menu.getMenuFont());
 
 		
 		MapApp app = null;

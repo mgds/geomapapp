@@ -3214,6 +3214,7 @@ public class MapApp implements ActionListener,
 
 		// GMA 1.6.2: Add title "Preferences" to Preferences window
 		option = new JFrame("Preferences");
+		option.setLocation(frame.getLocation());
 		// Do nothing on close. Must select cancel
 		option.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 

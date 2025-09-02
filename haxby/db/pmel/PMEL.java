@@ -448,7 +448,7 @@ public class PMEL implements Database, ActionListener {
 		}
 		if( evt.getSource()==loadB) {
 			// Add progress bar while retrieving list of data
-			ProcessingDialog ld = new ProcessingDialog(new JFrame(), new JLabel());
+			ProcessingDialog ld = new ProcessingDialog(MapApp.getApp().getFrame(), MapApp.getApp().getMap());
 			ld.addTask("Retrieving Data", new Thread( new Runnable() {
 			public void run() {
 				for( int k=0 ; k<3 ; k++) {
@@ -466,7 +466,7 @@ public class PMEL implements Database, ActionListener {
 		//From the sorted list of specific events, find the index from the unordered list to match the filename and load.
 		if( evt.getSource()==loadB2) {
 			// Add progress bar while retrieving list of data
-			ProcessingDialog ld = new ProcessingDialog(new JFrame(), new JLabel());
+			ProcessingDialog ld = new ProcessingDialog(MapApp.getApp().getFrame(), MapApp.getApp().getMap());
 			ld.addTask("Retrieving Data", new Thread( new Runnable() {
 			public void run() {
 				for( int l=0 ; l<activity.getItemCount(); l++) {

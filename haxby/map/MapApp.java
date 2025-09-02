@@ -194,7 +194,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.5.16"; //09/02/2025
+	public final static String VERSION = "3.7.5.15"; //09/02/2025
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -555,7 +555,7 @@ public class MapApp implements ActionListener,
 			if(null == curMenuFont) {
 				curMenuFont = XML_Menu.getMenuFont();
 			}
-			setFont(curMenuFont);
+			setMenuFont(curMenuFont);
 			startNewZoomHistory();			//start history dir
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -3301,7 +3301,7 @@ public class MapApp implements ActionListener,
 		JPanel menuFontTab = new JPanel(new BorderLayout());
 		JPanel fontSelection = new JPanel(new FlowLayout());
 		
-		curMenuFont = menuBar.getFont();
+		curMenuFont = UIManager.getFont("Menu.font");
 		menuFont = new JComboBox<>(fontList);
 		menuFont.setName("Menu Font");
 		menuFont.setSelectedItem(curMenuFont.getName());
@@ -3534,7 +3534,7 @@ public class MapApp implements ActionListener,
 		
 		menuFont.setSelectedItem(curMenuFont.getName());
 		menuFontSize.setText(String.valueOf(curMenuFont.getSize()));
-		setFont(curMenuFont);
+		setMenuFont(curMenuFont);
 
 		map.getMapBorder().setFont(tmpFont);
 
@@ -3579,7 +3579,7 @@ public class MapApp implements ActionListener,
 		map.getMapBorder().setFont(theFont);
 		
 		Font theMenuFont = new Font((String)menuFont.getSelectedItem(), Font.PLAIN, Integer.parseInt(menuFontSize.getText()));
-		setFont(theMenuFont);
+		setMenuFont(theMenuFont);
 
 		for (int i = 0; i < tmpSides.length; i++)
 			map.getMapBorder().setSide(i,side[i].isSelected());
@@ -3610,7 +3610,7 @@ public class MapApp implements ActionListener,
 
 	private void acceptOps() {
 		this.previewOps();
-		curMenuFont = menuBar.getFont();
+		curMenuFont = new Font((String)menuFont.getSelectedItem(), Font.PLAIN, Integer.parseInt(menuFontSize.getText()));
 		String fontString = curMenuFont.getName() + menuFontDelimiter + curMenuFont.getSize();
 		if(null != menuFontFile) {
 			try {
@@ -3855,7 +3855,7 @@ public class MapApp implements ActionListener,
 		}
 	}
 	
-	public void setFont(final Font newFont) {
+	public void setMenuFont(final Font newFont) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				UIManager.put("Menu.font", newFont);
@@ -3892,7 +3892,7 @@ public class MapApp implements ActionListener,
 					r.run();
 				}
 				//menuBar.setVisible(true);
-				System.out.println("Changed font to " + newFont);
+				System.out.println("Changed menu font to " + newFont);
 			}
 		});
 	}

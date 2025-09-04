@@ -194,7 +194,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.5.16"; //09/02/2025
+	public final static String VERSION = "3.7.5.18"; //09/02/2025
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -370,6 +370,9 @@ public class MapApp implements ActionListener,
 
 	public LayerManager layerManager;
 	public JFrame layerManagerDialog;
+	
+	private static MapApp theApp;
+	
 	// Menu Listener action bring to front
 	public MenuListener listener = new MenuListener() {
 		public void menuCanceled(MenuEvent e) {
@@ -3897,6 +3900,10 @@ public class MapApp implements ActionListener,
 			}
 		});
 	}
+	
+	public static MapApp getApp() {
+		return theApp;
+	}
 
 	public static MapApp createMapApp(String[] args) {		
 		findLaunchFile();
@@ -3957,7 +3964,7 @@ public class MapApp implements ActionListener,
 
 	public static void main( String[] args) {
 		setup();
-		createMapApp(args);
+		theApp = createMapApp(args);
 	}
 
 	public static String getBaseURL() {

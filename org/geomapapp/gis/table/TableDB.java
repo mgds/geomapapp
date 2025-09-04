@@ -141,7 +141,7 @@ public class TableDB extends javax.swing.table.AbstractTableModel {
 			s = in.readLine();
 		}
 		if(comments.length()>0) {
-			JOptionPane.showMessageDialog(null,
+			JOptionPane.showMessageDialog(haxby.map.MapApp.anchor,
 				new JScrollPane(new JTextArea(comments.toString())),
 				"Comments",
 				JOptionPane.INFORMATION_MESSAGE);

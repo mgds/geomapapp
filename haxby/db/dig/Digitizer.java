@@ -456,10 +456,10 @@ public class Digitizer implements Database,
 		}
 		if(evt.getSource() == insertBtn) {
 			if(table.getSelectedRows().length != 1) {
-				JOptionPane.showMessageDialog(null, "Please select a point from the table or map.", "", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "Please select a point from the table or map.", "", JOptionPane.PLAIN_MESSAGE);
 			}
 			else {
-				JOptionPane.showMessageDialog(null, "The previously digitized points will temporarily disappear from the table while new points are being chosen.", "", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "The previously digitized points will temporarily disappear from the table while new points are being chosen.", "", JOptionPane.PLAIN_MESSAGE);
 				lastPointSelected = table.getSelectedRow();
 				// similar to Start Digitizing
 				startStopBtn.setSelected(true);
@@ -802,7 +802,7 @@ public class Digitizer implements Database,
 			}
 
 		} catch(IOException e) {
-			JOptionPane.showMessageDialog(null,
+			JOptionPane.showMessageDialog(MapApp.anchor,
 					" Save failed: "+e.getMessage(),
 					" Save failed",
 					 JOptionPane.ERROR_MESSAGE);

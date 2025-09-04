@@ -935,7 +935,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			if (c==JFileChooser.CANCEL_OPTION||c==JFileChooser.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}
@@ -978,7 +978,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			if (c==JFileChooser.CANCEL_OPTION||c==JFileChooser.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}
@@ -2004,7 +2004,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			selectSedimentDialog.add(selectAddSedimentCB);
 			selectAddSedimentCB.addItemListener(this);
 			selectSedimentDialog.pack();
-			selectSedimentDialog.setLocation( 500, 500 );
+			selectSedimentDialog.setLocation( MapApp.anchor.getX()+500, MapApp.anchor.getY()+500 );
 			selectSedimentDialog.setSize( 195, 100 );
 			selectSedimentDialog.setVisible(true);
 
@@ -2064,7 +2064,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 					sedimentViewDataDialog.getContentPane().add(sedimentViewDataSP);
 
 					sedimentViewDataDialog.pack();
-					sedimentViewDataDialog.setLocation( 300, 300 );
+					sedimentViewDataDialog.setLocation( MapApp.anchor.getX()+300, MapApp.anchor.getY()+300 );
 					sedimentViewDataDialog.setSize( new Dimension( 800, 500 ) );
 					sedimentViewDataDialog.setVisible(true);
 				}
@@ -2087,7 +2087,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			sedimentSaveDialog.setSelectedFile(sedimentSaveFile);
 
 			int c = JOptionPane.NO_OPTION;
-			Point p = new Point( 300, 300 );
+			Point p = new Point( MapApp.anchor.getX()+300, MapApp.anchor.getY()+300 );
 			sedimentSaveDialog.setLocation(p);
 
 			while ( c == JOptionPane.NO_OPTION ) {
@@ -2099,7 +2099,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 				else if ( c == JFileChooser.APPROVE_OPTION ) {
 					sedimentSaveFile = sedimentSaveDialog.getSelectedFile();
 					if ( sedimentSaveFile.exists() ) {
-						int c2 = JOptionPane.showConfirmDialog(null, "File exists, Overwrite?");
+						int c2 = JOptionPane.showConfirmDialog(MapApp.anchor, "File exists, Overwrite?");
 						if (c2 == JOptionPane.OK_OPTION ) {
 							break;
 						}

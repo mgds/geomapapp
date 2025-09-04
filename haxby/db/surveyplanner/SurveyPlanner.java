@@ -165,7 +165,7 @@ public class SurveyPlanner extends JFrame implements Database, MouseListener, Mo
 		final Object[] options = {"Accept"};
 		String disclaimerText = "<html> <p>The displayed maps, images, data tables and this portal are not to be used for navigation purposes.</p></html>";
 
-		JOptionPane.showOptionDialog(null, disclaimerText, "Waypoints and Survey Planner Disclaimer", 
+		JOptionPane.showOptionDialog(MapApp.anchor, disclaimerText, "Waypoints and Survey Planner Disclaimer", 
 				JOptionPane.OK_OPTION, JOptionPane.WARNING_MESSAGE,  null,  options, options[0]);
 		
 	}

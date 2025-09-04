@@ -303,7 +303,7 @@ public class ViewShapes {
 		}
 		LineWidth renderer = new LineWidth(1f);
 		lineWidths.setRenderer( renderer );
-	//	JOptionPane.showMessageDialog( null, lineWidths);
+	//	JOptionPane.showMessageDialog( MapApp.anchor, lineWidths);
 		table.setDefaultEditor( LineWidth.class, 
 			new javax.swing.DefaultCellEditor(lineWidths));
 		table.setDefaultRenderer( LineWidth.class, renderer);

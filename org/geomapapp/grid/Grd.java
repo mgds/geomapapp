@@ -422,7 +422,7 @@ public class Grd {
 							
 					//create an EditorPane to handle the html and hyperlink
 				    JEditorPane ep = GeneralUtils.makeEditorPane(msg);
-					JOptionPane.showMessageDialog(null,ep , "Out of Memory Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(haxby.map.MapApp.anchor,ep , "Out of Memory Error", JOptionPane.ERROR_MESSAGE);
 					if(null != ig) ig.waiting = false;
 					return null;
 				}

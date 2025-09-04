@@ -255,7 +255,7 @@ public class SCSImage2 extends haxby.util.ScaledComponent
 						StringTokenizer st = new StringTokenizer(s);
 						String name = st.nextToken();
 						if( !name.equals( cruise.name ) ) {
-							JOptionPane.showMessageDialog(null, "Line in file does not match selected line: "+name);
+							JOptionPane.showMessageDialog(MapApp.anchor, "Line in file does not match selected line: "+name);
 							in.close();
 							continue;
 						}
@@ -1194,7 +1194,7 @@ public class SCSImage2 extends haxby.util.ScaledComponent
 
 		try {
 			saveJPG(file, saveWholeImage);
-			JOptionPane.showMessageDialog(null, "Save Successful");
+			JOptionPane.showMessageDialog(MapApp.anchor, "Save Successful");
 			if (saveWholeImage) {
 				MapApp.sendLogMessage("Saving_or_Downloading&portal="+scs.getDBName()+"&what=image_full&cruise="+this.cruise.name);
 			} else {
@@ -1202,7 +1202,7 @@ public class SCSImage2 extends haxby.util.ScaledComponent
 			}
 		}
 		catch(IOException ex) { 
-			JOptionPane.showMessageDialog(null, ex.getMessage(), "Error Writing Jpeg", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, ex.getMessage(), "Error Writing Jpeg", JOptionPane.ERROR_MESSAGE);
 			ex.printStackTrace();
 		}
 
@@ -1340,7 +1340,7 @@ public class SCSImage2 extends haxby.util.ScaledComponent
 			okCancelP.add(b);
 			wholeImageD.add(okCancelP, "South");
 			wholeImageD.pack();
-			wholeImageD.setLocation(400, 400);
+			wholeImageD.setLocation(MapApp.anchor.getX()+400, MapApp.anchor.getY()+400);
 			wholeImageD.setVisible(true);
 		}
 		else if ( evt.getActionCommand().equals("Zoom In") || evt.getActionCommand().equals("Zoom Out") ) {

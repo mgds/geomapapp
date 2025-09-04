@@ -394,7 +394,7 @@ public class GeneralUtils {
 	/**
 	 * Create a JEditorPane that will convert the text into html with working hyperlinks.
 	 * This can be included in a messageDialog with, e.g.
-	 * JOptionPane.showMessageDialog(null, ep)
+	 * JOptionPane.showMessageDialog(MapApp.anchor, ep)
 	 * @param text
 	 * @return
 	 */

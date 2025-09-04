@@ -181,7 +181,7 @@ public class ShipSelector{
 					e1.printStackTrace();
 				}
 				
-				JOptionPane.showMessageDialog(null, helpText);
+				JOptionPane.showMessageDialog(MapApp.anchor, helpText);
 				
 			}
 			

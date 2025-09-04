@@ -556,7 +556,7 @@ public class SCS implements Database,
 		else if( evt.getActionCommand().equals("Load Previously Digitized Products" )) {
 			if( selCruise<0 ) {
 				if( image.cruise==null) {
-					JOptionPane.showMessageDialog(null, "Select A Line");
+					JOptionPane.showMessageDialog(MapApp.anchor, "Select A Line");
 					return;
 				}
 				imagePath = null;

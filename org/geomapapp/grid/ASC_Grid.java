@@ -124,7 +124,7 @@ public class ASC_Grid {
 			return JOptionPane.OK_OPTION;
 		}
 		while( true ) {
-			int ok = JOptionPane.showConfirmDialog( null, panel, "Specify Projection", JOptionPane.OK_CANCEL_OPTION );
+			int ok = JOptionPane.showConfirmDialog( haxby.map.MapApp.anchor, panel, "Specify Projection", JOptionPane.OK_CANCEL_OPTION );
 			if( ok==JOptionPane.CANCEL_OPTION )return ok;
 			if( geog.isSelected() ) {
 				double[] wesn = new double[] {

@@ -67,7 +67,7 @@ public class BrowseURL {
 				    JEditorPane jep = new JEditorPane("text/html", msg);
 				    jep.setEditable(false);
 				    jep.setBackground(label.getBackground());
-				    JOptionPane.showMessageDialog(null, jep);
+				    JOptionPane.showMessageDialog(MapApp.anchor, jep);
 				}
 				catch(Exception e) {
 				    e.printStackTrace();
@@ -94,6 +94,6 @@ public class BrowseURL {
 			}
 		});
 		p.add(ta);
-		JOptionPane.showMessageDialog(null, p, "Cannot Access URL", JOptionPane.ERROR_MESSAGE);
+		JOptionPane.showMessageDialog(MapApp.anchor, p, "Cannot Access URL", JOptionPane.ERROR_MESSAGE);
 	}
 }

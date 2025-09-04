@@ -1324,10 +1324,10 @@ public class XMImage extends haxby.util.ScaledComponent
 					MapApp.sendLogMessage("Saving_or_Downloading&portal=Digital Seismic Reflection Profiles (MCS & SCS)&what=nav&cruise="+this.line.getCruiseID()+"&line=" +(String) this.line.lineID );
 				}
 				zos.close();
-				JOptionPane.showMessageDialog(null, "Save Successful");
+				JOptionPane.showMessageDialog(MapApp.anchor, "Save Successful");
 			}
 			catch(IOException ex) {
-				JOptionPane.showMessageDialog(null, ex.getMessage(), "Error Writing Zip", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, ex.getMessage(), "Error Writing Zip", JOptionPane.ERROR_MESSAGE);
 				ex.printStackTrace();
 			}
 			setCursor(Cursor.getDefaultCursor());
@@ -1359,11 +1359,11 @@ public class XMImage extends haxby.util.ScaledComponent
 			try {
 				saveJPEG(out);
 				out.close();
-				JOptionPane.showMessageDialog(null, "Save Successful");
+				JOptionPane.showMessageDialog(MapApp.anchor, "Save Successful");
 				MapApp.sendLogMessage("Saving_or_Downloading&portal=Digital Seismic Reflection Profiles (MCS & SCS)&what=image_viewport&cruise="+this.line.getCruiseID()+"&line=" +(String) this.line.lineID );
 			}
 			catch(IOException ex) {
-				JOptionPane.showMessageDialog(null, ex.getMessage(), "Error Writing Jpeg", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, ex.getMessage(), "Error Writing Jpeg", JOptionPane.ERROR_MESSAGE);
 				ex.printStackTrace();
 			}
 
@@ -1395,11 +1395,11 @@ public class XMImage extends haxby.util.ScaledComponent
 			try {
 				saveFullJPEG(out);
 				out.close();
-				JOptionPane.showMessageDialog(null, "Save Successful");
+				JOptionPane.showMessageDialog(MapApp.anchor, "Save Successful");
 				MapApp.sendLogMessage("Saving_or_Downloading&portal=Digital Seismic Reflection Profiles (MCS & SCS)&what=image_full&cruise="+this.line.getCruiseID()+"&line=" +(String) this.line.lineID );
 			}
 			catch(IOException ex) { 
-				JOptionPane.showMessageDialog(null, ex.getMessage(), "Error Writing Jpeg", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, ex.getMessage(), "Error Writing Jpeg", JOptionPane.ERROR_MESSAGE);
 				ex.printStackTrace();
 			}
 			setCursor(Cursor.getDefaultCursor());
@@ -1430,11 +1430,11 @@ public class XMImage extends haxby.util.ScaledComponent
 			try {
 				saveNAV(out);
 				out.close();
-				JOptionPane.showMessageDialog(null, "Save Successful");
+				JOptionPane.showMessageDialog(MapApp.anchor, "Save Successful");
 				MapApp.sendLogMessage("Saving_or_Downloading&portal=Digital Seismic Reflection Profiles (MCS & SCS)&what=nav&cruise="+this.line.getCruiseID()+"&line=" +(String) this.line.lineID );
 			}
 			catch(IOException ex) { 
-				JOptionPane.showMessageDialog(null, ex.getMessage(), "Error Writing NAV", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, ex.getMessage(), "Error Writing NAV", JOptionPane.ERROR_MESSAGE);
 				ex.printStackTrace();
 			}
 			setCursor(Cursor.getDefaultCursor());
@@ -1464,10 +1464,10 @@ public class XMImage extends haxby.util.ScaledComponent
 			try {
 				saveSEGY(out);
 				out.close();
-				JOptionPane.showMessageDialog(null, "Save Successful");
+				JOptionPane.showMessageDialog(MapApp.anchor, "Save Successful");
 			}
 			catch(IOException ex) { 
-				JOptionPane.showMessageDialog(null, ex.getMessage(), "Error Writing Segy", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, ex.getMessage(), "Error Writing Segy", JOptionPane.ERROR_MESSAGE);
 				ex.printStackTrace();
 			}
 			setCursor(Cursor.getDefaultCursor());
@@ -1562,10 +1562,10 @@ public class XMImage extends haxby.util.ScaledComponent
 			try {
 				saveNAV(out);
 				out.close();
-				JOptionPane.showMessageDialog(null, "Save Successful");
+				JOptionPane.showMessageDialog(MapApp.anchor, "Save Successful");
 			}
 		catch(IOException ex) { 
-				JOptionPane.showMessageDialog(null, ex.getMessage(), "Error Writing Nav", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, ex.getMessage(), "Error Writing Nav", JOptionPane.ERROR_MESSAGE);
 				ex.printStackTrace();
 			}
 			setCursor(Cursor.getDefaultCursor());
@@ -1610,7 +1610,7 @@ public class XMImage extends haxby.util.ScaledComponent
 		JDialog d = new JDialog((Frame)null, "Saving NAV");
 		JPanel p = new JPanel(new BorderLayout());
 		p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-		d.setLocationRelativeTo(null);
+		d.setLocationRelativeTo(MapApp.anchor);
 		JProgressBar pb = new JProgressBar(0,length);
 		p.add(new JLabel("Saving " + (length / 1000) + "kb nav file"), BorderLayout.NORTH);
 		p.add(pb);
@@ -1649,7 +1649,7 @@ public class XMImage extends haxby.util.ScaledComponent
 		JDialog d = new JDialog((Frame)null, "Saving SEGY");
 		JPanel p = new JPanel(new BorderLayout());
 		p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-		d.setLocationRelativeTo(null);
+		d.setLocationRelativeTo(MapApp.anchor);
 		JProgressBar pb = new JProgressBar(0,length);
 		p.add(new JLabel("Saving " + (length / 1000000) + "mb segy file"), BorderLayout.NORTH);
 		p.add(pb);
@@ -1712,7 +1712,7 @@ public class XMImage extends haxby.util.ScaledComponent
 		JDialog d = new JDialog((Frame)null, "Saving JPEG");
 		JPanel p = new JPanel(new BorderLayout());
 		p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-		d.setLocationRelativeTo(null);
+		d.setLocationRelativeTo(MapApp.anchor);
 		JProgressBar pb = new JProgressBar(0,length);
 		p.add(new JLabel("Saving " + (length / 1000) + "kb jpeg file"), BorderLayout.NORTH);
 		p.add(pb);
@@ -2141,7 +2141,7 @@ public class XMImage extends haxby.util.ScaledComponent
 	public void setLine(XMLine cruiseLine, boolean load) throws IOException {
 		int ok;
 		if(cruiseLine == null) {
-			JOptionPane.showMessageDialog(null, "Select a line");
+			JOptionPane.showMessageDialog(MapApp.anchor, "Select a line");
 			return;
 		}
 		if ( load ){
@@ -2163,7 +2163,7 @@ public class XMImage extends haxby.util.ScaledComponent
 						String name = s;
 
 						if( !name.equalsIgnoreCase( cruiseLine.getCruise()+" "+cruiseLine.getID() ) ) {
-							JOptionPane.showMessageDialog(null, "Line in file does not match selected line: "+name);
+							JOptionPane.showMessageDialog(MapApp.anchor, "Line in file does not match selected line: "+name);
 							in.close();
 							continue;
 						}

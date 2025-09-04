@@ -150,7 +150,7 @@ public class PaletteTool extends JComponent {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add( mod );
 		panel.add( tool.buttonPanel, "South");
-		JOptionPane.showMessageDialog( null, 
+		JOptionPane.showMessageDialog( haxby.map.MapApp.anchor, 
 					panel,
 					"Palette Tool",
 					JOptionPane.PLAIN_MESSAGE);

@@ -591,7 +591,7 @@ public class VelocityVectors extends JFrame implements Database, ActionListener,
 		try {
 			ds = new UnknownDataSet(new DBDescription("Velocity Vectors",0,""), dialog.input.getText(), "\t", map);
 		} catch (Exception e) {
-			int selection = JOptionPane.showOptionDialog(null, "Invalid velocity vector file: "+inputURL
+			int selection = JOptionPane.showOptionDialog(MapApp.anchor, "Invalid velocity vector file: "+inputURL
 					+ "\nFor valid file format, see the Help page linked below.", "Error", JOptionPane.DEFAULT_OPTION,
 					JOptionPane.ERROR_MESSAGE, null, options, options[1]);
 			if (selection == 0) displayHelp();
@@ -630,7 +630,7 @@ public class VelocityVectors extends JFrame implements Database, ActionListener,
 			if (rhoIndex == -1) missingCols += "\nNorth/East correlation coefficient";
 			
 			
-			int selection = JOptionPane.showOptionDialog(null, "Invalid velocity vector file: "+inputURL + missingCols
+			int selection = JOptionPane.showOptionDialog(MapApp.anchor, "Invalid velocity vector file: "+inputURL + missingCols
 					+ "\nFor the required column headers, see the Help page linked below.", "Error", JOptionPane.DEFAULT_OPTION,
 					JOptionPane.ERROR_MESSAGE, null, options, options[1]);
 			if (selection == 0) displayHelp();

@@ -231,7 +231,7 @@ public class ImageOverlaySet extends MapOverlay
 			} catch (OutOfMemoryError oome) {
 				oome.printStackTrace();
 				JLabel memE = new JLabel("<html>GeoMapApp needs more memory to display this image<br>Continue without image or restart from terminal with more memory<br>java -Xmx512m -jar GeoMapApp.jar</html>");
-				JOptionPane.showMessageDialog(null, memE, "Out Of Memory Error",
+				JOptionPane.showMessageDialog(haxby.map.MapApp.anchor, memE, "Out Of Memory Error",
 						JOptionPane.ERROR_MESSAGE);
 				break;
 			}

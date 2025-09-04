@@ -152,7 +152,7 @@ public class GMADownload {
 		dialog.setModal(true);
 		dialog.setContentPane(main);
 		dialog.pack();
-		dialog.setLocationRelativeTo(null);
+		dialog.setLocationRelativeTo(MapApp.anchor);
 		MapApp.anchor = dialog;
 		dialog.setVisible(true);
 	}

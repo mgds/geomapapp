@@ -797,7 +797,7 @@ public class MapPlaces implements Overlay {
 						
 							// Same file name prompts user to proceed with replace dialog
 							if(locFile.exists()){
-							int overwriteReturnValue = JOptionPane.showConfirmDialog(null,   
+							int overwriteReturnValue = JOptionPane.showConfirmDialog(MapApp.anchor,   
 									locFile.getName().toString()
 									+ " already exists. "   
 									+ "Do you want to replace it?",   

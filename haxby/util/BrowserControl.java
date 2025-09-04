@@ -84,7 +84,7 @@ or
 		JTextField field = new JTextField(url);
 		panel.add(label,"North");
 		panel.add(field);
-		JOptionPane.showMessageDialog( null,
+		JOptionPane.showMessageDialog( haxby.map.MapApp.anchor,
 				panel, "Unable to invoke browser",
 				JOptionPane.ERROR_MESSAGE);
 		}

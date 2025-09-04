@@ -37,14 +37,14 @@ public class SendToPetDB extends JButton {
 
 		int[] selectedIndices = table.getSelectedRows();
 		if(selectedIndices.length == 0) {
-			JOptionPane.showMessageDialog(null,
+			JOptionPane.showMessageDialog(haxby.map.MapApp.anchor,
 				"<html>Please select a row from the<br>table or " +
 				"an item on the map to continue.</html>",
 				"Warning",
 				JOptionPane.WARNING_MESSAGE);
 			return;
 		} else if (selectedIndices.length > 1) {
-			JOptionPane.showMessageDialog(null,
+			JOptionPane.showMessageDialog(haxby.map.MapApp.anchor,
 					"<html>Too many items are selected!<br>" +
 					"Please select one row from the<br>" +
 					"table or one item on the map to<br>" +

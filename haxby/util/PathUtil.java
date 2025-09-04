@@ -93,7 +93,7 @@ public class PathUtil {
 
 		} catch (IOException ex) {
 			ex.printStackTrace();
-			JOptionPane.showMessageDialog(null, "Could not connect to the GeoMapApp server. It's likely that you have internet issues or the server is down.", "", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Could not connect to the GeoMapApp server. It's likely that you have internet issues or the server is down.", "", JOptionPane.ERROR_MESSAGE);
 			System.exit(1);
 		} catch (ParserConfigurationException e) {
 			e.printStackTrace();

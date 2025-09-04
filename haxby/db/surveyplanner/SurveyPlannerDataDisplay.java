@@ -179,7 +179,7 @@ public class SurveyPlannerDataDisplay implements ActionListener{
 			if (c==JFileChooser.CANCEL_OPTION||c==JFileChooser.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(haxby.map.MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}

@@ -85,7 +85,7 @@ public class DirectoryChooser implements FileFilter,
 		} else if(cmd.equals("OK")) {
 			int i = list.getSelectedIndex();
 			if( i==-1 ) {
-				JOptionPane.showMessageDialog( null, "no directory selected" );
+				JOptionPane.showMessageDialog( haxby.map.MapApp.anchor, "no directory selected" );
 				return;
 			}
 			selectedIndex = i;

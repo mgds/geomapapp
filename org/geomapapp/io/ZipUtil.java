@@ -11,7 +11,7 @@ public class ZipUtil {
 		if( !archive.getName().endsWith(".zip") ) archive = new File( archive.getParentFile(), archive.getName()+".zip");
 		if( archive.isDirectory() ) throw new IOException("archive must not be a directory");
 		if( archive.exists() ) {
-			int ok=JOptionPane.showConfirmDialog(null, "Archive file exists. Overwrite?",
+			int ok=JOptionPane.showConfirmDialog(haxby.map.MapApp.anchor, "Archive file exists. Overwrite?",
 					"overwrite?", JOptionPane.YES_NO_OPTION);
 			if( ok==JOptionPane.NO_OPTION )return;
 		}

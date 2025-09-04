@@ -194,7 +194,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.5.18"; //09/02/2025
+	public final static String VERSION = "3.7.5.19"; //September 4th, 2025
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -342,7 +342,7 @@ public class MapApp implements ActionListener,
 	protected String wmsSRS4326 = "SRS=EPSG:4326";
 	protected String wmsSRS3031 = "SRS=EPSG:3031";
 	// more comments
-	protected DSDPDemo dsdp;
+	protected volatile DSDPDemo dsdp;
 	protected static MapPlaces locs;
 	public Credit credit;
 	long focusTime = -1;
@@ -1564,6 +1564,7 @@ public class MapApp implements ActionListener,
 			public void run() {
 				if( dsdp==null ) dsdp=new DSDPDemo(MapApp.this);
 				dsdp.show();
+				dsdp.toFront();
 			}
 		});
 	}

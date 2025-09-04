@@ -141,6 +141,7 @@ public class DSDPModel implements RangeListener, ColorServer, ActionListener {
 		dialog.getContentPane().add(closeB, "South");
 		
 		dialog.pack();
+		dialog.setLocation(demo.anchorLocation);
 		dialog.addWindowListener( new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				toggle.setSelected(false);

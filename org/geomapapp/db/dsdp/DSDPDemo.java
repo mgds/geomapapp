@@ -2004,7 +2004,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			selectSedimentDialog.add(selectAddSedimentCB);
 			selectAddSedimentCB.addItemListener(this);
 			selectSedimentDialog.pack();
-			selectSedimentDialog.setLocation( MapApp.anchor.getX()+500, MapApp.anchor.getY()+500 );
+			selectSedimentDialog.setLocation( MapApp.getAnchorX()+500, MapApp.getAnchorY()+500 );
 			selectSedimentDialog.setSize( 195, 100 );
 			selectSedimentDialog.setVisible(true);
 
@@ -2064,7 +2064,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 					sedimentViewDataDialog.getContentPane().add(sedimentViewDataSP);
 
 					sedimentViewDataDialog.pack();
-					sedimentViewDataDialog.setLocation( MapApp.anchor.getX()+300, MapApp.anchor.getY()+300 );
+					sedimentViewDataDialog.setLocation( MapApp.getAnchorX()+300, MapApp.getAnchorY()+300 );
 					sedimentViewDataDialog.setSize( new Dimension( 800, 500 ) );
 					sedimentViewDataDialog.setVisible(true);
 				}
@@ -2087,7 +2087,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			sedimentSaveDialog.setSelectedFile(sedimentSaveFile);
 
 			int c = JOptionPane.NO_OPTION;
-			Point p = new Point( MapApp.anchor.getX()+300, MapApp.anchor.getY()+300 );
+			Point p = new Point( MapApp.getAnchorX()+300, MapApp.getAnchorY()+300 );
 			sedimentSaveDialog.setLocation(p);
 
 			while ( c == JOptionPane.NO_OPTION ) {

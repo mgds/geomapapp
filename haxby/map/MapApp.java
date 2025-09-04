@@ -1784,6 +1784,18 @@ public class MapApp implements ActionListener,
 			tools.maskB.doClick();
 		}
 	}
+	public static Point getAnchorLocation() {
+		if(null == anchor) return new Point(0,0);
+		return anchor.getLocation();
+	}
+	public static int getAnchorX() {
+		if(null == anchor) return 0;
+		return anchor.getX();
+	}
+	public static int getAnchorY() {
+		if(null == anchor) return 0;
+		return anchor.getY();
+	}
 	public void setMask( boolean tf ) {
 		if(tf) {
 			Thread focusMask = null;		
@@ -2415,6 +2427,12 @@ public class MapApp implements ActionListener,
 			addProcessingTask(mi.getText(), new Runnable() {
 				public void run() {
 					addShapeFile(mi.getName(), menu);
+					if ( !tools.shapeTB.isSelected() ) {
+						tools.shapeTB.doClick();
+					}
+					else {
+						tools.shapes.setVisible(true);
+					}
 					// Sort the layers in the Layer Manager
 					if (menu.index != null) layerManager.sortLayers();
 				}

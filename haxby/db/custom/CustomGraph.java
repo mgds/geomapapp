@@ -152,7 +152,7 @@ public class CustomGraph implements WindowListener, ItemListener, ActionListener
 			JScrollPane sedimentSP = new JScrollPane( testBox, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
 			testDialog.getContentPane().add( sedimentSP, "Center" );
 			testDialog.pack();
-			testDialog.setLocation( MapApp.anchor.getX()+500, MapApp.anchor.getY()+500 );
+			testDialog.setLocation( MapApp.getAnchorX()+500, MapApp.getAnchorY()+500 );
 			testDialog.setSize( 600, 400 );
 			testDialog.setVisible(true);
 		} catch (IOException e) {
@@ -218,7 +218,7 @@ public class CustomGraph implements WindowListener, ItemListener, ActionListener
 			sedimentSaveDialog.setSelectedFile(sedimentSaveFile);
 
 			int c = JOptionPane.NO_OPTION;
-			Point p = new Point( MapApp.anchor.getX() + 300, MapApp.anchor.getY() + 300 );
+			Point p = new Point( MapApp.getAnchorX() + 300, MapApp.getAnchorY() + 300 );
 			sedimentSaveDialog.setLocation(p);
 
 			while ( c == JOptionPane.NO_OPTION ) {

@@ -79,7 +79,7 @@ public class XBrowser extends WindowAdapter
 		frame.getContentPane().add( new JScrollPane(ep), "Center" );
 		frame.pack();
 		frame.setSize( 780, 800 );
-		frame.setLocation( MapApp.anchor.getX()+40, MapApp.anchor.getY()+40 );
+		frame.setLocation( MapApp.getAnchorX()+40, MapApp.getAnchorY()+40 );
 		frame.show();
 		setEnabled();
 	}

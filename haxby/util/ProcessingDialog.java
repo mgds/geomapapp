@@ -70,7 +70,7 @@ public class ProcessingDialog extends JDialog {
 					stolenFocus.requestFocus();
 				} else
 				{
-					owner.requestFocus();
+					//owner.requestFocus();
 					map.requestFocusInWindow();
 				}
 			}

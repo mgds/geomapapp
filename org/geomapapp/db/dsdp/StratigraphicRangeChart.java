@@ -76,7 +76,7 @@ public class StratigraphicRangeChart extends JComponent implements MouseListener
 			stratigraphicRangesDialog.getContentPane().add(stratigraphicRangesSP);
 			stratigraphicRangesDialog.pack();
 			stratigraphicRangesDialog.setSize(stratImage.getWidth() + stratigraphicRangesSP.getVerticalScrollBar().getWidth() + 11,500);
-			stratigraphicRangesDialog.setLocation(400,400);
+			stratigraphicRangesDialog.setLocation(inputFrame.getLocation().x+400,inputFrame.getLocation().y);
 			stratigraphicRangesDialog.setVisible(true);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();

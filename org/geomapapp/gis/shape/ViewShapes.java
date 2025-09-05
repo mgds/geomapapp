@@ -3,6 +3,7 @@ package org.geomapapp.gis.shape;
 import haxby.map.MapApp;
 import haxby.map.XMap;
 import haxby.util.BrowseURL;
+import haxby.util.DisplayUtil;
 import haxby.util.PathUtil;
 import haxby.util.XBTable;
 
@@ -10,6 +11,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -133,7 +135,9 @@ public class ViewShapes {
 //		GMA 1.4.8: Make "Layers" window a frame so it can be minimized
 //		dialog = new JDialog(top, "Layers");
 		dialog = new JFrame("Shapefile Manager");
-		if(!dialog.isVisible()) dialog.setLocation(((MapApp)map.getApp()).getFrame().getLocation());
+		if(!dialog.isVisible()) {
+			DisplayUtil.setRelativeLocation(dialog, -100, null==MapApp.anchor?175:MapApp.anchor.getHeight()/4, MapApp.anchor);
+		}
 
 		split = new JSplitPane();
 		JScrollPane sp = new JScrollPane(table);
@@ -303,7 +307,7 @@ public class ViewShapes {
 		}
 		LineWidth renderer = new LineWidth(1f);
 		lineWidths.setRenderer( renderer );
-	//	JOptionPane.showMessageDialog( null, lineWidths);
+	//	JOptionPane.showMessageDialog( MapApp.anchor, lineWidths);
 		table.setDefaultEditor( LineWidth.class, 
 			new javax.swing.DefaultCellEditor(lineWidths));
 		table.setDefaultRenderer( LineWidth.class, renderer);

@@ -343,7 +343,7 @@ public class WFSViewServer implements ActionListener {
 					out.flush();
 					out.close();
 				} catch (IOException e) {
-					JOptionPane.showMessageDialog(null, "Error writing to wfs_server_list.dat", "File I/O Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(MapApp.anchor, "Error writing to wfs_server_list.dat", "File I/O Error", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		}
@@ -1021,10 +1021,10 @@ public class WFSViewServer implements ActionListener {
 						}
 					}  // end else
 				} catch (IOException e) {
-					JOptionPane.showMessageDialog(null, "Error reading data from WFS", "IOException", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(MapApp.anchor, "Error reading data from WFS", "IOException", JOptionPane.ERROR_MESSAGE);
 				}
 			} catch ( MalformedURLException mue ) {
-				JOptionPane.showMessageDialog(null, "Failed to retrieve GML", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "Failed to retrieve GML", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 		contentPane.add(thirdPane, BorderLayout.SOUTH);
@@ -1389,7 +1389,7 @@ public class WFSViewServer implements ActionListener {
 
 			in.close();
 			if ( !isWFS ) {
-				JOptionPane.showMessageDialog(null, "WFS service not found", "Invalid WFS URL", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "WFS service not found", "Invalid WFS URL", JOptionPane.ERROR_MESSAGE);
 				reset();
 				dispose();
 				exits();
@@ -1400,7 +1400,7 @@ public class WFSViewServer implements ActionListener {
 				chooseLayer();
 			}
 		} catch (IOException e1) {
-			JOptionPane.showMessageDialog(null, "Error reading URL. WFS service not found.", "IOException", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error reading URL. WFS service not found.", "IOException", JOptionPane.ERROR_MESSAGE);
 			reset();
 			dispose();
 			exits();
@@ -1427,7 +1427,7 @@ public class WFSViewServer implements ActionListener {
 				good = false;
 			}
 		} catch (NumberFormatException nfe) {
-			JOptionPane.showMessageDialog(null, "Malformed Bounding Box Number", "Number Format Exception", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Malformed Bounding Box Number", "Number Format Exception", JOptionPane.ERROR_MESSAGE);
 			good = false;
 		}
 		return good;
@@ -1467,9 +1467,9 @@ public class WFSViewServer implements ActionListener {
 			try {
 				capabilitiesURL = URLFactory.url(txt.getText());
 			} catch (MalformedURLException e1) {
-				JOptionPane.showMessageDialog(null, "Invalid URL", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "Invalid URL", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
 			} catch (NullPointerException e2) {
-				JOptionPane.showMessageDialog(null, "Empty URL", "No URL Given", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "Empty URL", "No URL Given", JOptionPane.ERROR_MESSAGE);
 			}
 			readCapabilities(capabilitiesURL);
 		}

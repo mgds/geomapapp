@@ -37,7 +37,7 @@ public class AnnotationObject extends LineSegmentsObject
 		if ( active && points.size() >= 2) {
 			dig.selectB.doClick();
 
-			annotation = JOptionPane.showInputDialog(null, "Annotation:");
+			annotation = JOptionPane.showInputDialog(MapApp.anchor, "Annotation:");
 			if (annotation == null) {
 				dig.delete();
 				return;

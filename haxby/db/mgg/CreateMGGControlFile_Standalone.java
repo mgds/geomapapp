@@ -206,7 +206,7 @@ public class CreateMGGControlFile_Standalone {
 			return true;
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			JOptionPane.showMessageDialog(null, "Not able to import: " + MGD77file, "Import Error",
+			JOptionPane.showMessageDialog(haxby.map.MapApp.anchor, "Not able to import: " + MGD77file, "Import Error",
 					JOptionPane.ERROR_MESSAGE);
 			outputControlFile.delete();
 			outputDataFile.delete();

@@ -195,7 +195,7 @@ public class KMLExportConfigDialog extends JDialog
 
 		pack();
 		setSize(Math.min(800, getWidth() + 20), Math.min(600, getHeight() + 20));
-		setLocationRelativeTo(null);
+		setLocationRelativeTo(haxby.map.MapApp.anchor);
 		setVisible(true);
 	}
 

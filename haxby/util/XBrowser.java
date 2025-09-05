@@ -2,6 +2,9 @@ package haxby.util;
 
 import javax.swing.*;
 import javax.swing.event.*;
+
+import haxby.map.MapApp;
+
 import java.util.*;
 import java.net.*;
 import java.awt.event.*;
@@ -76,7 +79,7 @@ public class XBrowser extends WindowAdapter
 		frame.getContentPane().add( new JScrollPane(ep), "Center" );
 		frame.pack();
 		frame.setSize( 780, 800 );
-		frame.setLocation( 40, 40 );
+		DisplayUtil.setRelativeLocation(frame, 40, 40, MapApp.anchor);
 		frame.show();
 		setEnabled();
 	}

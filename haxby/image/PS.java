@@ -286,7 +286,7 @@ public class PS {
 			file = new File( filename );
 		}
 		if( file.exists() ) {
-			int yn = JOptionPane.showConfirmDialog(null, 
+			int yn = JOptionPane.showConfirmDialog(haxby.map.MapApp.anchor, 
 				"Overwrite "+file.getPath()+" ?",
 				"PS Message",
 				JOptionPane.YES_NO_OPTION);

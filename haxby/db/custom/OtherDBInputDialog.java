@@ -291,7 +291,7 @@ public class OtherDBInputDialog extends 	JDialog
 			for (int i = 0; i < bookmarks.size(); i++)
 				out.writeObject(bookmarks.get(i));
 			out.close();
-			JOptionPane.showMessageDialog(null, "Bookmark Removed.", "Succesful", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Bookmark Removed.", "Succesful", JOptionPane.INFORMATION_MESSAGE);
 
 			bmM.removeAll();
 			JMenuItem mi = new JMenuItem("Remove Bookmark");
@@ -306,7 +306,7 @@ public class OtherDBInputDialog extends 	JDialog
 				mi.setActionCommand(i+10+"");
 				bmM.add(mi);
 			}
-		} catch (IOException e) {JOptionPane.showMessageDialog(null, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);}
+		} catch (IOException e) {JOptionPane.showMessageDialog(MapApp.anchor, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);}
 	}
 
 	private void ok() {
@@ -372,7 +372,7 @@ public class OtherDBInputDialog extends 	JDialog
 			JDialog d = new JDialog((Frame)null, "Loading File");
 			JPanel p = new JPanel(new BorderLayout());
 			p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-			d.setLocationRelativeTo(null);
+			d.setLocationRelativeTo(MapApp.anchor);
 			JProgressBar pb = new JProgressBar(0,length);
 			p.add(new JLabel("Loading " + (length / 1000) + " kb file"), BorderLayout.NORTH);
 			p.add(pb);
@@ -404,7 +404,7 @@ public class OtherDBInputDialog extends 	JDialog
 			d.dispose();
 			input.setText(strBuff.toString());
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(null, "Error loading file:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error loading file:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 
 	}
@@ -415,7 +415,7 @@ public class OtherDBInputDialog extends 	JDialog
 			JDialog d = new JDialog((Frame)null, "Loading File");
 			JPanel p = new JPanel(new BorderLayout());
 			p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-			d.setLocationRelativeTo(null);
+			d.setLocationRelativeTo(MapApp.anchor);
 			JProgressBar pb = new JProgressBar(0,length);
 			p.add(new JLabel("Loading " + (length / 1000) + " kb file"), BorderLayout.NORTH);
 			p.add(pb);
@@ -453,7 +453,7 @@ public class OtherDBInputDialog extends 	JDialog
 			d.dispose();
 
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(null, "Error loading file:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error loading file:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 	}
@@ -467,7 +467,7 @@ public class OtherDBInputDialog extends 	JDialog
 			JDialog d = new JDialog((Frame)null, "Loading File");
 			JPanel p = new JPanel(new BorderLayout());
 			p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-			d.setLocationRelativeTo(null);
+			d.setLocationRelativeTo(MapApp.anchor);
 			JProgressBar pb = null;
 			if (length > 0) {
 				pb = new JProgressBar(0,length);
@@ -520,7 +520,7 @@ public class OtherDBInputDialog extends 	JDialog
 			d.dispose();
 			this.input.setText(strBuff.toString());
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(null, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 	}
@@ -532,7 +532,7 @@ public class OtherDBInputDialog extends 	JDialog
 			JDialog d = new JDialog((Frame)null, "Loading File");
 			JPanel p = new JPanel(new BorderLayout());
 			p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-			d.setLocationRelativeTo(null);
+			d.setLocationRelativeTo(MapApp.anchor);
 			JProgressBar pb = new JProgressBar(0,length);
 			p.add(new JLabel("Loading " + (length / 1000) + " kb file"), BorderLayout.NORTH);
 			p.add(pb);
@@ -568,7 +568,7 @@ public class OtherDBInputDialog extends 	JDialog
 			wb.close();
 			d.dispose();
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(null, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 	}

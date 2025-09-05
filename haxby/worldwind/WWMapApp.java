@@ -148,7 +148,7 @@ public class WWMapApp extends MapApp implements PropertyChangeListener {
 		StartUp start = new StartUp(WORLDWIND);
 		startup.getContentPane().add(start, "Center");
 		startup.pack();
-		startup.setLocationRelativeTo(null);
+		startup.setLocationRelativeTo(MapApp.anchor);
 		start.setText("Composing Globe");
 		startup.setVisible(true);
 

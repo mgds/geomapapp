@@ -155,7 +155,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 													+ "loaded layers will be saved.<br><br> "
 													+ allProblemLayers + "<br><br><hr><br>"
 												+ "Continue saving the session?</html>";
-							int partSaveValue = JOptionPane.showConfirmDialog(null, alertPartSave, "Alert: Some Layers Will Not Save",
+							int partSaveValue = JOptionPane.showConfirmDialog(MapApp.anchor, alertPartSave, "Alert: Some Layers Will Not Save",
 										JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 							if(partSaveValue ==JOptionPane.NO_OPTION) {
 								problemLayers.clear();
@@ -190,7 +190,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 
 				//Prompt User if exists
 				if(xmlFile.exists()){
-					int overwriteReturnValue = JOptionPane.showConfirmDialog(null,
+					int overwriteReturnValue = JOptionPane.showConfirmDialog(MapApp.anchor,
 							xmlFile.getName().toString() + " already exists. "
 							+ "Do you want to replace it?", "File Already Exists",
 							JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
@@ -348,7 +348,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 							e1.printStackTrace();
 					}
 				} else {
-					JOptionPane.showMessageDialog(null, xmlFile.getName().toString() + " must be in .xml format");
+					JOptionPane.showMessageDialog(MapApp.anchor, xmlFile.getName().toString() + " must be in .xml format");
 				}
 				break;
 				case JFileChooser.CANCEL_OPTION:

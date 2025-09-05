@@ -352,7 +352,7 @@ public class UnknownDataSet implements MouseListener,
 
 //			***** GMA 1.6.4: Add variable that sets the number of data points displayed
 //			if (station&&data.size()>5000)
-//				JOptionPane.showMessageDialog(null, "The entered dataset has over 5000 stations." +
+//				JOptionPane.showMessageDialog(MapApp.anchor, "The entered dataset has over 5000 stations." +
 //					  "\nPlease note all stations are loaded in the GeoMapApp table and \n will appear as you zoom in to your area of interest. \n  While zoomed out, some stations may not be shown due to graphic memory limitations.", LIMIT_GRAPHICS_MEMORY + "+ Stations", JOptionPane.INFORMATION_MESSAGE);
 			if (station&&data.size()>LIMIT_GRAPHICS_MEMORY) {
 				JFrame messageFrame = new JFrame();
@@ -382,7 +382,7 @@ public class UnknownDataSet implements MouseListener,
 					 JDialog d = new JDialog((Frame)null, "Opening Table");
 						JPanel p = new JPanel(new BorderLayout());
 						p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-						d.setLocationRelativeTo(null);
+						d.setLocationRelativeTo(MapApp.anchor);
 						int length = 10;
 						JProgressBar pb = new JProgressBar(0,length);
 						p.add(new JLabel("Progressing"), BorderLayout.NORTH);
@@ -1849,20 +1849,20 @@ public class UnknownDataSet implements MouseListener,
 		if (isEdited()) {
 			int numEdited = countEditedRows();
 			String changedRowsTxt = (numEdited == 1) ? " row has" : " rows have";
-			int c=JOptionPane.showConfirmDialog(null, "Table has been edited.\n" + 
+			int c=JOptionPane.showConfirmDialog(MapApp.anchor, "Table has been edited.\n" + 
 					numEdited + changedRowsTxt + " been changed.\nConfirm Save.", "Edited Table", JOptionPane.YES_NO_OPTION);
 			if (c==JOptionPane.NO_OPTION) return false;
 		}
 		if (saveOption.equals("selection")) {
 			// 1.5.10 Check if anything is selected
 			if (dataT.getSelectedRowCount() == 0) {
-				JOptionPane.showMessageDialog(null, "No data selected for export", "No Selection", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "No data selected for export", "No Selection", JOptionPane.ERROR_MESSAGE);
 				return false;
 			}
 		} else if (saveOption.equals("plottable")) {
 			//check that there are plottable rows
 			if (getPlottableRows().length == 0) {
-				JOptionPane.showMessageDialog(null, "No plotted data available for export", "No Selection", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "No plotted data available for export", "No Selection", JOptionPane.ERROR_MESSAGE);
 				return false;
 			}
 		}
@@ -1883,7 +1883,7 @@ public class UnknownDataSet implements MouseListener,
 			if (c==JFileChooser.CANCEL_OPTION||c==JFileChooser.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}
@@ -1947,7 +1947,7 @@ public class UnknownDataSet implements MouseListener,
 			if (c==JFileChooser.CANCEL_OPTION||c==JFileChooser.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}
@@ -2011,7 +2011,7 @@ public class UnknownDataSet implements MouseListener,
 			if (c==JFileChooser.CANCEL_OPTION||c==JFileChooser.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION)break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}
@@ -2024,7 +2024,7 @@ public class UnknownDataSet implements MouseListener,
 				try {
 					if (!saveTo.getName().endsWith(".xlsx")){
 						System.out.println(saveTo.getName());
-						JOptionPane.showMessageDialog(null, "Save did not complete. Must end in .xlsx. Try again.");
+						JOptionPane.showMessageDialog(MapApp.anchor, "Save did not complete. Must end in .xlsx. Try again.");
 					}else{
 						SXSSFWorkbook xlsxWB = new SXSSFWorkbook();
 						SXSSFSheet xlsxSheet1 = xlsxWB.createSheet("First Sheet");
@@ -2114,8 +2114,8 @@ public class UnknownDataSet implements MouseListener,
 				if (desc.equals((bookmarks.get(i)))){
 
 //					GMA 1.5.2: Corrected misspelling of "already"
-//					JOptionPane.showMessageDialog(null, "Bookmark allready exists", "Bookmark exists", JOptionPane.INFORMATION_MESSAGE);
-					JOptionPane.showMessageDialog(null, "Bookmark already exists", "Bookmark exists", JOptionPane.INFORMATION_MESSAGE);
+//					JOptionPane.showMessageDialog(MapApp.anchor, "Bookmark allready exists", "Bookmark exists", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(MapApp.anchor, "Bookmark already exists", "Bookmark exists", JOptionPane.INFORMATION_MESSAGE);
 
 					return;
 				}
@@ -2128,8 +2128,8 @@ public class UnknownDataSet implements MouseListener,
 				for (int i = 0; i < bookmarks.size(); i++)
 					out.writeObject(bookmarks.get(i));
 				out.close();
-				JOptionPane.showMessageDialog(null, "Bookmark created.", "Succesful", JOptionPane.INFORMATION_MESSAGE);
-			} catch (IOException e) {JOptionPane.showMessageDialog(null, "Error Writing Bookmark:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);}
+				JOptionPane.showMessageDialog(MapApp.anchor, "Bookmark created.", "Succesful", JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException e) {JOptionPane.showMessageDialog(MapApp.anchor, "Error Writing Bookmark:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);}
 		}
 	}
 

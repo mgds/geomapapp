@@ -105,7 +105,7 @@ public class KMLExport {
 			if (c==JFileChooser.CANCEL_OPTION||c==JFileChooser.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				// if (c==JOptionPane.CANCEL_OPTION) return;
 			}
@@ -172,7 +172,7 @@ public class KMLExport {
 		try {
 			zos = new ZipOutputStream( new BufferedOutputStream (new FileOutputStream(f)));
 		} catch (FileNotFoundException e) {
-			JOptionPane.showMessageDialog(null, e.getMessage(), "Output Config Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, e.getMessage(), "Output Config Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 			return;
 		}
@@ -391,7 +391,7 @@ public class KMLExport {
 
 								ImageIO.write(img, "jpg", zos);
 							} catch (IOException e) {
-								JOptionPane.showMessageDialog(null, e.getMessage(), "Color Scale Output Error", JOptionPane.ERROR_MESSAGE);
+								JOptionPane.showMessageDialog(MapApp.anchor, e.getMessage(), "Color Scale Output Error", JOptionPane.ERROR_MESSAGE);
 								e.printStackTrace();
 							}
 						}
@@ -632,22 +632,22 @@ public class KMLExport {
 
 			zos.close();
 		} catch (ParserConfigurationException e) {
-			JOptionPane.showMessageDialog(null, e.getMessage(), "KMZ Parser Configure Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, e.getMessage(), "KMZ Parser Configure Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		} catch (TransformerConfigurationException e) {
-			JOptionPane.showMessageDialog(null, e.getMessage(), "KMZ Transform Configure Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, e.getMessage(), "KMZ Transform Configure Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		} catch (TransformerFactoryConfigurationError e) {
-			JOptionPane.showMessageDialog(null, e.getMessage(), "KMZ Transform Configure Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, e.getMessage(), "KMZ Transform Configure Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		} catch (TransformerException e) {
-			JOptionPane.showMessageDialog(null, e.getMessage(), "KMZ Transform Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, e.getMessage(), "KMZ Transform Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, e.getMessage(), "IO Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, e.getMessage(), "IO Error", JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 		}
-		JOptionPane.showMessageDialog(null, "Export Successful");
+		JOptionPane.showMessageDialog(MapApp.anchor, "Export Successful");
 	}
 
 	private static String getBallonStyle() {
@@ -1086,7 +1086,7 @@ public class KMLExport {
 			getContentPane().add(p);
 			pack();
 
-			setLocationRelativeTo(null);
+			setLocationRelativeTo(MapApp.anchor);
 			setVisible(true);
 		}
 

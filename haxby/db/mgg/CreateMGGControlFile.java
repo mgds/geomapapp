@@ -143,7 +143,7 @@ public class CreateMGGControlFile {
 				out.flush();
 				out.close();
 				
-				JOptionPane.showMessageDialog(null, "No data found for: " + leg, "Import Error",
+				JOptionPane.showMessageDialog(haxby.map.MapApp.anchor, "No data found for: " + leg, "Import Error",
 						JOptionPane.ERROR_MESSAGE);
 				return false;
 			}
@@ -213,7 +213,7 @@ public class CreateMGGControlFile {
 			out.close();
 			return true;
 		} catch (Exception ex) {
-			JOptionPane.showMessageDialog(null, "Not able to import: " + MGD77file, "Import Error",
+			JOptionPane.showMessageDialog(haxby.map.MapApp.anchor, "Not able to import: " + MGD77file, "Import Error",
 					JOptionPane.ERROR_MESSAGE);
 			outputControlFile.delete();
 			outputDataFile.delete();

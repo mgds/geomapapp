@@ -82,7 +82,7 @@ public class Composer extends JComponent
 		File file = chooser.getSelectedFile();
 		String name = file.getName();
 		while( !name.toLowerCase().endsWith("jpg") ) {
-			JOptionPane.showMessageDialog(null, "Only JPEG images currently loadable - suffix \".jpg\"" );
+			JOptionPane.showMessageDialog(MapApp.anchor, "Only JPEG images currently loadable - suffix \".jpg\"" );
 			ok = chooser.showOpenDialog(frame);
 			if( ok!=chooser.APPROVE_OPTION ) return;
 			file = chooser.getSelectedFile();
@@ -98,7 +98,7 @@ public class Composer extends JComponent
 			//image = im;
 			image = ImageIO.read(in);
 		} catch (Exception ex) {
-			JOptionPane.showMessageDialog(null, "Error while loading:\n  "+ex.getMessage());
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error while loading:\n  "+ex.getMessage());
 			System.exit(0);
 		}
 		zoom = 1.;

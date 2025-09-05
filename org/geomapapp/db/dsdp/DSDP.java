@@ -58,7 +58,7 @@ public class DSDP implements MouseListener, MouseMotionListener {
 			init();
 		} catch( IOException e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(null, "Failed to load DSDP");
+			JOptionPane.showMessageDialog(MapApp.anchor, "Failed to load DSDP");
 			holes = null;
 			db = null;
 			ages = null;

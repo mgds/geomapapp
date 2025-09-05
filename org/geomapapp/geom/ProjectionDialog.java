@@ -467,8 +467,8 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 		text.setEditable(false);
 		JScrollPane scroll = new JScrollPane(text);
 		scroll.setPreferredSize(new Dimension(350, 200));
-		//JOptionPane.showMessageDialog(null, scroll); // with JTextArea
-		JOptionPane.showMessageDialog(null, scroll, "File Details", JOptionPane.DEFAULT_OPTION);
+		//JOptionPane.showMessageDialog(MapApp.anchor, scroll); // with JTextArea
+		JOptionPane.showMessageDialog(haxby.map.MapApp.anchor, scroll, "File Details", JOptionPane.DEFAULT_OPTION);
 	}
 
 	public double getZScale() {

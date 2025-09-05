@@ -37,7 +37,7 @@ public class Navigation {
 				panel.add( new JLabel("enter name of shape file") );
 				JTextField text = new JTextField();
 				panel.add( text );
-				JOptionPane.showMessageDialog( null, panel, "enter title", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog( haxby.map.MapApp.anchor, panel, "enter title", JOptionPane.PLAIN_MESSAGE);
 				shapeName = text.getText();
 			} else {
 				shapeName = files[0].getName();

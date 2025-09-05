@@ -39,10 +39,10 @@ public class VersionUtil {
 			System.exit(1);
 		} catch(ConnectException e) {
 			if(versionURLIn.contains("dev")) {
-				JOptionPane.showMessageDialog(null, "<html><body><center>Could not connect to the dev server.<br>You must be on the LDEO VPN or physically on the LDEO campus to use development mode.</center></body></html>", "Cannot Access Dev Server", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "<html><body><center>Could not connect to the dev server.<br>You must be on the LDEO VPN or physically on the LDEO campus to use development mode.</center></body></html>", "Cannot Access Dev Server", JOptionPane.ERROR_MESSAGE);
 			}
 			else {
-				JOptionPane.showMessageDialog(null, "<html><body><center>Could not connect to the GMA server.<br>Access may be blocked, or something may be wrong with your internet connection.<br>If this persists, contact us.</center></body></html>", "Cannot Access GMA Server", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "<html><body><center>Could not connect to the GMA server.<br>Access may be blocked, or something may be wrong with your internet connection.<br>If this persists, contact us.</center></body></html>", "Cannot Access GMA Server", JOptionPane.ERROR_MESSAGE);
 			}
 			System.exit(1);
 		} catch (IOException e) {

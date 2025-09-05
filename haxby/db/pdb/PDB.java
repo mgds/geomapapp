@@ -1314,7 +1314,7 @@ public class PDB implements Database,
 				int[] sel = sTable.getSelectedRows();
 				int count = sel.length * (3+sModel.getColumnCount());
 				if(count > 10000) {
-					JOptionPane.showMessageDialog( null,
+					JOptionPane.showMessageDialog( MapApp.anchor,
 						"copy to clipboard limited to 10000 elements\n"
 						+ count +" elements selected\n");
 					return;
@@ -1414,7 +1414,7 @@ public class PDB implements Database,
 				int[] sel = aTable.getSelectedRows();
 				int count = sel.length * (3+aModel.getColumnCount());
 				if(count > 10000) {
-					JOptionPane.showMessageDialog( null,
+					JOptionPane.showMessageDialog( MapApp.anchor,
 						"copy to clipboard limited to 10000 elements\n"
 						+ count +" elements selected\n");
 					return;
@@ -1678,7 +1678,7 @@ public class PDB implements Database,
 		}
 		it.next();
 		if (!it.hasNext()) {
-			JOptionPane.showMessageDialog(null, "One or more rows must be selected.", "Save Selected", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "One or more rows must be selected.", "Save Selected", JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
 		
@@ -1698,7 +1698,7 @@ public class PDB implements Database,
 			if (c==jfc.CANCEL_OPTION||c==jfc.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}
@@ -1733,7 +1733,7 @@ public class PDB implements Database,
 		
 		it.next();
 		if (!it.hasNext()) {
-			JOptionPane.showMessageDialog(null, "One or more rows must be selected.", "Save Selected", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "One or more rows must be selected.", "Save Selected", JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
 		
@@ -1751,7 +1751,7 @@ public class PDB implements Database,
 			if (c==jfc.CANCEL_OPTION||c==jfc.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}

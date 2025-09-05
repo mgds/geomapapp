@@ -426,7 +426,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 			for (int i = 0; i < bookmarks.size(); i++)
 				out.writeObject(bookmarks.get(i));
 			out.close();
-			JOptionPane.showMessageDialog(null, "Bookmark Removed.", "Succesful", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Bookmark Removed.", "Succesful", JOptionPane.INFORMATION_MESSAGE);
 
 			bmM.removeAll();
 			JMenuItem mi = new JMenuItem("Remove Bookmark");
@@ -441,7 +441,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 				mi.setActionCommand(i+10+"");
 				bmM.add(mi);
 			}
-		} catch (IOException e) {JOptionPane.showMessageDialog(null, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);}
+		} catch (IOException e) {JOptionPane.showMessageDialog(MapApp.anchor, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);}
 	}
 
 	private void ok() {
@@ -493,7 +493,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 			JDialog d = new JDialog((Frame)null, "Loading File");
 			JPanel p = new JPanel(new BorderLayout());
 			p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-			d.setLocationRelativeTo(null);
+			d.setLocationRelativeTo(MapApp.anchor);
 			JProgressBar pb = new JProgressBar(0,length);
 			p.add(new JLabel("Loading " + (length / 1000) + " kb file"), BorderLayout.NORTH);
 			p.add(pb);
@@ -554,7 +554,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 			MapApp.sendLogMessage("Imported_ASCII_Table&name="+name.getText());
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(null, "Error loading file:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error loading file:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 		}
 		}.start();
@@ -593,7 +593,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 		JDialog d = new JDialog((Frame)null, "Loading File");
 		JPanel p = new JPanel(new BorderLayout());
 		p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-		d.setLocationRelativeTo(null);
+		d.setLocationRelativeTo(MapApp.anchor);
 		JProgressBar pb = new JProgressBar(0,length);
 		p.add(new JLabel("Loading " + (length / 1000) + " kb file"), BorderLayout.NORTH);
 		p.add(pb);
@@ -652,7 +652,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 			d.setVisible(false);
 			d.setEnabled(false);
 			cDialog.doClick();
-			JOptionPane.showMessageDialog(null, "The supplied spreadsheet seems to be Excel 5.0/7.0 format\n" +
+			JOptionPane.showMessageDialog(MapApp.anchor, "The supplied spreadsheet seems to be Excel 5.0/7.0 format\n" +
 												"or older and is not supported. Please save the file in a newer\n" +
 												"Excel format (such as 97-2003 .xls or 2007 .xlsx) and try\n" +
 												"again to import it.", "Warning",JOptionPane.ERROR_MESSAGE ) ;// message to user
@@ -679,7 +679,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 		JDialog d = new JDialog((Frame)null, "Loading File");
 		JPanel p = new JPanel(new BorderLayout());
 		p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-		d.setLocationRelativeTo(null);
+		d.setLocationRelativeTo(MapApp.anchor);
 		JProgressBar pb = new JProgressBar(0,length);
 		p.add(new JLabel("Loading " + (length / 1000) + " kb file"), BorderLayout.NORTH);
 		p.add(pb);
@@ -778,7 +778,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 				URL url = URLFactory.url(URLFactory.checkForRedirect(i));
 				String urlFileName;
 	
-				d.setLocationRelativeTo(null);
+				d.setLocationRelativeTo(MapApp.anchor);
 				d.setSize(180, 90);
 				JPanel p = new JPanel(new BorderLayout());
 				p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
@@ -887,7 +887,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 				} catch (Exception e) {
 					e.printStackTrace();
 					d.dispose();
-					JOptionPane.showMessageDialog(null, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(MapApp.anchor, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
 			}
@@ -907,7 +907,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 			JDialog d = new JDialog((Frame)null, "Loading File");
 			JPanel p = new JPanel(new BorderLayout());
 			p.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
-			d.setLocationRelativeTo(null);
+			d.setLocationRelativeTo(MapApp.anchor);
 			JProgressBar pb = new JProgressBar(0,length);
 			JLabel lab = new JLabel("Loading " + (length / 1000) + "kb file");
 			lab.setVisible(true);
@@ -947,7 +947,7 @@ public class DBInputDialog extends JDialog implements ActionListener,
 			wb.close();
 			d.dispose();
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(null, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error reading URL:\n"+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 			}

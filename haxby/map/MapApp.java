@@ -457,7 +457,7 @@ public class MapApp implements ActionListener,
 		try {
 			getServerList();
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
 		}
 		try {
 			getProxies();
@@ -544,7 +544,7 @@ public class MapApp implements ActionListener,
 			try {
 				getServerList();
 			} catch (IOException e) {
-				//JOptionPane.showMessageDialog(null, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
+				//JOptionPane.showMessageDialog(MapApp.anchor, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
 				BASE_URL = DEFAULT_URL;
 			}
 		}
@@ -570,7 +570,7 @@ public class MapApp implements ActionListener,
 		/*try {
 			getServerList();
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
 		}
 		DEV_MODE = BASE_URL.equals(DEV_URL);*/
 
@@ -754,7 +754,7 @@ public class MapApp implements ActionListener,
 
 		d.getContentPane().add(p);
 		d.pack();
-		d.setLocationRelativeTo(null);
+		d.setLocationRelativeTo(MapApp.anchor);
 		d.setVisible(true);
 	}
 
@@ -853,7 +853,7 @@ public class MapApp implements ActionListener,
 
 		d.getContentPane().add(p, BorderLayout.SOUTH);
 		d.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		d.setLocationRelativeTo(null);
+		d.setLocationRelativeTo(MapApp.anchor);
 		d.pack();
 		d.setVisible(true);
 	}
@@ -914,7 +914,7 @@ public class MapApp implements ActionListener,
 				sp.setPreferredSize( new Dimension(600,400) );
 				sp.setSize( new Dimension(600,400) );
 				panel.add( sp );
-				JOptionPane.showMessageDialog( null, panel, "GeoMapApp Alert", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog( MapApp.anchor, panel, "GeoMapApp Alert", JOptionPane.INFORMATION_MESSAGE);
 			//	System.out.println( jep.getText() );
 			}
 			catch(Exception e) {
@@ -1312,7 +1312,7 @@ public class MapApp implements ActionListener,
 	}
 
 	protected void WWInit() {
-		JOptionPane.showMessageDialog(null, "Unsupported Map Selected", "Error", JOptionPane.ERROR_MESSAGE);
+		JOptionPane.showMessageDialog(MapApp.anchor, "Unsupported Map Selected", "Error", JOptionPane.ERROR_MESSAGE);
 		System.exit(-1);
 	}
 
@@ -1783,6 +1783,18 @@ public class MapApp implements ActionListener,
 		} else if( evt.getKeyCode() == KeyEvent.VK_M ) {
 			tools.maskB.doClick();
 		}
+	}
+	public static Point getAnchorLocation() {
+		if(null == anchor) return new Point(0,0);
+		return anchor.getLocation();
+	}
+	public static int getAnchorX() {
+		if(null == anchor) return 0;
+		return anchor.getX();
+	}
+	public static int getAnchorY() {
+		if(null == anchor) return 0;
+		return anchor.getY();
 	}
 	public void setMask( boolean tf ) {
 		if(tf) {
@@ -2415,6 +2427,12 @@ public class MapApp implements ActionListener,
 			addProcessingTask(mi.getText(), new Runnable() {
 				public void run() {
 					addShapeFile(mi.getName(), menu);
+					if ( !tools.shapeTB.isSelected() ) {
+						tools.shapeTB.doClick();
+					}
+					else {
+						tools.shapes.setVisible(true);
+					}
 					// Sort the layers in the Layer Manager
 					if (menu.index != null) layerManager.sortLayers();
 				}
@@ -2442,7 +2460,7 @@ public class MapApp implements ActionListener,
 						//eg to https version of the page
 						url = URLFactory.checkForRedirect(url);
 						if (!URLFactory.checkWorkingURL(url)) {
-							JOptionPane.showMessageDialog(null, "Error loading layer:\n"+tableLayerName, "Error", JOptionPane.ERROR_MESSAGE);
+							JOptionPane.showMessageDialog(MapApp.anchor, "Error loading layer:\n"+tableLayerName, "Error", JOptionPane.ERROR_MESSAGE);
 							layerManager.missingLayer(menu.index);
 							return;
 						}
@@ -2974,7 +2992,7 @@ public class MapApp implements ActionListener,
 			String proj = thisXMLItemLoad.proj.toLowerCase();
 			if (!proj.contains(MapApp.CURRENT_PROJECTION.toLowerCase())) {
 				if (proj.contains("m")) {
-					int confirm = JOptionPane.showConfirmDialog(null, 
+					int confirm = JOptionPane.showConfirmDialog(MapApp.anchor, 
 							"This session will switch to Mercator Projection", 
 							"Switch Projection", JOptionPane.OK_CANCEL_OPTION);
 					if (confirm == JOptionPane.CANCEL_OPTION) {
@@ -2983,7 +3001,7 @@ public class MapApp implements ActionListener,
 					}
 					MInit2();
 				} else if (proj.contains("s")) {
-					int confirm = JOptionPane.showConfirmDialog(null, 
+					int confirm = JOptionPane.showConfirmDialog(MapApp.anchor, 
 							"This session will switch to South Polar Projection", 
 							"Switch Projection", JOptionPane.OK_CANCEL_OPTION);
 					if (confirm == JOptionPane.CANCEL_OPTION) {
@@ -2992,7 +3010,7 @@ public class MapApp implements ActionListener,
 					}
 					SPInit2();	
 				} else if (proj.contains("n")) {
-					int confirm = JOptionPane.showConfirmDialog(null, 
+					int confirm = JOptionPane.showConfirmDialog(MapApp.anchor, 
 							"This session will switch to North Polar Projection", 
 							"Switch Projection", JOptionPane.OK_CANCEL_OPTION);
 					if (confirm == JOptionPane.CANCEL_OPTION) {
@@ -3670,7 +3688,7 @@ public class MapApp implements ActionListener,
 			out.flush();
 			out.close();
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, "Error writing to default_server.dat", "File I/O Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error writing to default_server.dat", "File I/O Error", JOptionPane.ERROR_MESSAGE);
 		}
 
 		try {
@@ -3718,7 +3736,7 @@ public class MapApp implements ActionListener,
 		map.addMouseListener(zoomer);
 
 //		***** GMA 1.6.2: Prompt user to restart GeoMapApp for server and proxy settings to take full effect
-		//JOptionPane.showMessageDialog(null, "Please restart GeoMapApp for server settings to take effect", "Restart GeoMapApp", JOptionPane.PLAIN_MESSAGE);
+		//JOptionPane.showMessageDialog(MapApp.anchor, "Please restart GeoMapApp for server settings to take effect", "Restart GeoMapApp", JOptionPane.PLAIN_MESSAGE);
 //		***** GMA 1.6.2
 
 		mapFocus();
@@ -4111,7 +4129,7 @@ public class MapApp implements ActionListener,
 		String wfsLayer = wfs_menu.wfs_layer_feature;
 		String wfsBbox;
 		if (!URLFactory.checkWorkingURL(wfsURL)) {
-			JOptionPane.showMessageDialog(null, "Error loading layer:\n"+wfsTitle, "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error loading layer:\n"+wfsTitle, "Error", JOptionPane.ERROR_MESSAGE);
 			layerManager.missingLayer(wfs_menu.index);
 			return;
 		}
@@ -4146,7 +4164,7 @@ public class MapApp implements ActionListener,
 	public void getWMSLayer(XML_Menu wms_XML_Menu) throws IOException {
 		
 		if (!URLFactory.checkWorkingURL(wms_XML_Menu.layer_url)) {
-			JOptionPane.showMessageDialog(null, "Error loading layer:\n"+wms_XML_Menu.name, "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error loading layer:\n"+wms_XML_Menu.name, "Error", JOptionPane.ERROR_MESSAGE);
 			layerManager.missingLayer(wms_XML_Menu.index);
 			return;
 		}
@@ -4236,7 +4254,7 @@ public class MapApp implements ActionListener,
 	public void addShapeFile(String layerURL, XML_Menu inputXML_Menu) {
 		try {
 			if (!URLFactory.checkWorkingURL(layerURL)) {
-				JOptionPane.showMessageDialog(null, "Error loading layer:\n"+inputXML_Menu, "Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "Error loading layer:\n"+inputXML_Menu, "Error", JOptionPane.ERROR_MESSAGE);
 				layerManager.missingLayer(inputXML_Menu.index);
 				return;
 			}

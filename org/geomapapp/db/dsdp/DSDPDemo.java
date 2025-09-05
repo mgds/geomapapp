@@ -4,6 +4,7 @@ import haxby.db.custom.DBGraph;
 import haxby.db.custom.ExcelFileFilter;
 import haxby.map.MapApp;
 import haxby.util.BrowseURL;
+import haxby.util.DisplayUtil;
 import haxby.util.PathUtil;
 import haxby.util.URLFactory;
 
@@ -2004,7 +2005,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			selectSedimentDialog.add(selectAddSedimentCB);
 			selectAddSedimentCB.addItemListener(this);
 			selectSedimentDialog.pack();
-			selectSedimentDialog.setLocation( MapApp.getAnchorX()+500, MapApp.getAnchorY()+500 );
+			DisplayUtil.setRelativeLocation(selectSedimentDialog, 500, 500, MapApp.anchor);
 			selectSedimentDialog.setSize( 195, 100 );
 			selectSedimentDialog.setVisible(true);
 
@@ -2064,8 +2065,8 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 					sedimentViewDataDialog.getContentPane().add(sedimentViewDataSP);
 
 					sedimentViewDataDialog.pack();
-					sedimentViewDataDialog.setLocation( MapApp.getAnchorX()+300, MapApp.getAnchorY()+300 );
 					sedimentViewDataDialog.setSize( new Dimension( 800, 500 ) );
+					DisplayUtil.setRelativeLocation(sedimentViewDataDialog, 300, 300, MapApp.anchor);
 					sedimentViewDataDialog.setVisible(true);
 				}
 				else {
@@ -2087,8 +2088,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			sedimentSaveDialog.setSelectedFile(sedimentSaveFile);
 
 			int c = JOptionPane.NO_OPTION;
-			Point p = new Point( MapApp.getAnchorX()+300, MapApp.getAnchorY()+300 );
-			sedimentSaveDialog.setLocation(p);
+			DisplayUtil.setRelativeLocation(sedimentSaveDialog, 300, 300, MapApp.anchor);
 
 			while ( c == JOptionPane.NO_OPTION ) {
 				c = sedimentSaveDialog.showSaveDialog(sedimentDialog);

@@ -9,6 +9,7 @@ import haxby.image.Icons;
 import haxby.map.MapApp;
 import haxby.map.Zoomable;
 import haxby.map.Zoomer;
+import haxby.util.DisplayUtil;
 import haxby.util.URLFactory;
 
 import java.awt.BasicStroke;
@@ -1340,7 +1341,7 @@ public class SCSImage2 extends haxby.util.ScaledComponent
 			okCancelP.add(b);
 			wholeImageD.add(okCancelP, "South");
 			wholeImageD.pack();
-			wholeImageD.setLocation(MapApp.getAnchorX()+400, MapApp.getAnchorY()+400);
+			DisplayUtil.setRelativeLocation(wholeImageD, 400, 400, MapApp.anchor);
 			wholeImageD.setVisible(true);
 		}
 		else if ( evt.getActionCommand().equals("Zoom In") || evt.getActionCommand().equals("Zoom Out") ) {

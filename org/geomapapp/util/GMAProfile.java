@@ -83,6 +83,7 @@ import haxby.map.MapApp;
 import haxby.map.Overlay;
 import haxby.map.XMap;
 import haxby.proj.Projection;
+import haxby.util.DisplayUtil;
 import haxby.util.GeneralUtils;
 import haxby.util.LayerManager.LayerPanel;
 import haxby.util.ToggleableMouseInputAdapter;
@@ -491,9 +492,8 @@ public class GMAProfile implements Overlay, XYPoints {
 				}
 			}
 		}
-		Point pt = ((MapApp)map.getApp()).getFrame().getLocation();
 		if(!dialog.isVisible()) {
-			dialog.setLocation(pt.x, pt.y+150);
+			DisplayUtil.setRelativeLocation(dialog, 0, 150, MapApp.anchor);
 			dialog.setVisible(true);
 		}
 		dialog.toFront();

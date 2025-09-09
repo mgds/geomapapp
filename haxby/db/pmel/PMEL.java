@@ -53,6 +53,7 @@ public class PMEL implements Database, ActionListener {
 };
 	private int whichOption;
 	private int dataIndex;
+	private boolean loadCancelled = false;
 	
 	public PMEL(XMap map) {
 		this.map = map;
@@ -97,31 +98,26 @@ public class PMEL implements Database, ActionListener {
 				panel, "Select", JOptionPane.OK_CANCEL_OPTION,
 				JOptionPane.PLAIN_MESSAGE);
 
-		dataIndex = 0;
-		if( sosus.isSelected()) dataIndex=0;
-		else if( epr.isSelected()) dataIndex=1;
-		else if( mar.isSelected()) dataIndex=2;
+		if(whichOption == JOptionPane.OK_OPTION) {
+			dataIndex = 0;
+			if( sosus.isSelected()) dataIndex=0;
+			else if( epr.isSelected()) dataIndex=1;
+			else if( mar.isSelected()) dataIndex=2;
 
-		datasets[dataIndex].setSelected(true);
+			datasets[dataIndex].setSelected(true);
+			loadCancelled = false;
+		}
+		else {
+			loadCancelled = true;
+		}
+	}
+	public boolean isLoadCancelled() {
+		return loadCancelled;
 	}
 	public boolean loadDB() {
 		if(loaded) return true;
-		if( dataset==-1 ) {
-			JPanel panel = new JPanel( new GridLayout(0, 1) );
-			JLabel label = new JLabel( "Select a data set to display:" );
-			panel.add( label );
-			JRadioButton sosus = new JRadioButton("Juan de Fuca \"SOSUS\"", true);
-			JRadioButton epr = new JRadioButton( "East Pacific Rise \"EPR\"", false);
-			JRadioButton mar = new JRadioButton( "Mid-Atlantic Ridge \"MAR\"", false);
-
-			ButtonGroup gp = new ButtonGroup();
-			gp.add( sosus );
-			gp.add( epr );
-			gp.add( mar );
-
-			panel.add( sosus );
-			panel.add( epr );
-			panel.add( mar );
+		if(loadCancelled) return false;
+		if(dataset==-1 ) {
 
 			datasets[dataIndex].setSelected(true);
 			return load(dataIndex);

@@ -194,7 +194,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.5.19"; //September 4th, 2025
+	public final static String VERSION = "3.7.5.21"; //September 9th, 2025
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -2693,6 +2693,7 @@ public class MapApp implements ActionListener,
 						final Database database = db[i];
 						final JMenuItem mi = (JMenuItem) evt.getSource();
 						System.gc();
+						database.setup();
 						Runnable loadDB = new Runnable() {
 							public void run() {
 								if(database.loadDB()) {

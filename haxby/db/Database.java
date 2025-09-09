@@ -71,4 +71,10 @@ public abstract interface Database extends Overlay {
 		@return the JComponent of the bottom panel.
 	*/
 	public JComponent getDataDisplay();
+	
+	/**
+	 * Does some setup before loading the DB.
+	 */
+	public default void setup() {
+	}
 }

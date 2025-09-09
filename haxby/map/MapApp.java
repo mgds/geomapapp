@@ -2717,12 +2717,17 @@ public class MapApp implements ActionListener,
 									}
 									sendLogMessage("Opening Portal$name="+database.getDBName());
 								}
-								else {
+								else if(!database.isLoadCancelled()){
 									JOptionPane.showMessageDialog(vPane, "Error loading " + currentDB.getDBName(), "", JOptionPane.ERROR_MESSAGE);
 								}
 							}
 						};
-						addProcessingTask(mi.getText(), loadDB);
+						if(database.isLoadCancelled()) {
+							mi.setSelected(false);
+						}
+						else {
+							addProcessingTask(mi.getText(), loadDB);
+						}
 					}
 					else {
 						currentDB = db[i];

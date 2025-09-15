@@ -71,4 +71,18 @@ public abstract interface Database extends Overlay {
 		@return the JComponent of the bottom panel.
 	*/
 	public JComponent getDataDisplay();
+	
+	/**
+	 * Does some setup before loading the DB.
+	 */
+	public default void setup() {
+	}
+	
+	/**
+	 * Checks to see if the DB loading was cancelled.
+	 * @return true iff the DB loading was cancelled.
+	 */
+	public default boolean isLoadCancelled() {
+		return false;
+	}
 }

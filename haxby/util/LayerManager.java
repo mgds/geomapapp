@@ -8,6 +8,8 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -153,7 +155,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 													+ "loaded layers will be saved.<br><br> "
 													+ allProblemLayers + "<br><br><hr><br>"
 												+ "Continue saving the session?</html>";
-							int partSaveValue = JOptionPane.showConfirmDialog(null, alertPartSave, "Alert: Some Layers Will Not Save",
+							int partSaveValue = JOptionPane.showConfirmDialog(MapApp.anchor, alertPartSave, "Alert: Some Layers Will Not Save",
 										JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 							if(partSaveValue ==JOptionPane.NO_OPTION) {
 								problemLayers.clear();
@@ -188,7 +190,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 
 				//Prompt User if exists
 				if(xmlFile.exists()){
-					int overwriteReturnValue = JOptionPane.showConfirmDialog(null,
+					int overwriteReturnValue = JOptionPane.showConfirmDialog(MapApp.anchor,
 							xmlFile.getName().toString() + " already exists. "
 							+ "Do you want to replace it?", "File Already Exists",
 							JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
@@ -346,7 +348,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 							e1.printStackTrace();
 					}
 				} else {
-					JOptionPane.showMessageDialog(null, xmlFile.getName().toString() + " must be in .xml format");
+					JOptionPane.showMessageDialog(MapApp.anchor, xmlFile.getName().toString() + " must be in .xml format");
 				}
 				break;
 				case JFileChooser.CANCEL_OPTION:
@@ -959,12 +961,13 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			lmFrame.toFront();
 			if (activeWindow != null) activeWindow.requestFocus();
 		}
+		map.removeOverlay(layerPanel.layer);
 	}
 
 	public void doRemove(LayerPanel layerPanel) {
 		MapApp app = (MapApp) map.getApp();
 
-		if ( layerPanel.layer instanceof Grid2DOverlay ) {
+		if ( layerPanel.layer instanceof Grid2DOverlay) {
 			app.getMapTools().getGridDialog().dispose((Grid2DOverlay)layerPanel.layer);
 		}
 		
@@ -1369,6 +1372,28 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			}
 		}
 	}
+	
+	private void moveNearMainWindow() {
+		Window parent = ((MapApp)map.getApp()).getFrame();
+		Point loc = parent.getLocation();
+		int x = loc.x + parent.getWidth();
+		int y = loc.y;
+		Rectangle bounds = parent.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
+		if(x + lmFrame.getWidth() > bounds.width+bounds.x) {
+			x = bounds.width + bounds.x - lmFrame.getWidth();
+		}
+		lmFrame.setLocation(x, y);
+	}
+	
+	public void makeShown(boolean shouldShow) {
+		if(shouldShow && !lmFrame.isVisible()) {
+			moveNearMainWindow();
+			lmFrame.setVisible(shouldShow);
+		}
+		else {
+			lmFrame.setVisible(shouldShow);
+		}
+	}
 
 //	New overlays added at index 0, so "top/highest" overlay is always at index 0 in this class
 	public void propertyChange(PropertyChangeEvent evt) {
@@ -1394,7 +1419,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 					menu = XML_Menu.getXML_Menu(evt.getPropertyName());
 				//	p.layerName = evt.getPropertyName(); 
 				}
-				p = new LayerPanel(layer,evt.getPropertyName(),layerURLString,true,menu);
+				p = new LayerPanel(layer,evt.getPropertyName(),layerURLString,layer.shouldShow(),menu);
 				add(p,0);
 				this.layerPanels.add(0,p);
 				this.overlays.add(0,layer);
@@ -1416,18 +1441,8 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 					if ( XML_Menu.commandToMenuItemHash != null && XML_Menu.commandToMenuItemHash.contains("layer_manager_cmd") ) {
 						((JCheckBoxMenuItem)XML_Menu.commandToMenuItemHash.get("layer_manager_cmd")).setSelected(true);
 					}
-
-					Window parent = lmFrame.getOwner();
-					int x = lmFrame.getLocation().x;
-					x += lmFrame.getWidth();
-					int y = lmFrame.getLocation().y;
-					if (!lmFrame.isVisible()){
-
-						lmFrame.setLocation(x, y-200);
-					}
 					Window activeWindow = FocusManager.getCurrentManager().getActiveWindow();
-
-					lmFrame.setVisible(true);
+					makeShown(true);
 					lmFrame.toFront();
 					if (activeWindow != null)
 						activeWindow.requestFocus();
@@ -1462,6 +1477,9 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 				}
 				//System.out.println("Opacity" + menuItem.opacity_value);
 				p = new LayerPanel(layer,layerName,layerURLString,true,menuItem);
+				if(!lmFrame.isVisible()) {
+					moveNearMainWindow();
+				}
 				if (evt.getPropertyName() != null) {
 					//p.layerName = evt.getPropertyName(); 
 				}
@@ -1529,15 +1547,15 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 					if ( XML_Menu.commandToMenuItemHash != null && XML_Menu.commandToMenuItemHash.contains("layer_manager_cmd") ) {
 						((JCheckBoxMenuItem)XML_Menu.commandToMenuItemHash.get("layer_manager_cmd")).setSelected(true);
 					}
-					Window parent = lmFrame.getOwner();
-					int x = lmFrame.getLocation().x;
-					x += lmFrame.getWidth();
-					int y = lmFrame.getLocation().y;
-					if (!lmFrame.isVisible()){
-						lmFrame.setLocation(x, y-200);
-					}
+//					Window parent = lmFrame.getOwner();
+//					int x = lmFrame.getLocation().x;
+//					x += lmFrame.getWidth();
+//					int y = lmFrame.getLocation().y;
+//					if (!lmFrame.isVisible()){
+//						lmFrame.setLocation(x, y-200);
+//					}
 					Window activeWindow = FocusManager.getCurrentManager().getActiveWindow();
-					lmFrame.setVisible(true);
+					makeShown(true);
 					lmFrame.toFront();
 					if (activeWindow != null)
 						activeWindow.requestFocus();

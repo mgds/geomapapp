@@ -10,4 +10,7 @@ public abstract interface Overlay {
 		@param What to draw.
 	*/
 	public void draw(java.awt.Graphics2D g);
+	public default boolean shouldShow() {
+		return true;
+	} 
 }

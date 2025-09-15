@@ -441,7 +441,7 @@ public class Radar implements ActionListener,
 			savePrompt.add(matCB);
 			savePrompt.add(ncCB);
 
-			JOptionPane.showConfirmDialog(null, savePrompt, "Save what?", JOptionPane.OK_CANCEL_OPTION);
+			JOptionPane.showConfirmDialog(MapApp.anchor, savePrompt, "Save what?", JOptionPane.OK_CANCEL_OPTION);
 
 			String type = null;
 

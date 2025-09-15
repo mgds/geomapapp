@@ -19,8 +19,6 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Vector;
 
-import javax.swing.JOptionPane;
-
 import haxby.nav.ControlPoint;
 import haxby.nav.Nav;
 import haxby.proj.Projection;
@@ -77,6 +75,7 @@ public class CreateMGGControlFile_Standalone {
 					new BufferedOutputStream(new FileOutputStream(outputControlFile, append)));
 
 			leg = MGD77file.getName().replace(extension, "");
+			System.out.print("Processing " + leg + "… ");
 
 			// System.out.println(leg);
 
@@ -134,10 +133,13 @@ public class CreateMGGControlFile_Standalone {
 			in.close();
 
 			if (!dataFound) {
-				System.out.println("No data found for " + leg);
+				System.out.println("No data found.");
 				out.flush();
 				out.close();
 				return false;
+			}
+			else {
+				System.out.println("Found data.");
 			}
 
 			//int nraw = nav.getSize();
@@ -206,8 +208,8 @@ public class CreateMGGControlFile_Standalone {
 			return true;
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			JOptionPane.showMessageDialog(null, "Not able to import: " + MGD77file, "Import Error",
-					JOptionPane.ERROR_MESSAGE);
+			
+			System.err.println("Not able to import: " + MGD77file);
 			outputControlFile.delete();
 			outputDataFile.delete();
 			return false;
@@ -232,7 +234,7 @@ public class CreateMGGControlFile_Standalone {
 
 		// save the data from the mgd77 file in a data file in the
 		// mgg_data_files directory
-		MGG.MGG_data_dir.mkdir();
+		MGG.MGG_data_dir.mkdirs();
 		outputDataFile = new File(MGG.MGG_data_dir, "mgg_data_" + leg);
 
 		BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputDataFile)));
@@ -487,7 +489,7 @@ public class CreateMGGControlFile_Standalone {
 
 		// save the data from the mgd77 file in a data file in the
 		// mgg_data_files directory
-		MGG.MGG_data_dir.mkdir();
+		MGG.MGG_data_dir.mkdirs();
 		outputDataFile = new File(MGG.MGG_data_dir, "mgg_data_" + leg);
 
 		BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputDataFile)));
@@ -500,7 +502,7 @@ public class CreateMGGControlFile_Standalone {
 		// create mgd77 directory to store the .mgd77 files once we have saved them as
 		// .a77 files
 		File mgd77Dir = new File(MGG.MGG_header_dir.getPath().replace("header", "mgd77"));
-		mgd77Dir.mkdir();
+		mgd77Dir.mkdirs();
 
 		double[] lon = new double[5000];
 		double[] lat = new double[5000];
@@ -778,7 +780,7 @@ public class CreateMGGControlFile_Standalone {
 
 		// save the data from the mgd77 file in a data file in the
 		// mgg_data_files directory
-		MGG.MGG_data_dir.mkdir();
+		MGG.MGG_data_dir.mkdirs();
 		outputDataFile = new File(MGG.MGG_data_dir, "mgg_data_" + leg);
 
 		BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputDataFile)));
@@ -960,7 +962,7 @@ public class CreateMGGControlFile_Standalone {
 	public void importMGD77Header(File mgd77leg) throws IOException {
 		// copy the file to the mgg_header_files directory
 
-		MGG.MGG_header_dir.mkdir();
+		MGG.MGG_header_dir.mkdirs();
 		String extension = mgd77leg.getName().substring(mgd77leg.getName().lastIndexOf('.'));
 		String leg = MGD77file.getName().replace(extension, "").toUpperCase();
 		File dest = new File(MGG.MGG_header_dir, leg + extension);

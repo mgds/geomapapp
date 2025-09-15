@@ -53,22 +53,6 @@ public class BasicDialog extends JPanel
 		label.setHorizontalAlignment( label.CENTER );
 		panel.add( label );
 
-		// Add check boxes
-		for(int i=0 ; i<materials.length ; i++) {
-			materials[i] = new JCheckBox(PDBMaterial.material[i].abbrev + ": " + PDBMaterial.material[i].name, true);
-			materials[i].setToolTipText(materials[i].getText());
-			panel.add(materials[i]);
-			materials[i].addActionListener(this);
-			materials[i].setActionCommand("material");
-			materials[i].setSelected( true );
-			materials[i].setBorder(on);
-		}
-		for(int i=materials.length ; i<max ; i++) {
-			label = new JLabel("");
-			label.setBorder(lb1);
-			panel.add(label);
-		}
-
 		// Add buttons
 		JRadioButton buttonS = new JRadioButton("Select All");
 		//button.setBorder( bb );
@@ -88,6 +72,23 @@ public class BasicDialog extends JPanel
 
 		panel.add(buttonS);
 		panel.add(buttonC);
+		panel.add(new JLabel(""));
+
+		// Add check boxes
+		for(int i=0 ; i<materials.length ; i++) {
+			materials[i] = new JCheckBox(PDBMaterial.material[i].abbrev + ": " + PDBMaterial.material[i].name, true);
+			materials[i].setToolTipText(materials[i].getText());
+			panel.add(materials[i]);
+			materials[i].addActionListener(this);
+			materials[i].setActionCommand("material");
+			materials[i].setSelected( true );
+			materials[i].setBorder(on);
+		}
+		for(int i=materials.length ; i<max ; i++) {
+			label = new JLabel("");
+			label.setBorder(lb1);
+			panel.add(label);
+		}
 		add( panel );
 
 		// Data Type section
@@ -98,22 +99,6 @@ public class BasicDialog extends JPanel
 		label.setForeground( Color.black );
 		label.setHorizontalAlignment( label.CENTER );
 		panel.add( label );
-
-		// Add checkboxes
-		for(int i=0 ; i<dataTypes.length ; i++) {
-			dataTypes[i] = new JCheckBox(PDBDataType.dataCode[i][0] + ": " +PDBDataType.dataCode[i][1], true);
-			dataTypes[i].setToolTipText(dataTypes[i].getText());
-			panel.add(dataTypes[i]);
-			dataTypes[i].addActionListener(this);
-			dataTypes[i].setActionCommand("dataType");
-			dataTypes[i].setSelected( true );
-			dataTypes[i].setBorder(on);
-		}
-		for(int i = dataTypes.length; i < max; i++) {
-			label = new JLabel("");
-			label.setBorder(lb1);
-			panel.add(label);
-		}
 
 		// Add buttons
 		JRadioButton buttonS2 = new JRadioButton("Select All");
@@ -132,6 +117,23 @@ public class BasicDialog extends JPanel
 
 		panel.add(buttonS2);
 		panel.add(buttonC2);
+		panel.add(new JLabel(""));
+
+		// Add checkboxes
+		for(int i=0 ; i<dataTypes.length ; i++) {
+			dataTypes[i] = new JCheckBox(PDBDataType.dataCode[i][0] + ": " +PDBDataType.dataCode[i][1], true);
+			dataTypes[i].setToolTipText(dataTypes[i].getText());
+			panel.add(dataTypes[i]);
+			dataTypes[i].addActionListener(this);
+			dataTypes[i].setActionCommand("dataType");
+			dataTypes[i].setSelected( true );
+			dataTypes[i].setBorder(on);
+		}
+		for(int i = dataTypes.length; i < max; i++) {
+			label = new JLabel("");
+			label.setBorder(lb1);
+			panel.add(label);
+		}
 
 		add( panel );
 
@@ -143,23 +145,6 @@ public class BasicDialog extends JPanel
 		label.setForeground( Color.black );
 		label.setHorizontalAlignment( label.CENTER );
 		panel.add( label );
-
-		// Add checkboxes
-		for(int i=0 ; i<rockTypes.length ; i++) {
-			String rockDisplay = (PDBRockType.rock[i].abbrev + ": " + PDBRockType.rock[i].name);
-			rockTypes[i] = new JCheckBox(PDBRockType.rock[i].abbrev + ": " + PDBRockType.rock[i].name, true);
-			rockTypes[i].setToolTipText(rockTypes[i].getText());
-			panel.add(rockTypes[i]);
-			rockTypes[i].addActionListener(this);
-			rockTypes[i].setActionCommand("rockType");
-			rockTypes[i].setSelected( true );
-			rockTypes[i].setBorder(on);
-		}
-		for(int i = rockTypes.length; i < max; i++) {
-			label = new JLabel("");
-			label.setBorder(lb1);
-			panel.add(label);
-		}
 
 		// Add buttons
 		JRadioButton buttonS3 = new JRadioButton("Select All");
@@ -178,6 +163,24 @@ public class BasicDialog extends JPanel
 
 		panel.add(buttonS3);
 		panel.add(buttonC3);
+		panel.add(new JLabel(""));
+		// Add checkboxes
+		for(int i=0 ; i<rockTypes.length ; i++) {
+			String rockDisplay = (PDBRockType.rock[i].abbrev + ": " + PDBRockType.rock[i].name);
+			rockTypes[i] = new JCheckBox(PDBRockType.rock[i].abbrev + ": " + PDBRockType.rock[i].name, true);
+			rockTypes[i].setToolTipText(rockTypes[i].getText());
+			panel.add(rockTypes[i]);
+			rockTypes[i].addActionListener(this);
+			rockTypes[i].setActionCommand("rockType");
+			rockTypes[i].setSelected( true );
+			rockTypes[i].setBorder(on);
+		}
+		for(int i = rockTypes.length; i < max; i++) {
+			label = new JLabel("");
+			label.setBorder(lb1);
+			panel.add(label);
+		}
+
 		add( panel );
 
 /*

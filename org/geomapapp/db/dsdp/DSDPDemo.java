@@ -4,6 +4,7 @@ import haxby.db.custom.DBGraph;
 import haxby.db.custom.ExcelFileFilter;
 import haxby.map.MapApp;
 import haxby.util.BrowseURL;
+import haxby.util.DisplayUtil;
 import haxby.util.PathUtil;
 import haxby.util.URLFactory;
 
@@ -12,6 +13,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -116,6 +118,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 	JRadioButton saveSelectionRB;
 	JButton okB;
 	JButton cancelB;
+	Point anchorLocation;
 	private WindowAdapter onClosingAddGraphAdapter;
 
 	static String DSDP_PATH = PathUtil.getPath("DSDP/DSDP_PATH",
@@ -222,6 +225,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 
 	public DSDPDemo(MapApp app, DSDP that_dsdp) {
 		map = app.getMap();
+		anchorLocation = app.getFrame().getLocation();
 
 		this.dsdp = that_dsdp;
 
@@ -336,9 +340,20 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 		dsdpF.addWindowListener(this);
 		dsdpF.getContentPane().add(ageP,"North");
 		dsdpF.pack();
-		dsdpF.setLocation(0, 700);
 		dsdpF.setSize(800,200);
+		Point dsdpFLoc = new Point(anchorLocation.x - dsdpF.getWidth()/5, anchorLocation.y + app.getFrame().getHeight()/2);
+		GraphicsDevice gd = app.getFrame().getGraphicsConfiguration().getDevice();
+		Rectangle bounds = gd.getDefaultConfiguration().getBounds();
+		if(dsdpFLoc.y + dsdpF.getHeight() > bounds.height + bounds.y) {
+			dsdpFLoc.y = bounds.height + bounds.y - dsdpF.getHeight();
+		}
+		if(dsdpFLoc.x < bounds.x) {
+			dsdpFLoc.x = bounds.x;
+		}
+		dsdpF.setLocation(dsdpFLoc);
+		dsdpF.toFront();
 		dsdpF.setVisible(true);
+		dsdpF.requestFocus();
 	}
 
 	public void close() {
@@ -418,6 +433,13 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			}
 		}
 		adjustment = false;
+	}
+	
+	public void toFront() {
+		if(null != dsdpF) {
+			dsdpF.toFront();
+			dsdpF.requestFocus();
+		}
 	}
 
 	public boolean getAdjustment() {
@@ -501,6 +523,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 		dsdp.db.setVisible(true);
 		map.addOverlay("DSDP", dsdp.db);
 		dsdp.db.redraw();
+		dsdpF.toFront();
 //		map.repaint();
 	}
 
@@ -756,7 +779,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 		Dimension dim = holeDialog.getSize();
 		dim.height = 800;
 		holeDialog.setSize(dim);
-		holeDialog.setLocation( 800, 0);
+		holeDialog.setLocation( anchorLocation.x + 800, anchorLocation.y);
 		holeDialog.addWindowListener( new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				fossilTB.setSelected(false);
@@ -903,16 +926,17 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 
 	public void exportExcel() {
 		JFileChooser jfc = new JFileChooser(System.getProperty("user.dir"));
+		//jfc.setLocation(anchorLocation);
 		ExcelFileFilter eff = new ExcelFileFilter();
 		jfc.setFileFilter(eff);
 		File f=new File("dsdpTable.xls");
 		jfc.setSelectedFile(f);
 		do {
-			int c = jfc.showSaveDialog(null);
+			int c = jfc.showSaveDialog(saveDialog);
 			if (c==JFileChooser.CANCEL_OPTION||c==JFileChooser.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}
@@ -940,21 +964,22 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 
 	public void exportSelectExcel(){
 		if (table.getSelectedRowCount() == 0) {
-			JOptionPane.showMessageDialog(null, "No data selected for export", "No Selection", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(saveDialog, "No data selected for export", "No Selection", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
 
 		JFileChooser jfc = new JFileChooser(System.getProperty("user.dir"));
+		//jfc.setLocation(anchorLocation);
 		ExcelFileFilter eff = new ExcelFileFilter();
 		jfc.setFileFilter(eff);
 		File f=new File("dsdpTableSelection.xls");
 		jfc.setSelectedFile(f);
 		do {
-			int c = jfc.showSaveDialog(null);
+			int c = jfc.showSaveDialog(saveDialog);
 			if (c==JFileChooser.CANCEL_OPTION||c==JFileChooser.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}
@@ -1015,7 +1040,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 				//	});
 					imageDialog.pack();
 					imageDialog.setSize( new Dimension( 400,500) );
-					imageDialog.setLocation(600,0);
+					imageDialog.setLocation(anchorLocation.x + 600,anchorLocation.y);
 				} else {
 					image.setImage( javax.imageio.ImageIO.read(haxby.util.URLFactory.url(url)));
 				}
@@ -1064,7 +1089,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 					graphDialog.getContentPane().add(panel, "North");
 					graphDialog.pack();
 					graphDialog.setSize( new Dimension( 400,500) );
-					graphDialog.setLocation(600,0);
+					graphDialog.setLocation(anchorLocation.x+600, anchorLocation.y);
 				} else {
 					graph.setPoints( new BRGTable(url), 0 );
 				}
@@ -1190,7 +1215,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 		if ( hole == null ) {
 			return;
 		}
-		Point screenLocation = new Point(0,0);
+		Point screenLocation = anchorLocation;
 		Dimension sedimentDialogSize = new Dimension( 400, 600 );
 		
 		if ( sedimentDialog != null ) {
@@ -1942,7 +1967,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			okCancelPanel.add(cancelB);
 			saveDialog.getContentPane().add(okCancelPanel,"South");
 			saveDialog.pack();
-			saveDialog.setLocation(500,500);
+			saveDialog.setLocation(dsdpF.getLocation().x + 500,dsdpF.getLocation().y + 100);
 			saveDialog.setVisible(true);
 		}
 
@@ -1980,7 +2005,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			selectSedimentDialog.add(selectAddSedimentCB);
 			selectAddSedimentCB.addItemListener(this);
 			selectSedimentDialog.pack();
-			selectSedimentDialog.setLocation( 500, 500 );
+			DisplayUtil.setRelativeLocation(selectSedimentDialog, 500, 500, MapApp.anchor);
 			selectSedimentDialog.setSize( 195, 100 );
 			selectSedimentDialog.setVisible(true);
 
@@ -2040,8 +2065,8 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 					sedimentViewDataDialog.getContentPane().add(sedimentViewDataSP);
 
 					sedimentViewDataDialog.pack();
-					sedimentViewDataDialog.setLocation( 300, 300 );
 					sedimentViewDataDialog.setSize( new Dimension( 800, 500 ) );
+					DisplayUtil.setRelativeLocation(sedimentViewDataDialog, 300, 300, MapApp.anchor);
 					sedimentViewDataDialog.setVisible(true);
 				}
 				else {
@@ -2063,8 +2088,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 			sedimentSaveDialog.setSelectedFile(sedimentSaveFile);
 
 			int c = JOptionPane.NO_OPTION;
-			Point p = new Point( 300, 300 );
-			sedimentSaveDialog.setLocation(p);
+			DisplayUtil.setRelativeLocation(sedimentSaveDialog, 300, 300, MapApp.anchor);
 
 			while ( c == JOptionPane.NO_OPTION ) {
 				c = sedimentSaveDialog.showSaveDialog(sedimentDialog);
@@ -2075,7 +2099,7 @@ public class DSDPDemo implements WindowListener, MouseMotionListener, Adjustment
 				else if ( c == JFileChooser.APPROVE_OPTION ) {
 					sedimentSaveFile = sedimentSaveDialog.getSelectedFile();
 					if ( sedimentSaveFile.exists() ) {
-						int c2 = JOptionPane.showConfirmDialog(null, "File exists, Overwrite?");
+						int c2 = JOptionPane.showConfirmDialog(MapApp.anchor, "File exists, Overwrite?");
 						if (c2 == JOptionPane.OK_OPTION ) {
 							break;
 						}

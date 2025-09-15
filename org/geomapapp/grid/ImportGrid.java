@@ -1,5 +1,6 @@
 package org.geomapapp.grid;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -9,39 +10,68 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
 import org.geomapapp.geom.CylindricalProjection;
 import org.geomapapp.geom.MapProjection;
 import org.geomapapp.geom.Mercator;
+import org.geomapapp.geom.MercatorProjection;
 import org.geomapapp.geom.ProjectionDialog;
+import org.geomapapp.geom.RectangularProjection;
+import org.geomapapp.geom.UTM;
 import org.geomapapp.geom.UTMProjection;
 import org.geomapapp.gis.shape.ESRIShapefile;
 import org.geomapapp.gis.shape.ShapeSuite;
+import org.geotools.coverage.grid.GridCoordinates2D;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridEnvelope2D;
+import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.coverage.grid.io.imageio.geotiff.GeoTiffIIOMetadataDecoder;
+import org.geotools.gce.geotiff.GeoTiffReader;
+import org.geotools.geometry.Envelope2D;
+import org.opengis.geometry.DirectPosition;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.Matrix;
+import org.opengis.referencing.operation.Projection;
+import org.geotools.referencing.crs.DefaultProjectedCRS;
+import org.geotools.referencing.operation.transform.AffineTransform2D;
 
 import haxby.map.MapApp;
 import haxby.proj.PolarStereo;
 import haxby.util.FilesUtil;
+import haxby.util.GTConverter;
 import haxby.util.GeneralUtils;
 import haxby.util.PathUtil;
 
 public class ImportGrid implements Runnable {
 	private static String[] supportedGrids = new String[] {
 		"NetCDF grid (example: .grd  or .nc)", // .grd or .nc
+		"GeoTIFF (.tif or .tiff)",
 		"ESRI ASCII grid files ( .asc )",
 		"ESRI Binary grid files ( .hdr / .flt )",
 		"GRD98 grid files ( .G98, big-endian )", // GMA 1.6.6
@@ -71,7 +101,7 @@ public class ImportGrid implements Runnable {
 			}
 		});
 
-		gridFilter.put(new Integer(1), new FileFilter() {
+		gridFilter.put(new Integer(2), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".asc") )return false;
@@ -84,7 +114,7 @@ public class ImportGrid implements Runnable {
 			}
 		});
 
-		gridFilter.put(new Integer(2), new FileFilter() {
+		gridFilter.put(new Integer(3), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".hdr") )return false;
@@ -98,7 +128,7 @@ public class ImportGrid implements Runnable {
 		});
 
 //		***** GMA 1.6.6: Add new filter for GEODAS grids
-		gridFilter.put(new Integer(3), new FileFilter() {
+		gridFilter.put(new Integer(4), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".g98") )return false;
@@ -111,7 +141,7 @@ public class ImportGrid implements Runnable {
 			}
 		});
 
-		gridFilter.put(new Integer(4), new FileFilter() {
+		gridFilter.put(new Integer(5), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".asc") )return false;
@@ -121,6 +151,17 @@ public class ImportGrid implements Runnable {
 			}
 			public String getDescription() {
 				return "Polar Projection ASCII Grids ( *.asc)";
+			}
+		});
+		
+		gridFilter.put(1, new FileFilter() {
+			public boolean accept(File f) {
+				if(f.isDirectory()) return true;
+				String extension = f.getName().toLowerCase().substring(f.getName().lastIndexOf(".")+1);
+				return extension.equals("tif") || extension.equals("tiff");
+			}
+			public String getDescription() {
+				return "GeoTIFF grids (*.tif, *.tiff)";
 			}
 		});
 	}
@@ -171,11 +212,14 @@ public class ImportGrid implements Runnable {
 		this.suite = suite;
 		this.mapType = mapType;
 		area = new JTextArea(12,50);
+		area.setLineWrap(true);
+		area.setWrapStyleWord(true);
 		dec = new DecimateXBG(area, this);
 		init();
 	}
 
 	void init() {
+		MapApp app = (MapApp) suite.map.getApp();
 		JPanel panel = new JPanel();
 		gridB = new JButton("Import Grid");
 		panel.add(gridB);
@@ -190,14 +234,140 @@ public class ImportGrid implements Runnable {
 
 		frame.getContentPane().add( scroll );
 		frame.pack();
+		frame.setLocation(app.getFrame().getLocation());
 		frame.setVisible(true);
 
 		// GMA 1.4.8: Automatically bring up file chooser to select grid
 		gridB.doClick();
 		
 		//determine whether logging is selected in Preferences
-		MapApp app = (MapApp) suite.map.getApp();
 		log = app.logGridImports;
+	}
+	
+	class GeotiffGridFile implements GridFile {
+		private GridCoverage2D gridCoverage;
+		private Grid2D grid;
+		private GridEnvelope2D env;
+		private double[] _wesn;
+		private MapProjection proj;
+		private GeoTiffIIOMetadataDecoder mdd;
+		private boolean flip;
+		private String name;
+		
+		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn, String nameIn) {
+			this(gcIn, envIn, projIn, mddIn, nameIn, false);
+		}
+		
+		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn, String nameIn, boolean shouldFlip) {
+			grid = null;
+			_wesn = null;
+			gridCoverage = gcIn;
+			env = envIn;
+			proj = projIn;
+			mdd = mddIn;
+			flip = shouldFlip;
+			name = nameIn;
+		}
+		
+		public Grid2D getGrid() {
+			if(null == grid) {
+				GridGeometry2D geom = gridCoverage.getGridGeometry();
+				Matrix m = ((AffineTransform2D)geom.getGridToCRS2D()).getMatrix();
+				double xOffset = m.getElement(0, 2),
+						yOffset = m.getElement(1, 2),
+						dx = m.getElement(0, 0),
+						dy = m.getElement(1, 1);
+				double posDx = Math.abs(dx), posDy = Math.abs(dy);
+				int signDx = (int)(posDx/dx), signDy = (int)(posDy/dy);
+				double tileOffsetX = dx/2, tileOffsetY = dy/2;
+				MapProjection proj2;
+				appendNewText("\nGetting the projection…");
+				if(proj instanceof UTM) {
+					appendNewText(" UTM\n");
+					pd.setUtmHemisphere(((UTM)proj).getHemisphere());
+					proj2 = new UTMProjection(xOffset-tileOffsetX, yOffset-tileOffsetY, posDx, posDy, (UTM)proj);
+				}
+				else {
+					appendNewText(" Rectangular\n");
+					RectangularProjection rproj = (RectangularProjection)proj;
+					double[] projWesn = rproj.getWESN();
+					projWesn[0] += tileOffsetX;
+					projWesn[2] -= tileOffsetY;
+					projWesn[1] -= tileOffsetX;
+					projWesn[3] += tileOffsetY;
+					proj2 = new RectangularProjection(projWesn, rproj.getWidth(), rproj.getHeight());
+				}
+				double nanValue = mdd.hasNoData()?mdd.getNoData():Double.NaN;
+				pd.setNoData(nanValue);
+				double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
+				GridCoordinates2D low = env.getLow(), high = env.getHigh();
+				int numCells = (high.y-low.y+1)*(high.x-low.x+1);
+				int howManyHundred = numCells/100;
+				appendNewText("\nGetting Z range… ");
+				for(int y = low.y; y < high.y; y++) {
+					for(int x = low.x; x < high.x; x++) {
+						int whichCell = (y*(high.x-low.x+1) + (x-low.x));
+						if(0 == howManyHundred || 0 == whichCell % howManyHundred) {
+							int percent = whichCell * 100 / numCells;
+							showPercent(percent);
+						}
+						else if(x+1 == high.x && y+1 == high.y) {
+							showPercent(100);
+						}
+						double[] vals = gridCoverage.evaluate(new GridCoordinates2D(x, y), (double[])null);
+						if(!Double.isNaN(vals[0]) && (Double.isNaN(nanValue) || Math.abs(vals[0] - nanValue) > 0.00001)) {
+							if(vals[0] < minZ) minZ = vals[0];
+							if(vals[0] > maxZ) maxZ = vals[0];
+						}
+					}
+				}
+				pd.setMinMaxZ(minZ, maxZ);
+				pd.showPixelNodeCheckBox(true);
+				pd.setDx(dx);
+				pd.setDy(dy);
+				waiting = false;
+				MapProjection tmpProj = getProjection(name, proj, new double[] {xOffset, xOffset+dx*env.width, yOffset+dy*env.height, yOffset}, env.width, env.height);
+				if(null == tmpProj) {
+					return null;
+				}
+				boolean hasNoData = !Double.isNaN(pd.getNoData());
+				if(hasNoData) nanValue = pd.getNoData();
+				else nanValue = Double.NaN;
+				double[] gridWesn = getGridWESN(tmpProj, new Rectangle(0, 0, env.width, env.height));
+				flip = pd.getFlipGrid();
+				double dx2 = (gridWesn[1] - gridWesn[0])/env.width,
+						dy2 = (gridWesn[3] - gridWesn[2])/env.height;
+				if(dxMin > dx2) dxMin = dx2;
+				if(dyMin > dy2) dyMin = dy2;
+				waiting = true;
+				appendNewText("\nConverting the grid… ");
+				//displayWaitingDots();
+				Date start = new Date();
+				GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, tmpProj, hasNoData, nanValue, signDx, flip?(-signDy):signDy, ImportGrid.this);
+				Date end = new Date();
+				long durMillis = end.getTime() - start.getTime();
+				if(durMillis > 1000) {
+					Duration elapsed = Duration.ofMillis(durMillis);
+					String elapsedStr = "Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase();
+					appendNewText(elapsedStr.toLowerCase());
+					System.out.println(elapsedStr);
+				}
+				else {
+					String elapsedStr = "Took " + durMillis + "ms";
+					appendNewText(elapsedStr.toLowerCase());
+					System.out.println(elapsedStr);
+				}
+				if(zMin > tmp.getLowest()) zMin = tmp.getLowest();
+				if(zMax < tmp.getHighest()) zMax = tmp.getHighest();
+				grid = tmp.data;
+				_wesn = gridWesn;
+			}
+			return grid;
+		}
+		public double[] getWesn() {
+			return _wesn;
+		}
+		public String getName() { return name; }
 	}
 
 	void begin() {
@@ -216,7 +386,7 @@ public class ImportGrid implements Runnable {
 
 	void open() throws IOException {
 		// show choice of which grid to import
-		Object c = JOptionPane.showInputDialog(null,
+		Object c = JOptionPane.showInputDialog(((MapApp)suite.map.getApp()).getFrame(),
 								"<html><b>Select a grid type to import.</b></html>\n" + " ",
 								"Import 2-D Grid File", 
 								JOptionPane.QUESTION_MESSAGE,
@@ -252,6 +422,7 @@ public class ImportGrid implements Runnable {
 				FileFilter fileFilter = (FileFilter) gridFilter.get( new Integer(gridType));
 
 				chooser.addChoosableFileFilter(fileFilter);
+				chooser.setFileFilter(fileFilter);
 				int ok = chooser.showOpenDialog(frame);
 				File[] choice = null;
 				if( ok!=JFileChooser.CANCEL_OPTION ) {
@@ -261,6 +432,7 @@ public class ImportGrid implements Runnable {
 				chooser.setFileSelectionMode( mode );
 				chooser.removeChoosableFileFilter(fileFilter);
 				if( ok==JFileChooser.CANCEL_OPTION ) {
+					frame.setVisible(false);
 					return;
 				}
 
@@ -272,21 +444,21 @@ public class ImportGrid implements Runnable {
 						showFormatError(choice[0].getName());
 					}
 					break;
-				case 1:
+				case 2:
 					try {
 						openESRI_ASCII(choice);
 					} catch (IOException e) {
 						showFormatError(choice[0].getName());
 					}
 					break;
-				case 2:
+				case 3:
 					try {
 						openESRI_Binary(choice);
 					} catch (IOException e) {
 						showFormatError(choice[0].getName());
 					}
 					break;
-				case 3:
+				case 4:
 					try {
 						// GMA 1.6.6: Added GRD98 grid format option
 						openGRD98(choice);
@@ -294,10 +466,18 @@ public class ImportGrid implements Runnable {
 						showFormatError(choice[0].getName());
 					}
 					break;
-				case 4:
+				case 5:
 					try {
 						openPolarASC(choice);
 					} catch (IOException e) {
+						showFormatError(choice[0].getName());
+					}
+				case 1:
+					try {
+						//GMA 3.7.5: added Geotiff grid import
+						openGeotiff(choice);
+					}
+					catch(IOException e) {
 						showFormatError(choice[0].getName());
 					}
 				default:
@@ -482,6 +662,82 @@ public class ImportGrid implements Runnable {
 		}
 		
 	}
+	
+	void openGeotiff(File[] files) throws IOException {
+		if(files.length == 0) return;
+		if(files.length < 1) pd.setFloorCeilingZ(Double.MIN_VALUE, Double.MAX_VALUE);
+		String name = files[0].getParentFile().getName();
+		if(1 == files.length) {
+			name = files[0].getName();
+			name = name.substring(0, name.lastIndexOf("."));
+		}
+		zScale = new double[files.length];
+		zScale[0] = 1;
+		add_offset = new double[files.length]; 
+		area.setText("Opening " + name);
+		area.update(area.getGraphics());
+		double furthestWest = Double.MAX_VALUE, furthestEast = -Double.MAX_VALUE, furthestNorth = -Double.MAX_VALUE, furthestSouth = Double.MAX_VALUE;
+		waiting = true;
+		//displayWaitingDots();
+		dxMin = dyMin = Double.MAX_VALUE;
+		zMin = Double.MAX_VALUE;
+		zMax = -Double.MAX_VALUE;
+		GridFile[] gridFiles = new GridFile[files.length];
+		flipGrid = new boolean[files.length];
+		pd.showFlipGridCheckBox(true);
+		for(currentIndex = 0; currentIndex < files.length; currentIndex++) {
+			File file = files[currentIndex];
+			//read the file with GeoTools
+			GeoTiffReader reader = new GeoTiffReader(file);
+			GeoTiffIIOMetadataDecoder mdd = reader.getMetadata();
+			GridCoverage2D gridCoverage = reader.read(null);
+			GridGeometry2D geom = gridCoverage.getGridGeometry();
+			Envelope2D coordRange = geom.getEnvelope2D();
+			GridEnvelope2D env = geom.getGridRange2D();
+			GridCoordinates2D low = env.getLow(), high = env.getHigh();
+			int gridWidth = high.x-low.x+1, gridHeight = high.y-low.y+1;
+			int size = gridWidth * gridHeight;
+			//TODO determine what the max size is before it gets to take too long to process
+			
+			appendNewText("\nReading the " + size + " cells of " + file.getName() + " (" + gridWidth + "x" + gridHeight + ").");
+			//assume for now it's not too big
+			DirectPosition lowerCorner = coordRange.getLowerCorner(), upperCorner = coordRange.getUpperCorner();
+			//convert the file to Grid2D
+			//get the projection first
+			final MapProjection proj = GTConverter.getGmaProj(geom);
+			gridFiles[currentIndex] = new GeotiffGridFile(gridCoverage, env, proj, mdd, file.getName());
+			if(null == gridFiles[currentIndex].getGrid()) {
+				appendNewText("\nCancelled import of " + file.getName());
+				continue;
+			}
+			appendNewText("\nGetting the WESN");
+			double[] curWesn = ((GeotiffGridFile)gridFiles[currentIndex]).getWesn();
+			if(furthestWest > curWesn[0]) furthestWest = curWesn[0];
+			if(furthestEast < curWesn[1]) furthestEast = curWesn[1];
+			if(furthestSouth > curWesn[2]) furthestSouth = curWesn[2];
+			if(furthestNorth < curWesn[3]) furthestNorth = curWesn[3];
+			appendNewText("\nFinished converting " + file.getName() + ".");
+		}
+		if(furthestWest <= furthestEast) {
+			mostWest = furthestWest;
+			mostEast = furthestEast;
+			mostSouth = furthestSouth;
+			mostNorth = furthestNorth;
+			pd.setWESNRange(furthestWest, furthestEast, furthestSouth, furthestNorth);
+			wesn = new double[] {furthestWest, furthestEast, furthestSouth, furthestNorth};
+			pd.setMinMaxZ(zMin, zMax);
+			waiting = false;
+			if(files.length>1) {
+				appendNewText("\nAll conversions complete. Tiling the grids.");
+			}
+			else {
+				appendNewText("\nTiling the grid.");
+			}
+			tileGrids(name, files, gridFiles, 360./640);
+			MapApp.sendLogMessage("Imported_GeoTIFF_Grid&name="+name+"&WESN="+wesn[0]+","+wesn[1]+","+wesn[2]+","+wesn[3]);
+		}
+		waiting = false;
+	}
 
 	void openPolarASC(File[] files)  throws IOException {
 		String name = files[0].getParentFile().getName();
@@ -584,8 +840,10 @@ public class ImportGrid implements Runnable {
 			Double[] northPositive = new Double[files.length];
 
 			waiting = true;
-			displayWaitingDots();
+			//displayWaitingDots();
+			appendNewText("\nGetting combined grid range… ");
 			for( int k=0 ; k<files.length ; k++) {
+				if(files.length < 100 || k % (files.length/100) == 0) showPercent(100 * (k+1) / files.length);
 				GrdProperties gridP1 = new GrdProperties(files[k].getPath());
 				// z range
 				lowestMin[k] = gridP1.z_range[0];
@@ -619,6 +877,7 @@ public class ImportGrid implements Runnable {
 		}
 
 		currentIndex = 0;
+		appendNewText("\nGetting the Z scale…");
 		zMinTemp = new Double[files.length];
 		zMaxTemp = new Double[files.length];
 //		Handling multiple input files and finding the min/max bounds of the set
@@ -660,12 +919,14 @@ public class ImportGrid implements Runnable {
 				}
 			}
 			waiting = false;
+			pd.setDx(gridP.spacing[0]);
+			pd.setDy(gridP.spacing[1]);
 			final MapProjection proj = getProjection(files[k].getName(), gridP.getProjection(), gridWESN, gridP.dimension[0], gridP.dimension[1]);
 			if ( proj == null ) {
 				return;
 			}
 			waiting = true;
-			displayWaitingDots();
+			//displayWaitingDots();
 			double[] wesnGrid = getGridWESN(proj, new Rectangle(0, 0, gridP.dimension[0], gridP.dimension[1]));
 
 			if ( proj instanceof UTMProjection) {
@@ -702,7 +963,7 @@ public class ImportGrid implements Runnable {
 			grids[k] = new GridFile() {
 				public Grid2D getGrid() throws IOException {
 					GrdProperties gridP = new GrdProperties(file.getPath(), thisFlipGrid);
-					Grid2D grid = Grd.readGrd(file.getPath(), null, gridP, thisFlipGrid, noData);
+					Grid2D grid = Grd.readGrd(file.getPath(), null, gridP, thisFlipGrid, noData, ImportGrid.this);
 					if (grid == null) {
 						return null;
 					}
@@ -753,11 +1014,17 @@ public class ImportGrid implements Runnable {
 			Double[] southNegative = new Double[files.length];
 			Double[] northPositive = new Double[files.length];
 			waiting = true;
-			displayWaitingDots();
+			//displayWaitingDots();
+			if(files.length>1) {
+				appendNewText("\nGetting Combined Range of Grids… ");
+			}
+			else {
+				appendNewText("\nGetting Grid Range… ");
+			}
 			for( int k=0 ; k<files.length ; k++) {				
 				ASC_Grid gridFile = new ASC_Grid(files[k]);
 				gridFile.readHeader();
-				gridFile.readGrid();
+				gridFile.readGrid(ImportGrid.this);
 
 				lowestMin[k] = gridFile.zMin;
 				highestMax[k] = gridFile.zMax;
@@ -768,6 +1035,7 @@ public class ImportGrid implements Runnable {
 				southNegative[k] = gridFile.y0;
 				northPositive[k] = gridFile.y0 + (gridFile.height - 1) * gridFile.dx;
 				//System.out.println("w " + westNegative[k] + " e " + eastPositive[k] + " s " +  southNegative[k] + " n " + northPositive[k]);
+				showPercent(100 * k / files.length);
 				currentIndex++;
 			}
 			Arrays.sort(lowestMin);
@@ -798,7 +1066,7 @@ public class ImportGrid implements Runnable {
 			ASC_Grid gridFile = new ASC_Grid(files[k]);
 
 			gridFile.readHeader();
-			gridFile.readGrid();
+			gridFile.readGrid(ImportGrid.this);
 			double gridWESN[] = new double[] { gridFile.x0, gridFile.x0 + (gridFile.width - 1) * gridFile.dx,
 					gridFile.y0, gridFile.y0 + (gridFile.height - 1) * gridFile.dx};
 
@@ -807,14 +1075,15 @@ public class ImportGrid implements Runnable {
 			pd.removeResetFeature(); // remove reset button for all
 
 			waiting = false;
+			showPercent(100);
 			final MapProjection proj = getProjection(files[k].getName(), gridFile.proj, gridWESN, gridFile.width, gridFile.height);
 			if (proj == null)
 				return;
 			waiting = true;
-			displayWaitingDots();
+			//displayWaitingDots();
 
 			gridFile.proj = proj;
-			Grid2D grid = gridFile.getGrid();
+			Grid2D grid = gridFile.getGrid(ImportGrid.this);
 				
 			if (gridFile.proj instanceof UTMProjection) {
 				double dx = (grid.getWESN()[1] - grid.getWESN()[0]) / gridFile.width;
@@ -851,7 +1120,7 @@ public class ImportGrid implements Runnable {
 					ASC_Grid gridFile = new ASC_Grid(file);
 					gridFile.readHeader();
 					gridFile.proj = proj;
-					return gridFile.getGrid();
+					return gridFile.getGrid(ImportGrid.this);
 				}
 			};
 			currentIndex++;
@@ -1176,10 +1445,12 @@ public class ImportGrid implements Runnable {
 		int iy2 = (int)Math.ceil(y2/320.);
 
 		double totalCount = 0;
-		appendNewText("\nTiling from X: " + ix1 + " to " + ix2 + "\n\t and Y: " + iy1 + " to " + iy2);
+		appendNewText("\nTiling from X: " + ix1 + " to " + ix2 + "\n\t and Y: " + iy1 + " to " + iy2 + "…\n");
 		waiting = true;
-		displayWaitingDots();
+		//displayWaitingDots();
 
+		int numCells = (ix2-ix1+1) * (iy2-iy1+1);
+		int howManyHundred = numCells/100;
 		for( int ix=ix1 ; ix<=ix2 ; ix++) {
 			int xA = (int)Math.max(ix*320, x1);
 			int xB = (int)Math.min((ix+1)*320, x2);
@@ -1188,7 +1459,13 @@ public class ImportGrid implements Runnable {
 				xB -= mapWrap;
 			}
 			for( int iy=iy1 ; iy<=iy2 ; iy++) {
-
+				int whichCell = (ix-ix1)*(iy2-iy1) + (iy-iy1);
+				if(0 == howManyHundred || whichCell%howManyHundred == 0) {
+					showPercent(whichCell * 100 / numCells);
+				}
+				else if(iy == iy2 && ix == ix2) {
+					showPercent(100);
+				}
 				int yA = (int)Math.max(iy*320, y1);
 				int yB = (int)Math.min((iy+1)*320, y2);
 				Grid2D.Short tile=null;
@@ -1356,18 +1633,52 @@ public class ImportGrid implements Runnable {
 	/*
 	 * append new text to the Import Grid log area
 	 */
+	private volatile Queue<String> toAppend = new ConcurrentLinkedQueue<>();
 	protected void appendNewText(final String txt) {
-		Runnable runnable = new UpdateArea();
-		Thread thread = new Thread(runnable);
-		areaText = txt;
-		thread.start();
-	}	
-
-	class UpdateArea implements Runnable {
+		toAppend.add(txt);
+		Runnable r = new Runnable() {
+			public void run() {
+				synchronized(area) {
+					area.append(toAppend.remove());
+					area.setCaretPosition(area.getText().length()-1);
+					area.update(area.getGraphics());
+				}
+			}
+		};
+		new Thread(r).start();
+	}
+	
+	public void showPercent(int percent) {
+		if(1 > percent) {
+			appendNewText("(0%)");
+		}
+		else {
+			new Thread(new PercentDisplay(percent)).start();
+		}
+	}
+	
+	class PercentDisplay implements Runnable {
+		private int percent;
+		public PercentDisplay(int percentIn) {
+			percent = percentIn;
+		}
+		private String percString() {
+			return "(" + percent + "%)";
+		}
+		private String prevPercString() {
+			return "(" + (percent-1) + "%)";
+		}
 		public void run() {
-			area.append(areaText);
-			area.setCaretPosition(area.getText().length() -1);
-			area.update(area.getGraphics());
+			synchronized(area) {
+				if(0 == percent) {
+					area.append("\n"+percString());
+				}
+				else {
+					area.setText(area.getText().replace(prevPercString(), percString()));
+				}
+				if(area.getText().length()>0)area.setCaretPosition(area.getText().length()-1);
+				if(area.getGraphics() != null) area.update(area.getGraphics());
+			}
 		}
 	}
 
@@ -1402,6 +1713,7 @@ public class ImportGrid implements Runnable {
 	}
 	
 	private void showFormatError (String filename) {
+		waiting = false;
 		String msg = "Unable to open " + filename + ". <br>Incompatible file format."
 				+ "<html><br>See <a href=\""+PathUtil.getPath("PUBLIC_HOME_PATH")+"FAQ.html#ImportingData\">"
 				+ "GeoMapApp FAQ</a> for supported formats.</html> ";

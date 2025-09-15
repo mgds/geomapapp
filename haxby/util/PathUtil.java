@@ -46,7 +46,7 @@ public class PathUtil {
 		if (keyToURL == null) loadPaths();
 		String url = keyToURL.get(key.toLowerCase());
 		// if running in dev mode, replace any production URLs with the dev version
-		if (url != null && MapApp.isDevMode()) {
+		if (url != null && MapApp.BASE_URL != null && MapApp.BASE_URL.equals(MapApp.DEV_URL)) {
 			url = url.replace(MapApp.PRODUCTION_URL, MapApp.DEV_URL);
 		}
 		if (url != null) return url;
@@ -58,7 +58,7 @@ public class PathUtil {
 		if (keyToURL == null) loadPaths();
 		String url = keyToURL.get(key.toLowerCase());
 		// if running in dev mode, replace any production URLs with the dev version
-		if (url != null && MapApp.BASE_URL != null && MapApp.BASE_URL.matches(MapApp.DEV_URL)) {
+		if (url != null && MapApp.BASE_URL != null && MapApp.BASE_URL.equals(MapApp.DEV_URL)) {
 			url = url.replace(MapApp.PRODUCTION_URL, MapApp.DEV_URL);
 		}
 		if (url != null) return url;
@@ -93,7 +93,7 @@ public class PathUtil {
 
 		} catch (IOException ex) {
 			ex.printStackTrace();
-			JOptionPane.showMessageDialog(null, "Could not connect to the GeoMapApp server. It's likely that you have internet issues or the server is down.", "", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Could not connect to the GeoMapApp server. It's likely that you have internet issues or the server is down.", "", JOptionPane.ERROR_MESSAGE);
 			System.exit(1);
 		} catch (ParserConfigurationException e) {
 			e.printStackTrace();

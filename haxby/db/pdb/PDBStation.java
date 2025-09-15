@@ -1,6 +1,7 @@
 package haxby.db.pdb;
 
 import haxby.map.MapApp;
+import haxby.util.NumberFormatUtil;
 import haxby.util.PathUtil;
 import haxby.util.URLFactory;
 
@@ -18,6 +19,9 @@ import java.util.HashMap;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import javax.swing.JDialog;
+import javax.swing.SwingUtilities;
+
 public class PDBStation {
 	public static PDBStation[] stations = null;
 	String id;
@@ -32,6 +36,7 @@ public class PDBStation {
 	byte alterationFlags;
 	long rockTypes;
 	static boolean loaded = false;
+	private static JDialog dialog = null;
 	public static HashMap<String, PDBStation> idToStation = new HashMap<String, PDBStation>();
 
 	static String PETDB_PATH = PathUtil.getPath("PORTALS/PETDB_PATH",
@@ -155,6 +160,11 @@ public class PDBStation {
 		stations = tmp;
 		return size();
 	}
+	
+	static void setProgressDialog(JDialog dlg) {
+		dialog = dlg;
+	}
+	
 	static void unload() {
 		if (stations != null) {
 			for (int i = 0; i < stations.length; i++)
@@ -189,6 +199,7 @@ public class PDBStation {
 		//first read the header
 		s = in.readLine();
 		
+		int count = 0;
 		//then read the data
 		SortedMap<Integer, PDBStation> stations_map = new TreeMap<>();
 		while ((s = in.readLine())!= null){
@@ -198,6 +209,15 @@ public class PDBStation {
 			id = results[1];
 			expedition =  results[2].length() > 0 ? Integer.parseInt(results[2]) : 0;
 			location = Integer.parseInt(results[3]);
+			count++;
+			if(null != dialog) {
+				final int tnuoc = count;
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						dialog.setTitle("Processing the " + NumberFormatUtil.cardinalToOrdinal(tnuoc) + " station…");
+					}
+				});
+			}
 			if(PDBLocation.locations[location] == null) {
 				stations_map.put(index, null);
 			}

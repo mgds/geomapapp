@@ -294,6 +294,7 @@ public class SearchTree implements 	ActionListener,
 
 	public void setMapApp(MapApp mapApp) {
 		this.mapApp = mapApp;
+		searchTreeFrame.setLocation(mapApp.getFrame().getLocation());
 	}
 
 	public SearchTree tearOffSearchTree(DefaultMutableTreeNode rootNode, int xpos, int ypos) {

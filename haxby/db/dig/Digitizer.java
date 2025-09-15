@@ -99,6 +99,7 @@ public class Digitizer implements Database,
 	private boolean loadedGMRTForDig = false;
 	private boolean isSurveyPlanner = false; //is Digitizer being used by Survey Planner
 	private double speed = 0; // for use in Survey Planner
+	public boolean didLoadGMRT = false;
 	
 	public Digitizer( XMap map ) {
 		this.map = map;
@@ -351,7 +352,8 @@ public class Digitizer implements Database,
 				LineSegmentsObject obj = (LineSegmentsObject) table.getModel();
 				profile.setLine( obj );
 				if (isSurveyPlanner && !((MapApp)map.getApp()).getMapTools().getGridDialog().isDialogVisible()) {
-					((MapApp)map.getApp()).getMapTools().getGridDialog().getToggle().doClick();
+					((MapApp)map.getApp()).getMapTools().getGridDialog().getToggle().setSelected(true);
+					didLoadGMRT = true;
 				}
 				graph.setPoints( profile, 0 );
 				graph.setScrollableTracksViewportWidth(autoscaleCB.isSelected());
@@ -454,10 +456,10 @@ public class Digitizer implements Database,
 		}
 		if(evt.getSource() == insertBtn) {
 			if(table.getSelectedRows().length != 1) {
-				JOptionPane.showMessageDialog(null, "Please select a point from the table or map.", "", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "Please select a point from the table or map.", "", JOptionPane.PLAIN_MESSAGE);
 			}
 			else {
-				JOptionPane.showMessageDialog(null, "The previously digitized points will temporarily disappear from the table while new points are being chosen.", "", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "The previously digitized points will temporarily disappear from the table while new points are being chosen.", "", JOptionPane.PLAIN_MESSAGE);
 				lastPointSelected = table.getSelectedRow();
 				// similar to Start Digitizing
 				startStopBtn.setSelected(true);
@@ -800,7 +802,7 @@ public class Digitizer implements Database,
 			}
 
 		} catch(IOException e) {
-			JOptionPane.showMessageDialog(null,
+			JOptionPane.showMessageDialog(MapApp.anchor,
 					" Save failed: "+e.getMessage(),
 					" Save failed",
 					 JOptionPane.ERROR_MESSAGE);

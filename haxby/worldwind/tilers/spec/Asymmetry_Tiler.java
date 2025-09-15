@@ -22,7 +22,7 @@ public class Asymmetry_Tiler {
 		}
 
 		GrdProperties gridP = new GrdProperties(args[0]);
-		Grid2D grid = Grd.readGrd(args[0], null, gridP, false);
+		Grid2D grid = Grd.readGrd(args[0], null, gridP, false, null);
 		
 		for (double d : grid.getWESN()) {
 			System.out.println(d);

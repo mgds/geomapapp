@@ -51,7 +51,10 @@ public class PMEL implements Database, ActionListener {
 			"Easter Microplate 22S, 1996",
 			"Gorda Ridge Seismic Event 2001" //2
 };
-
+	private int whichOption;
+	private int dataIndex;
+	private boolean loadCancelled = false;
+	
 	public PMEL(XMap map) {
 		this.map = map;
 		earthquakes=new Vector<PMELEvent>();
@@ -74,33 +77,47 @@ public class PMEL implements Database, ActionListener {
 	public String getDescription() {
 		return "Deep Ocean Seismicity from Hydroacoustic Monitoring";
 	}
-	public boolean loadDB() {
-		if(loaded) return true;
-		if( dataset==-1 ) {
-			JPanel panel = new JPanel( new GridLayout(0, 1) );
-			JLabel label = new JLabel( "Select a data set to display:" );
-			panel.add( label );
-			JRadioButton sosus = new JRadioButton("Juan de Fuca \"SOSUS\"", true);
-			JRadioButton epr = new JRadioButton( "East Pacific Rise \"EPR\"", false);
-			JRadioButton mar = new JRadioButton( "Mid-Atlantic Ridge \"MAR\"", false);
+	public void setup() {
+		JPanel panel = new JPanel( new GridLayout(0, 1) );
+		JLabel label = new JLabel( "Select a data set to display:" );
+		panel.add( label );
+		JRadioButton sosus = new JRadioButton("Juan de Fuca \"SOSUS\"", true);
+		JRadioButton epr = new JRadioButton( "East Pacific Rise \"EPR\"", false);
+		JRadioButton mar = new JRadioButton( "Mid-Atlantic Ridge \"MAR\"", false);
 
-			ButtonGroup gp = new ButtonGroup();
-			gp.add( sosus );
-			gp.add( epr );
-			gp.add( mar );
+		ButtonGroup gp = new ButtonGroup();
+		gp.add( sosus );
+		gp.add( epr );
+		gp.add( mar );
 
-			panel.add( sosus );
-			panel.add( epr );
-			panel.add( mar );
+		panel.add( sosus );
+		panel.add( epr );
+		panel.add( mar );
+		
+		whichOption = JOptionPane.showConfirmDialog( map.getTopLevelAncestor(),
+				panel, "Select", JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.PLAIN_MESSAGE);
 
-			int ok = JOptionPane.showConfirmDialog( map.getTopLevelAncestor(),
-						panel, "Select", JOptionPane.OK_CANCEL_OPTION,
-						JOptionPane.PLAIN_MESSAGE);
-			if(ok!=JOptionPane.OK_OPTION) return false;
-			int dataIndex = 0;
+		if(whichOption == JOptionPane.OK_OPTION) {
+			dataIndex = 0;
 			if( sosus.isSelected()) dataIndex=0;
 			else if( epr.isSelected()) dataIndex=1;
 			else if( mar.isSelected()) dataIndex=2;
+
+			datasets[dataIndex].setSelected(true);
+			loadCancelled = false;
+		}
+		else {
+			loadCancelled = true;
+		}
+	}
+	public boolean isLoadCancelled() {
+		return loadCancelled;
+	}
+	public boolean loadDB() {
+		if(loaded) return true;
+		if(loadCancelled) return false;
+		if(dataset==-1 ) {
 
 			datasets[dataIndex].setSelected(true);
 			return load(dataIndex);
@@ -448,7 +465,7 @@ public class PMEL implements Database, ActionListener {
 		}
 		if( evt.getSource()==loadB) {
 			// Add progress bar while retrieving list of data
-			ProcessingDialog ld = new ProcessingDialog(new JFrame(), new JLabel());
+			ProcessingDialog ld = new ProcessingDialog(MapApp.getApp().getFrame(), MapApp.getApp().getMap());
 			ld.addTask("Retrieving Data", new Thread( new Runnable() {
 			public void run() {
 				for( int k=0 ; k<3 ; k++) {
@@ -466,7 +483,7 @@ public class PMEL implements Database, ActionListener {
 		//From the sorted list of specific events, find the index from the unordered list to match the filename and load.
 		if( evt.getSource()==loadB2) {
 			// Add progress bar while retrieving list of data
-			ProcessingDialog ld = new ProcessingDialog(new JFrame(), new JLabel());
+			ProcessingDialog ld = new ProcessingDialog(MapApp.getApp().getFrame(), MapApp.getApp().getMap());
 			ld.addTask("Retrieving Data", new Thread( new Runnable() {
 			public void run() {
 				for( int l=0 ; l<activity.getItemCount(); l++) {

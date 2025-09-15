@@ -326,7 +326,7 @@ public class WMSViewServer implements ActionListener {
 					supportedReader = true;
 			}
 			if (!supportedReader) {
-				JOptionPane.showMessageDialog(null, "No Supported Image Formats Available",
+				JOptionPane.showMessageDialog(MapApp.anchor, "No Supported Image Formats Available",
 										"Web Map Service does not supply any supported image formats", JOptionPane.ERROR_MESSAGE);
 				capabilities = null;
 				return;
@@ -516,7 +516,7 @@ public class WMSViewServer implements ActionListener {
 				capabilitiesURL = URLFactory.url(tmp);
 			} catch (MalformedURLException e1) {
 				reset();
-				JOptionPane.showMessageDialog(null, "Invalid URL", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "Invalid URL", "MalformedURLException", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
 			// Send I/O stream connection.

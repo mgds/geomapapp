@@ -1,5 +1,7 @@
 package haxby.db.custom;
 
+import haxby.map.MapApp;
+import haxby.util.DisplayUtil;
 import haxby.util.URLFactory;
 
 import java.awt.BorderLayout;
@@ -151,7 +153,7 @@ public class CustomGraph implements WindowListener, ItemListener, ActionListener
 			JScrollPane sedimentSP = new JScrollPane( testBox, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
 			testDialog.getContentPane().add( sedimentSP, "Center" );
 			testDialog.pack();
-			testDialog.setLocation( 500, 500 );
+			DisplayUtil.setRelativeLocation(testDialog, 500, 500, MapApp.anchor);
 			testDialog.setSize( 600, 400 );
 			testDialog.setVisible(true);
 		} catch (IOException e) {
@@ -217,8 +219,7 @@ public class CustomGraph implements WindowListener, ItemListener, ActionListener
 			sedimentSaveDialog.setSelectedFile(sedimentSaveFile);
 
 			int c = JOptionPane.NO_OPTION;
-			Point p = new Point( 300, 300 );
-			sedimentSaveDialog.setLocation(p);
+			DisplayUtil.setRelativeLocation(sedimentSaveDialog, 300, 300, MapApp.anchor);
 
 			while ( c == JOptionPane.NO_OPTION ) {
 				c = sedimentSaveDialog.showSaveDialog(testDialog);
@@ -228,7 +229,7 @@ public class CustomGraph implements WindowListener, ItemListener, ActionListener
 				else if ( c == JFileChooser.APPROVE_OPTION ) {
 					sedimentSaveFile = sedimentSaveDialog.getSelectedFile();
 					if ( sedimentSaveFile.exists() ) {
-						int c2 = JOptionPane.showConfirmDialog(null, "File exists, Overwrite?");
+						int c2 = JOptionPane.showConfirmDialog(MapApp.anchor, "File exists, Overwrite?");
 						if (c2 == JOptionPane.OK_OPTION ) {
 							break;
 						}

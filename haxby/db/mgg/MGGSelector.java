@@ -675,7 +675,7 @@ public class MGGSelector implements ActionListener {
 			if (loadNewControlFile) {
 				System.gc();
 				// Add progress bar while retrieving list of data
-					ProcessingDialog ld = new ProcessingDialog(new JFrame(), new JLabel());
+					ProcessingDialog ld = new ProcessingDialog(MapApp.getApp().getFrame(), MapApp.getApp().getMap());
 					ld.addTask("Retrieving Data", new Thread( new Runnable() {
 					public void run() {
 				int m = 0;

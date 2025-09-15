@@ -1,6 +1,7 @@
 package org.geomapapp.util;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -173,6 +174,7 @@ public class XML_Menu {
 				zoom,
 				lonX,
 				latY;
+	private static Font menuFont = new Font("Arial", Font.PLAIN, 16);
 
 	public RequestLayer[] layers;
 	public List<XML_Menu> child_layers = new LinkedList<XML_Menu>();
@@ -345,10 +347,12 @@ public class XML_Menu {
 		if(MapApp.ReadMenusCache == false ) {
 			Transformer transformer;
 			try {
-				transformer = TransformerFactory.newInstance().newTransformer();
-				Result outputRoot = new StreamResult(menusCacheFileFirst);
-				Source input = new DOMSource(dom);
-				transformer.transform(input, outputRoot);
+				if(!MapApp.AT_SEA) {
+					transformer = TransformerFactory.newInstance().newTransformer();
+					Result outputRoot = new StreamResult(menusCacheFileFirst);
+					Source input = new DOMSource(dom);
+					transformer.transform(input, outputRoot);
+				}
 			} catch (TransformerConfigurationException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -607,7 +611,7 @@ public class XML_Menu {
 					sub_layer.layer_file_import = attribute.getNodeValue();
 				}
 				if ( (attribute = attributes.getNamedItem("href")) != null ) {
-					sub_layer.infoURLString = attribute.getNodeValue();
+					sub_layer.infoURLString = MapApp.getAppropriateUrl(attribute.getNodeValue());
 
 					if (!sub_layer.infoURLString.startsWith("http")) {
 						sub_layer.infoURLString =
@@ -615,7 +619,7 @@ public class XML_Menu {
 					}
 				}
 				if ( (attribute = attributes.getNamedItem("search_url")) != null ) {
-					sub_layer.search_url = attribute.getNodeValue();
+					sub_layer.search_url = MapApp.getAppropriateUrl(attribute.getNodeValue());
 
 					if (!sub_layer.search_url.startsWith("http")){
 						sub_layer.search_url =
@@ -623,7 +627,7 @@ public class XML_Menu {
 					}
 				}
 				if ( (attribute = attributes.getNamedItem("url2")) != null ) {
-					sub_layer.layer_url2 = attribute.getNodeValue();
+					sub_layer.layer_url2 = MapApp.getAppropriateUrl(attribute.getNodeValue());
 
 					if (!sub_layer.layer_url2.startsWith("http")) {
 						sub_layer.layer_url2 =
@@ -631,7 +635,7 @@ public class XML_Menu {
 					}
 				}
 				if ( (attribute = attributes.getNamedItem("url")) != null ) {
-					sub_layer.layer_url = attribute.getNodeValue();
+					sub_layer.layer_url = MapApp.getAppropriateUrl(attribute.getNodeValue());
 					if (!sub_layer.layer_url.startsWith("http") && !sub_layer.layer_url.contains("import")) {
 						sub_layer.layer_url = PathUtil.getPath("ROOT_PATH") + sub_layer.layer_url;
 					}
@@ -677,8 +681,8 @@ public class XML_Menu {
 								Document dom = null;
 								// We want to rewrite on the fly all url menus to grab from dev location.
 								if(MapApp.BASE_URL.matches(MapApp.DEV_URL)){
-									sub_layer.layer_url= sub_layer.layer_url.replaceAll("http://app.", "http://app-dev.")
-											.replaceAll("https://app.", "https://app-dev.");
+									sub_layer.layer_url= sub_layer.layer_url.replaceAll("http://app\\.", "http://app-dev.")
+											.replaceAll("https://app\\.", "https://app-dev.");
 								}
 
 								String[] parseURL = sub_layer.layer_url.split("/");
@@ -698,10 +702,12 @@ public class XML_Menu {
 									dom = db.parse(URLFactory.url(sub_layer.layer_url).openStream());
 									Transformer transformer;
 									try {
-										transformer = TransformerFactory.newInstance().newTransformer();
-										Result outputRoot = new StreamResult(new File(GMARoot.getRoot() + File.separator + "menus_cache" + File.separator + "menus" + File.separator + parseURL[parseURL.length - 1]));
-										Source input = new DOMSource(dom);
-										transformer.transform(input, outputRoot);
+										if(!MapApp.AT_SEA) {
+											transformer = TransformerFactory.newInstance().newTransformer();
+											Result outputRoot = new StreamResult(new File(GMARoot.getRoot() + File.separator + "menus_cache" + File.separator + "menus" + File.separator + parseURL[parseURL.length - 1]));
+											Source input = new DOMSource(dom);
+											transformer.transform(input, outputRoot);
+										}
 									} catch (TransformerConfigurationException e) {
 										// TODO Auto-generated catch block
 										e.printStackTrace();
@@ -1554,5 +1560,13 @@ public class XML_Menu {
 			}
 		}
 		return null;
+	}
+
+	public static Font getMenuFont() {
+		return menuFont;
+	}
+
+	public static void setMenuFont(Font menuFont) {
+		XML_Menu.menuFont = menuFont;
 	}
 }

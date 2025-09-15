@@ -83,6 +83,7 @@ import haxby.map.MapApp;
 import haxby.map.Overlay;
 import haxby.map.XMap;
 import haxby.proj.Projection;
+import haxby.util.DisplayUtil;
 import haxby.util.GeneralUtils;
 import haxby.util.LayerManager.LayerPanel;
 import haxby.util.ToggleableMouseInputAdapter;
@@ -490,8 +491,12 @@ public class GMAProfile implements Overlay, XYPoints {
 					}
 				}
 			}
-		}	
-		if(!dialog.isVisible())dialog.setVisible(true);
+		}
+		if(!dialog.isVisible()) {
+			DisplayUtil.setRelativeLocation(dialog, 0, 150, MapApp.anchor);
+			dialog.setVisible(true);
+		}
+		dialog.toFront();
 
 		int dpi = Toolkit.getDefaultToolkit().getScreenResolution();
 		DecimalFormat fmt = new DecimalFormat("#.#");
@@ -1110,7 +1115,7 @@ public class GMAProfile implements Overlay, XYPoints {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-				JOptionPane.showMessageDialog(null, helpText, "Help", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, helpText, "Help", JOptionPane.PLAIN_MESSAGE);
 			}
 		});
 		helpMenu.add(mi);
@@ -1505,19 +1510,19 @@ public class GMAProfile implements Overlay, XYPoints {
 			public void actionPerformed(ActionEvent e) {
 				if(degreesOrMinutes.getSelectedIndex()==0){
 					if((Math.abs(Double.parseDouble(setStartLonT.getText()))> 180)){
-						JOptionPane.showMessageDialog(null,"Longitude must be between -180 and 180", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Longitude must be between -180 and 180", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 
 					if((Math.abs(Double.parseDouble(setStartLatT.getText()))> 90)){
-						JOptionPane.showMessageDialog(null,"Latitude must be between -90 and 90", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Latitude must be between -90 and 90", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 					try
 					{
 						currentPts[0]=new Point2D.Double(Double.parseDouble(setStartLonT.getText()), Double.parseDouble(setStartLatT.getText()));
 					}catch(NumberFormatException nfe){
-						JOptionPane.showMessageDialog(null,"Use Decimal Degrees", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Use Decimal Degrees", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 				}
@@ -1525,22 +1530,22 @@ public class GMAProfile implements Overlay, XYPoints {
 					String[] lonTextTokens = setStartLonT.getText().split(" ");
 					String[] latTextTokens = setStartLatT.getText().split(" ");
 					if((lonTextTokens.length!=2) || (latTextTokens.length!=2)){
-						JOptionPane.showMessageDialog(null,"Use degrees decimal minutes", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Use degrees decimal minutes", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 
 					if((Double.parseDouble(lonTextTokens[0])>180) || (Double.parseDouble(lonTextTokens[0])<0)){
-						JOptionPane.showMessageDialog(null,"Longitude must be between 0 and 180", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Longitude must be between 0 and 180", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 
 					if((Double.parseDouble(latTextTokens[0])>90) || (Double.parseDouble(latTextTokens[0])<0)){
-						JOptionPane.showMessageDialog(null,"Longitude must be between 0 and 90", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Longitude must be between 0 and 90", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 
 					if((Double.parseDouble(lonTextTokens[1])>=60) || (Double.parseDouble(lonTextTokens[1])<0) || (Double.parseDouble(latTextTokens[1])>=60) || (Double.parseDouble(latTextTokens[1])<0)){
-						JOptionPane.showMessageDialog(null,"Minutes must be between 0 and 60", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Minutes must be between 0 and 60", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 
@@ -1604,19 +1609,19 @@ public class GMAProfile implements Overlay, XYPoints {
 			public void actionPerformed(ActionEvent e) {
 				if(degreesOrMinutes.getSelectedIndex()==0){
 					if((Math.abs(Double.parseDouble(setEndLonT.getText()))> 180)){
-						JOptionPane.showMessageDialog(null,"Longitude must be between -180 and 180", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Longitude must be between -180 and 180", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 
 					if((Math.abs(Double.parseDouble(setEndLatT.getText()))> 90)){
-						JOptionPane.showMessageDialog(null,"Latitude must be between -90 and 90", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Latitude must be between -90 and 90", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 					//TODO check the dropdowns
 					try{
 						currentPts[currentPts.length-1]=new Point2D.Double(Double.parseDouble(setEndLonT.getText()), Double.parseDouble(setEndLatT.getText()));
 					}catch(NumberFormatException nfe){
-						JOptionPane.showMessageDialog(null,"Use Decimal Degrees", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Use Decimal Degrees", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 				}
@@ -1625,22 +1630,22 @@ public class GMAProfile implements Overlay, XYPoints {
 					String[] lonTextTokens = setEndLonT.getText().split(" ");
 					String[] latTextTokens = setEndLatT.getText().split(" ");
 					if((lonTextTokens.length!=2) || (latTextTokens.length!=2)){
-						JOptionPane.showMessageDialog(null,"Use degrees decimal minutes", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Use degrees decimal minutes", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 
 					if((Double.parseDouble(lonTextTokens[0])>180) || (Double.parseDouble(lonTextTokens[0])<0)){
-						JOptionPane.showMessageDialog(null,"Longitude must be between 0 and 180", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Longitude must be between 0 and 180", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 
 					if((Double.parseDouble(latTextTokens[0])>90) || (Double.parseDouble(latTextTokens[0])<0)){
-						JOptionPane.showMessageDialog(null,"Longitude must be between 0 and 90", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Longitude must be between 0 and 90", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 
 					if((Double.parseDouble(lonTextTokens[1])>=60) || (Double.parseDouble(lonTextTokens[1])<0) || (Double.parseDouble(latTextTokens[1])>=60) || (Double.parseDouble(latTextTokens[1])<0)){
-						JOptionPane.showMessageDialog(null,"Minutes must be between 0 and 60", "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(MapApp.anchor,"Minutes must be between 0 and 60", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 

@@ -534,7 +534,7 @@ public class SCS implements Database,
 			}
 
 			// Add progress bar while retrieving list of data
-			ProcessingDialog ld = new ProcessingDialog(new JFrame(), new JLabel());
+			ProcessingDialog ld = new ProcessingDialog(MapApp.getApp().getFrame(), MapApp.getApp().getMap());
 			ld.addTask("Retrieving Data", new Thread( new Runnable() {
 			public void run() {
 				int c = selCruise;
@@ -556,7 +556,7 @@ public class SCS implements Database,
 		else if( evt.getActionCommand().equals("Load Previously Digitized Products" )) {
 			if( selCruise<0 ) {
 				if( image.cruise==null) {
-					JOptionPane.showMessageDialog(null, "Select A Line");
+					JOptionPane.showMessageDialog(MapApp.anchor, "Select A Line");
 					return;
 				}
 				imagePath = null;

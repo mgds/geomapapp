@@ -8,6 +8,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
@@ -33,6 +35,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JToggleButton;
+import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -260,13 +263,13 @@ public class GridDialog implements ItemListener, WindowListener {
 		if (!dialog.isVisible()) {
 			Point point = owner.getLocation();
 			point.y = owner.getHeight() + point.y + 10;
+			Rectangle screenBounds = owner.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
+			if(point.y + dialog.getHeight() > screenBounds.y + screenBounds.height) {
+				point.y = screenBounds.y + screenBounds.height - dialog.getHeight();
+			}
 			dialog.setLocation(point);
 		}
 		dialog.setVisible(true);
-		Point point = owner.getLocation();
-		point.y = owner.getHeight() -200;
-		point.x = owner.getWidth() -500;
-		dialog.setLocation(point.x, point.y); //sets frame location
 	}
 	
 	//Contributed Grids
@@ -281,9 +284,12 @@ public class GridDialog implements ItemListener, WindowListener {
 
 		if (!dialog.isVisible()) {
 			Point point = owner.getLocation();
-			point.y = owner.getHeight() -200;
-			point.x = owner.getWidth() -500;
-			dialog.setLocation(point.x, point.y); //sets frame location
+			point.y += owner.getHeight() + 10;
+			Rectangle screenBounds = owner.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
+			if(point.y + dialog.getHeight() > screenBounds.y + screenBounds.height) {
+				point.y = screenBounds.y + screenBounds.height - dialog.getHeight();
+			}
+			dialog.setLocation(point); //sets frame location
 		}
 		dialog.setVisible(true);
 	}
@@ -314,7 +320,37 @@ public class GridDialog implements ItemListener, WindowListener {
 		dialog = new JFrame("Loaded Grids");
 
 		dialog.addWindowListener(this);
-		dialog.setLocationRelativeTo(null);
+		dialog.addComponentListener(new ComponentListener() {
+
+			volatile Timer resizeTimer;
+
+			public void componentMoved(ComponentEvent evt) {
+			}
+
+			@Override
+			public void componentHidden(ComponentEvent arg0) {
+			}
+
+			@Override
+			public void componentResized(ComponentEvent e) {
+				if(null == resizeTimer || !resizeTimer.isRunning()) {
+					resizeTimer = new Timer(100, new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent event) {
+							dialog.pack();
+							//dialog.repaint();
+							resizeTimer.stop();
+						}
+					});
+				}
+				resizeTimer.restart();
+			}
+
+			@Override
+			public void componentShown(ComponentEvent e) {
+			}
+		});
+		dialog.setLocationRelativeTo(owner);
 
 		Box panel = Box.createHorizontalBox();
 
@@ -897,6 +933,13 @@ public class GridDialog implements ItemListener, WindowListener {
 		Dimension dim = dialog.getSize();
 		dialog.pack();
 		if( currentPanel!=grid.getRenderer()) dialog.setSize(dim);
+		Point dloc = dialog.getLocation();
+		Rectangle screenBounds = dialog.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
+		if(dloc.y + dialog.getHeight() > screenBounds.y + screenBounds.height) {
+			dloc.y = screenBounds.y + screenBounds.height - dialog.getHeight();
+		}
+		dialog.setLocation(dloc);
+		dialog.toFront();
 		dialog.repaint();
 	}
 	public void addGrid( Grid2DOverlay grid ) {

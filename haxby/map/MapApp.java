@@ -8,6 +8,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -16,6 +17,7 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
@@ -40,6 +42,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.net.Authenticator;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
@@ -59,6 +62,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Vector;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -73,6 +77,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
@@ -92,6 +97,7 @@ import javax.swing.JTextField;
 import javax.swing.JWindow;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
@@ -101,6 +107,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.geomapapp.credit.Credit;
 import org.geomapapp.db.dsdp.DSDPDemo;
+import org.geomapapp.geom.MapProjection;
 import org.geomapapp.gis.shape.ESRIShapefile;
 import org.geomapapp.grid.Grid2DOverlay;
 import org.geomapapp.grid.GridComposer;
@@ -187,14 +194,14 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.4"; //08/06/2024
+	public final static String VERSION = "3.7.6"; //September 15th, 2025
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
 	
 	public static final String PRODUCTION_URL = "https://app.geomapapp.org/";
 	public static String DEFAULT_URL = "https://app.geomapapp.org/";
-	public static final String DEV_URL = "http://app-dev.geomapapp.org/"; 
+	public static final String DEV_URL = "https://app-dev.geomapapp.org/"; 
 	private static String DEV_PASSWORD_PATH = "gma_passwords/dev_server_password";
 	public static String BASE_URL;
 	public static String NEW_BASE_URL;
@@ -266,7 +273,8 @@ public class MapApp implements ActionListener,
 	protected WMSViewServer wmsWindow;
 	protected String directory;
 	protected boolean[] tmpSides = new boolean[4];
-	protected JComboBox font;
+	protected JComboBox<String> font;
+	protected JComboBox<String> menuFont;
 
 	protected Vector servers;
 	protected JComboBox serverList;
@@ -279,6 +287,7 @@ public class MapApp implements ActionListener,
 	//public File historyFile = new File( historyDir, "zoom.txt"); //not used
 	protected File historyVersionFile = new File( historyDir, "version");
 	protected File menusCacheDir = new File( parentRoot, "menus_cache");
+	protected File menuFontFile = new File(menusCacheDir, "menu_font.txt");
 	protected File menusCacheFile = new File( menusCacheDir, "menu_updated.txt");
 	protected File menusCacheDir2 = new File(menusCacheDir, "menus");
 	protected File menusCacheFileFirst = new File( menusCacheDir2, "main_menu.xml");
@@ -309,6 +318,7 @@ public class MapApp implements ActionListener,
 	private static File DEFAULT_GRID_IMPORTS_LOGS_DIR = new File(System.getProperty("user.home") + "/Desktop/");
 	
 	protected JTextField fontSize;
+	protected JTextField menuFontSize;
 	protected JCheckBox[] side;
 	protected JCheckBox showTileNames;
 	protected JCheckBox gridsCB;
@@ -321,6 +331,8 @@ public class MapApp implements ActionListener,
 						clearPCache;
 	protected Font tmpFont,
 					defaultFont;
+	protected Font curMenuFont, defaultMenuFont;
+	private String menuFontDelimiter = ", ";
 	protected boolean[] dfltSides = new boolean[4];
 	protected boolean scroll = true;
 	protected boolean attached = true;
@@ -330,7 +342,7 @@ public class MapApp implements ActionListener,
 	protected String wmsSRS4326 = "SRS=EPSG:4326";
 	protected String wmsSRS3031 = "SRS=EPSG:3031";
 	// more comments
-	protected DSDPDemo dsdp;
+	protected volatile DSDPDemo dsdp;
 	protected static MapPlaces locs;
 	public Credit credit;
 	long focusTime = -1;
@@ -347,6 +359,8 @@ public class MapApp implements ActionListener,
 	public static JFileChooser chooser = null;
 	public static ArrayList<String> portal_commands;
 	
+	public static Component anchor = null;
+	
 	private JCheckBox loadAltTiles;
 	//private JTextField altTilesUrlTextField;
 
@@ -356,6 +370,9 @@ public class MapApp implements ActionListener,
 
 	public LayerManager layerManager;
 	public JFrame layerManagerDialog;
+	
+	private static MapApp theApp;
+	
 	// Menu Listener action bring to front
 	public MenuListener listener = new MenuListener() {
 		public void menuCanceled(MenuEvent e) {
@@ -440,7 +457,7 @@ public class MapApp implements ActionListener,
 		try {
 			getServerList();
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
 		}
 		try {
 			getProxies();
@@ -527,15 +544,21 @@ public class MapApp implements ActionListener,
 			try {
 				getServerList();
 			} catch (IOException e) {
-				//JOptionPane.showMessageDialog(null, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
+				//JOptionPane.showMessageDialog(MapApp.anchor, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
 				BASE_URL = DEFAULT_URL;
 			}
 		}
-		DEV_MODE = BASE_URL.equals(DEV_URL);
+		DEV_MODE = BASE_URL.replace("http://", "https://").equals(DEV_URL);
 		
 		try {
 			getProxies();
-			fetchCacheMenus = getMenusCache(); // add menu cache dir
+			if(!AT_SEA) fetchCacheMenus = getMenusCache(); // add menu cache dir
+			defaultMenuFont = XML_Menu.getMenuFont();
+			curMenuFont = readMenuFont(); //get menu font
+			if(null == curMenuFont) {
+				curMenuFont = XML_Menu.getMenuFont();
+			}
+			setMenuFont(curMenuFont);
 			startNewZoomHistory();			//start history dir
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -547,7 +570,7 @@ public class MapApp implements ActionListener,
 		/*try {
 			getServerList();
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error reading remote server list", "Non-Critical Error", JOptionPane.ERROR_MESSAGE);
 		}
 		DEV_MODE = BASE_URL.equals(DEV_URL);*/
 
@@ -580,6 +603,36 @@ public class MapApp implements ActionListener,
 			WWInit();
 		}
 		processBorder();
+	}
+	
+	private Font readMenuFont() {
+		boolean readFont = false;
+		Font f = null;
+		if(menuFontFile.exists()) {
+			try {
+				Scanner s = new Scanner(menuFontFile);
+				String fontStr = s.nextLine();
+				while(fontStr.trim().length() == 0 && !fontStr.contains(menuFontDelimiter) && s.hasNextLine()) {
+					fontStr = s.nextLine();
+				}
+				String[] fontInfo = fontStr.split(menuFontDelimiter);
+				f = new Font(fontInfo[0], Font.PLAIN, Integer.parseInt(fontInfo[1]));
+				readFont = true;
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+		if(!readFont) {
+			try {
+				f = XML_Menu.getMenuFont();
+				menuFontFile.createNewFile();
+				PrintStream ps = new PrintStream(menuFontFile);
+				ps.println(f.getName() + menuFontDelimiter + f.getSize());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return f;
 	}
 
 	public static boolean isDevMode() {
@@ -701,7 +754,7 @@ public class MapApp implements ActionListener,
 
 		d.getContentPane().add(p);
 		d.pack();
-		d.setLocationRelativeTo(null);
+		d.setLocationRelativeTo(MapApp.anchor);
 		d.setVisible(true);
 	}
 
@@ -800,7 +853,7 @@ public class MapApp implements ActionListener,
 
 		d.getContentPane().add(p, BorderLayout.SOUTH);
 		d.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		d.setLocationRelativeTo(null);
+		d.setLocationRelativeTo(MapApp.anchor);
 		d.pack();
 		d.setVisible(true);
 	}
@@ -823,6 +876,12 @@ public class MapApp implements ActionListener,
 	}
 	public JFrame getFrame() {
 		return frame;
+	}
+	public MapProjection getProjection() {
+		if(null != map) {
+			return map.getProjection();
+		}
+		return null;
 	}
 	protected void checkVersion() {
 		if (AT_SEA) {
@@ -855,7 +914,7 @@ public class MapApp implements ActionListener,
 				sp.setPreferredSize( new Dimension(600,400) );
 				sp.setSize( new Dimension(600,400) );
 				panel.add( sp );
-				JOptionPane.showMessageDialog( null, panel, "GeoMapApp Alert", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog( MapApp.anchor, panel, "GeoMapApp Alert", JOptionPane.INFORMATION_MESSAGE);
 			//	System.out.println( jep.getText() );
 			}
 			catch(Exception e) {
@@ -870,6 +929,12 @@ public class MapApp implements ActionListener,
 			ex.printStackTrace();
 			// System.exit(0);
 		}*/
+	}
+	
+	public static boolean isJar() {
+		String str = String.valueOf(MapApp.class.getResource("MapApp.class"));
+		System.out.println(str);
+		return str.startsWith("jar:");
 	}
 
 	/*
@@ -1126,7 +1191,8 @@ public class MapApp implements ActionListener,
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 		startup.pack();
 		Dimension win = startup.getSize();
-		startup.setLocation( (screen.width-win.width)/2, (screen.height-win.height)/2 );
+		//startup.setLocation( (screen.width-win.width)/2, (screen.height-win.height)/2 );
+		startup.setLocationRelativeTo(anchor);
 		startup.show();
 		Mercator proj = ProjectionFactory.getMercator( 640 );
 		double lat = proj.getLatitude( -260. );
@@ -1241,11 +1307,12 @@ public class MapApp implements ActionListener,
 			}
 		public void windowGainedFocus(WindowEvent e) {}
 		});
+		frame.setLocationRelativeTo(anchor);
 		return frame;
 	}
 
 	protected void WWInit() {
-		JOptionPane.showMessageDialog(null, "Unsupported Map Selected", "Error", JOptionPane.ERROR_MESSAGE);
+		JOptionPane.showMessageDialog(MapApp.anchor, "Unsupported Map Selected", "Error", JOptionPane.ERROR_MESSAGE);
 		System.exit(-1);
 	}
 
@@ -1393,7 +1460,7 @@ public class MapApp implements ActionListener,
 			List<XML_Menu> menuLayers = null;
 
 			// Check the cache to determine where to fetch xml menus
-			if(fetchCacheMenus == true) {
+			if(fetchCacheMenus) {
 				mainMenuFile = new File( menusCacheDir2, "main_menu.xml");
 				//mainMenuURL = PathUtil.getPath("MENU_PATH",MapApp.BASE_URL+"/gma_menus/main_menu.xml"); // 3.5.2 and older
 				mainMenuURL = PathUtil.getPath("NEW_MENU_PATH_2015",MapApp.BASE_URL+"/gma_menus/main_menu_new_2015.xml");
@@ -1418,7 +1485,7 @@ public class MapApp implements ActionListener,
 					}
 				}
 				//System.out.println("true");
-			} else if(fetchCacheMenus == false) {
+			} else {
 				//mainMenuURL = PathUtil.getPath("MENU_PATH",MapApp.BASE_URL+"/gma_menus/main_menu.xml"); // 3.5.2 and older
 				mainMenuURL = PathUtil.getPath("NEW_MENU_PATH_2015",MapApp.BASE_URL+"/gma_menus/main_menu_new_2015.xml");
 				menuLayers = XML_Menu.parse(mainMenuURL);
@@ -1485,6 +1552,8 @@ public class MapApp implements ActionListener,
 		}
 		frame.pack();
 		frame.setSize( 1000, 710 );
+		frame.setLocationRelativeTo(anchor);
+		anchor = frame;
 		frame.setVisible(true);
 		getGMARoot();
 	}
@@ -1495,6 +1564,7 @@ public class MapApp implements ActionListener,
 			public void run() {
 				if( dsdp==null ) dsdp=new DSDPDemo(MapApp.this);
 				dsdp.show();
+				dsdp.toFront();
 			}
 		});
 	}
@@ -1713,6 +1783,18 @@ public class MapApp implements ActionListener,
 		} else if( evt.getKeyCode() == KeyEvent.VK_M ) {
 			tools.maskB.doClick();
 		}
+	}
+	public static Point getAnchorLocation() {
+		if(null == anchor) return new Point(0,0);
+		return anchor.getLocation();
+	}
+	public static int getAnchorX() {
+		if(null == anchor) return 0;
+		return anchor.getX();
+	}
+	public static int getAnchorY() {
+		if(null == anchor) return 0;
+		return anchor.getY();
 	}
 	public void setMask( boolean tf ) {
 		if(tf) {
@@ -2345,6 +2427,12 @@ public class MapApp implements ActionListener,
 			addProcessingTask(mi.getText(), new Runnable() {
 				public void run() {
 					addShapeFile(mi.getName(), menu);
+					if ( !tools.shapeTB.isSelected() ) {
+						tools.shapeTB.doClick();
+					}
+					else {
+						tools.shapes.setVisible(true);
+					}
 					// Sort the layers in the Layer Manager
 					if (menu.index != null) layerManager.sortLayers();
 				}
@@ -2372,7 +2460,7 @@ public class MapApp implements ActionListener,
 						//eg to https version of the page
 						url = URLFactory.checkForRedirect(url);
 						if (!URLFactory.checkWorkingURL(url)) {
-							JOptionPane.showMessageDialog(null, "Error loading layer:\n"+tableLayerName, "Error", JOptionPane.ERROR_MESSAGE);
+							JOptionPane.showMessageDialog(MapApp.anchor, "Error loading layer:\n"+tableLayerName, "Error", JOptionPane.ERROR_MESSAGE);
 							layerManager.missingLayer(menu.index);
 							return;
 						}
@@ -2605,6 +2693,7 @@ public class MapApp implements ActionListener,
 						final Database database = db[i];
 						final JMenuItem mi = (JMenuItem) evt.getSource();
 						System.gc();
+						database.setup();
 						Runnable loadDB = new Runnable() {
 							public void run() {
 								if(database.loadDB()) {
@@ -2628,12 +2717,17 @@ public class MapApp implements ActionListener,
 									}
 									sendLogMessage("Opening Portal$name="+database.getDBName());
 								}
-								else {
+								else if(!database.isLoadCancelled()){
 									JOptionPane.showMessageDialog(vPane, "Error loading " + currentDB.getDBName(), "", JOptionPane.ERROR_MESSAGE);
 								}
 							}
 						};
-						addProcessingTask(mi.getText(), loadDB);
+						if(database.isLoadCancelled()) {
+							mi.setSelected(false);
+						}
+						else {
+							addProcessingTask(mi.getText(), loadDB);
+						}
 					}
 					else {
 						currentDB = db[i];
@@ -2904,7 +2998,7 @@ public class MapApp implements ActionListener,
 			String proj = thisXMLItemLoad.proj.toLowerCase();
 			if (!proj.contains(MapApp.CURRENT_PROJECTION.toLowerCase())) {
 				if (proj.contains("m")) {
-					int confirm = JOptionPane.showConfirmDialog(null, 
+					int confirm = JOptionPane.showConfirmDialog(MapApp.anchor, 
 							"This session will switch to Mercator Projection", 
 							"Switch Projection", JOptionPane.OK_CANCEL_OPTION);
 					if (confirm == JOptionPane.CANCEL_OPTION) {
@@ -2913,7 +3007,7 @@ public class MapApp implements ActionListener,
 					}
 					MInit2();
 				} else if (proj.contains("s")) {
-					int confirm = JOptionPane.showConfirmDialog(null, 
+					int confirm = JOptionPane.showConfirmDialog(MapApp.anchor, 
 							"This session will switch to South Polar Projection", 
 							"Switch Projection", JOptionPane.OK_CANCEL_OPTION);
 					if (confirm == JOptionPane.CANCEL_OPTION) {
@@ -2922,7 +3016,7 @@ public class MapApp implements ActionListener,
 					}
 					SPInit2();	
 				} else if (proj.contains("n")) {
-					int confirm = JOptionPane.showConfirmDialog(null, 
+					int confirm = JOptionPane.showConfirmDialog(MapApp.anchor, 
 							"This session will switch to North Polar Projection", 
 							"Switch Projection", JOptionPane.OK_CANCEL_OPTION);
 					if (confirm == JOptionPane.CANCEL_OPTION) {
@@ -3148,6 +3242,7 @@ public class MapApp implements ActionListener,
 
 		// GMA 1.6.2: Add title "Preferences" to Preferences window
 		option = new JFrame("Preferences");
+		option.setLocation(frame.getLocation());
 		// Do nothing on close. Must select cancel
 		option.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -3158,7 +3253,8 @@ public class MapApp implements ActionListener,
 		JPanel fonts = new JPanel(new FlowLayout());
 		tmpFont = map.getMapBorder().getFont();
 
-		font = new JComboBox(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
+		String[] fontList = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+		font = new JComboBox<>(fontList);
 		font.setName("Font");
 		font.setSelectedItem(map.getMapBorder().getFont().getName());
 		fonts.add(font);
@@ -3229,6 +3325,25 @@ public class MapApp implements ActionListener,
 
 		// Tab Add Map Boarder
 		prefer.add("Map Border", mapbord);
+		
+		//Menu font
+		JPanel menuFontTab = new JPanel(new BorderLayout());
+		JPanel fontSelection = new JPanel(new FlowLayout());
+		
+		curMenuFont = UIManager.getFont("Menu.font");
+		menuFont = new JComboBox<>(fontList);
+		menuFont.setName("Menu Font");
+		menuFont.setSelectedItem(curMenuFont.getName());
+		fontSelection.add(menuFont);
+		
+		JLabel lblMenuFontSize = new JLabel("Size: ");
+		menuFontSize = new JTextField();
+		menuFontSize.setText(String.valueOf(curMenuFont.getSize()));
+		fontSelection.add(lblMenuFontSize);
+		fontSelection.add(menuFontSize);
+		menuFontTab.add(fontSelection);
+		prefer.add("Menu Font", menuFontTab);
+		
 
 		// Tab Coordinates
 		JPanel coordsTab = new JPanel(new BorderLayout());
@@ -3322,6 +3437,8 @@ public class MapApp implements ActionListener,
 //prefer.add("Menu Options", menuOptions);
 
 //		***** GMA 1.6.2: Add "Server Options" tab to the "Preferences" window
+		// ** GMA 3.7.5: Remove "Server Options" from the "Preferences" window
+		/*
 		Border emptyBorder = BorderFactory.createEmptyBorder(10, 10, 10, 10);
 		Border lineBorder = BorderFactory.createLineBorder( Color.black );
 		Border compBorder = BorderFactory.createCompoundBorder( lineBorder, emptyBorder );
@@ -3344,9 +3461,10 @@ public class MapApp implements ActionListener,
 		inputDevPasswordPanel.add(inputDevPasswordText);
 		inputDevPasswordPanel.setVisible(false);
 		serverPanel.add(inputDevPasswordPanel, BorderLayout.SOUTH );
+		*/
 
 		// Tab Server Options
-		prefer.addTab( "Server Options", serverOptions);
+		//prefer.addTab( "Server Options", serverOptions);
 //		***** GMA 1.6.2
 
 		//ShoreLine
@@ -3364,6 +3482,7 @@ public class MapApp implements ActionListener,
 				loadRemoteTiles = new JButton("Load cruise tiles from the server");
 		loadLocalTiles.setActionCommand("loadTilesLocalCmd");
 		loadRemoteTiles.setActionCommand("loadTilesRemoteCmd");
+		if(MapApp.AT_SEA) loadRemoteTiles.setEnabled(false);
 		loadLocalTiles.addActionListener(this);
 		loadRemoteTiles.addActionListener(this);
 		c.gridwidth = 2;
@@ -3402,8 +3521,13 @@ public class MapApp implements ActionListener,
 		if ( defaultFont == null ) {
 			defaultFont = new Font("Arial",Font.PLAIN,10);
 		}
+		defaultMenuFont = XML_Menu.getMenuFont();
+		
 		font.setSelectedItem(defaultFont.getName());
 		fontSize.setText("" + defaultFont.getSize());
+		
+		menuFont.setSelectedItem(defaultMenuFont.getName());
+		menuFontSize.setText(String.valueOf(defaultMenuFont.getSize()));
 
 		map.scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		map.scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -3413,7 +3537,7 @@ public class MapApp implements ActionListener,
 		if (whichMap == MapApp.SOUTH_POLAR_MAP)
 			opShorePanel.defaults();
 
-		serverList.setSelectedItem( DEFAULT_URL );
+		if(null != serverList) serverList.setSelectedItem( DEFAULT_URL );
 
 		showTileNames.setSelected(false);
 		MMapServer.DRAW_TILE_LABELS = false;
@@ -3436,6 +3560,10 @@ public class MapApp implements ActionListener,
 
 		font.setSelectedItem(tmpFont.getName());
 		fontSize.setText("" + tmpFont.getSize());
+		
+		menuFont.setSelectedItem(curMenuFont.getName());
+		menuFontSize.setText(String.valueOf(curMenuFont.getSize()));
+		setMenuFont(curMenuFont);
 
 		map.getMapBorder().setFont(tmpFont);
 
@@ -3459,7 +3587,7 @@ public class MapApp implements ActionListener,
 		if (lonRange == Projection.RANGE_180W_to_180E) { range180Btn.setSelected(true); }
 		if (lonRange == Projection.RANGE_0_to_360) { range360Btn.setSelected(true); }
 		
-		serverList.setSelectedIndex(selectedServer);
+		if(null != serverList) serverList.setSelectedIndex(selectedServer);
 		showTileNames.setSelected(MMapServer.DRAW_TILE_LABELS);
 		
 		gridsCB.setSelected(logGridImports);
@@ -3478,6 +3606,9 @@ public class MapApp implements ActionListener,
 	private void previewOps() {
 		Font theFont = new Font( (String) font.getSelectedItem(), Font.PLAIN, Integer.parseInt(fontSize.getText()));
 		map.getMapBorder().setFont(theFont);
+		
+		Font theMenuFont = new Font((String)menuFont.getSelectedItem(), Font.PLAIN, Integer.parseInt(menuFontSize.getText()));
+		setMenuFont(theMenuFont);
 
 		for (int i = 0; i < tmpSides.length; i++)
 			map.getMapBorder().setSide(i,side[i].isSelected());
@@ -3508,6 +3639,20 @@ public class MapApp implements ActionListener,
 
 	private void acceptOps() {
 		this.previewOps();
+		curMenuFont = new Font((String)menuFont.getSelectedItem(), Font.PLAIN, Integer.parseInt(menuFontSize.getText()));
+		String fontString = curMenuFont.getName() + menuFontDelimiter + curMenuFont.getSize();
+		if(null != menuFontFile) {
+			try {
+				if(!menuFontFile.exists()) {
+					menuFontFile.createNewFile();
+				}
+				PrintStream ps = new PrintStream(menuFontFile);
+				ps.println(fontString);
+			}
+			catch(IOException e) {
+				e.printStackTrace();
+			}
+		}
 //		***** GMA 1.6.2: Load server and proxy options and make currently selected options the default options so they are loaded when GeoMapApp restarts
 		if ( serverList != null && selectedServer != serverList.getSelectedIndex()) {
 			if ( ((String)serverList.getSelectedItem()).equals(DEV_URL) && inputDevPasswordText != null ) {
@@ -3549,7 +3694,7 @@ public class MapApp implements ActionListener,
 			out.flush();
 			out.close();
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, "Error writing to default_server.dat", "File I/O Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error writing to default_server.dat", "File I/O Error", JOptionPane.ERROR_MESSAGE);
 		}
 
 		try {
@@ -3597,7 +3742,7 @@ public class MapApp implements ActionListener,
 		map.addMouseListener(zoomer);
 
 //		***** GMA 1.6.2: Prompt user to restart GeoMapApp for server and proxy settings to take full effect
-		//JOptionPane.showMessageDialog(null, "Please restart GeoMapApp for server settings to take effect", "Restart GeoMapApp", JOptionPane.PLAIN_MESSAGE);
+		//JOptionPane.showMessageDialog(MapApp.anchor, "Please restart GeoMapApp for server settings to take effect", "Restart GeoMapApp", JOptionPane.PLAIN_MESSAGE);
 //		***** GMA 1.6.2
 
 		mapFocus();
@@ -3738,6 +3883,52 @@ public class MapApp implements ActionListener,
 //			e.printStackTrace();
 		}
 	}
+	
+	public void setMenuFont(final Font newFont) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				UIManager.put("Menu.font", newFont);
+				UIManager.put("MenuItem.font", newFont);
+				UIManager.put("CheckBoxMenuItem.font", newFont);
+				if(null != menuBar) {
+					menuBar.setFont(newFont);
+					menuBar.updateUI();
+					menuBar.update(menuBar.getGraphics());
+					menuBar.invalidate();
+					menuBar.repaint();
+					//menuBar.setVisible(false);
+					//recursively change the menu fonts
+					Runnable r = new Runnable() {
+						private void changeFont(JComponent jc) {
+							if(null != jc) {
+								jc.setFont(newFont);
+								if(jc instanceof JMenu) {
+									JMenu jm = (JMenu)jc;
+									int numSubMenus = jm.getItemCount();
+									for(int i = 0; i < numSubMenus; i++) {
+										changeFont(jm.getItem(i));
+									}
+								}
+							}
+						}
+						public void run() {
+							int c = menuBar.getMenuCount();
+							for(int i = 0; i < c; i++) {
+								changeFont(menuBar.getMenu(i));
+							}
+						}
+					};
+					r.run();
+				}
+				//menuBar.setVisible(true);
+				System.out.println("Changed menu font to " + newFont);
+			}
+		});
+	}
+	
+	public static MapApp getApp() {
+		return theApp;
+	}
 
 	public static MapApp createMapApp(String[] args) {		
 		findLaunchFile();
@@ -3754,6 +3945,10 @@ public class MapApp implements ActionListener,
 		}
 
 		com.Ostermiller.util.Browser.init();
+		
+		UIManager.put("Menu.font", XML_Menu.getMenuFont());
+		UIManager.put("MenuItem.font", XML_Menu.getMenuFont());
+		UIManager.put("CheckBoxMenuItem.font", XML_Menu.getMenuFont());
 
 		
 		MapApp app = null;
@@ -3786,10 +3981,15 @@ public class MapApp implements ActionListener,
 		return app;
 	}
 
-	public static void main( String[] args) {
+	public static void setup() {
+		fixVendorNameIssue(com.sun.media.imageioimpl.common.PackageUtil.class, "Sun", "1.1", "JAI");
 		//fixes issue with column sorting
 		System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
-		createMapApp(args);
+	}
+
+	public static void main( String[] args) {
+		setup();
+		theApp = createMapApp(args);
 	}
 
 	public static String getBaseURL() {
@@ -3935,7 +4135,7 @@ public class MapApp implements ActionListener,
 		String wfsLayer = wfs_menu.wfs_layer_feature;
 		String wfsBbox;
 		if (!URLFactory.checkWorkingURL(wfsURL)) {
-			JOptionPane.showMessageDialog(null, "Error loading layer:\n"+wfsTitle, "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error loading layer:\n"+wfsTitle, "Error", JOptionPane.ERROR_MESSAGE);
 			layerManager.missingLayer(wfs_menu.index);
 			return;
 		}
@@ -3970,7 +4170,7 @@ public class MapApp implements ActionListener,
 	public void getWMSLayer(XML_Menu wms_XML_Menu) throws IOException {
 		
 		if (!URLFactory.checkWorkingURL(wms_XML_Menu.layer_url)) {
-			JOptionPane.showMessageDialog(null, "Error loading layer:\n"+wms_XML_Menu.name, "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(MapApp.anchor, "Error loading layer:\n"+wms_XML_Menu.name, "Error", JOptionPane.ERROR_MESSAGE);
 			layerManager.missingLayer(wms_XML_Menu.index);
 			return;
 		}
@@ -4060,7 +4260,7 @@ public class MapApp implements ActionListener,
 	public void addShapeFile(String layerURL, XML_Menu inputXML_Menu) {
 		try {
 			if (!URLFactory.checkWorkingURL(layerURL)) {
-				JOptionPane.showMessageDialog(null, "Error loading layer:\n"+inputXML_Menu, "Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(MapApp.anchor, "Error loading layer:\n"+inputXML_Menu, "Error", JOptionPane.ERROR_MESSAGE);
 				layerManager.missingLayer(inputXML_Menu.index);
 				return;
 			}
@@ -4455,6 +4655,7 @@ public class MapApp implements ActionListener,
 				//should only have one line in default_server.dat
 				String server = serverIn.readLine();
 				serverIn.close();
+				server = server.replace("http://", "https://");
 				servers.add(server);
 				if(!server.equals(DEV_URL)) {
 					server = DEFAULT_URL;
@@ -4473,6 +4674,7 @@ public class MapApp implements ActionListener,
 				BufferedReader serverIn = new BufferedReader( new FileReader(serverFile) );
 				String s = null;
 				while ( ( s = serverIn.readLine() ) != null ) {
+					s = s.replace("http://", "https://");
 					servers.add(s);
 					DEFAULT_URL = s;
 					BASE_URL = s;
@@ -4999,6 +5201,13 @@ public class MapApp implements ActionListener,
 			}
 		}
 	}
+	
+	//
+	public static String getAppropriateUrl(String origUrl) {
+		String insecureProdUrl = PRODUCTION_URL.replaceFirst("https://", "http://");
+		String secureProdUrl = PRODUCTION_URL.replaceFirst("http://", "https://");
+		return origUrl.replaceFirst(insecureProdUrl, BASE_URL.replaceFirst("https://", "http://")).replaceFirst(secureProdUrl, (null == BASE_URL)?(PRODUCTION_URL):(BASE_URL));
+	}
 
 	protected void toggleDisplayAttachment() {
 		if(currentDB == null ) return;
@@ -5211,6 +5420,30 @@ public class MapApp implements ActionListener,
 			System.out.println("message NOT logged: " + message);
 			e.printStackTrace();
 		}
+	}
+	
+	public static void fixVendorNameIssue(Class<?> clazz, String vendor, String version, String specTitle) {
+		try {
+			Field vendorField = clazz.getDeclaredField("vendor");
+			vendorField.setAccessible(true);
+			vendorField.set(null, vendor);
+			
+			Field versionField = clazz.getDeclaredField("version");
+			versionField.setAccessible(true);
+			versionField.set(null, version);
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static int getGraphicsDevice(Component c) {
+		GraphicsDevice[] screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+		GraphicsDevice compDevice = c.getGraphicsConfiguration().getDevice();
+		for(int i = 0; i < screenDevices.length; i++) {
+			if(compDevice.equals(screenDevices[i])) return i;
+		}
+		return -1;
 	}
 	
 	public static HashSet<String> supported_commands = new HashSet<String>();

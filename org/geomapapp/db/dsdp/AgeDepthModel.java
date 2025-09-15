@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
@@ -267,7 +268,8 @@ public class AgeDepthModel implements ScalableXYPoints, AdjustmentListener, Acti
 		graphDialog.getContentPane().add( labelPanel, "South" );
 		graphDialog.pack();
 		graphDialog.setSize( new Dimension( 400,600) );
-		graphDialog.setLocation(300,0);
+		Point mapLoc = (dsdp.map.getApp() instanceof haxby.map.MapApp) ? ((haxby.map.MapApp)dsdp.map.getApp()).getFrame().getLocation() : new Point(0,0);
+		graphDialog.setLocation(mapLoc.x+300,mapLoc.y);
 	//	graphDialog.setVisible(true);
 		graphDialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
 		graphDialog.addWindowListener( new WindowAdapter() {
@@ -378,7 +380,7 @@ public class AgeDepthModel implements ScalableXYPoints, AdjustmentListener, Acti
 			if (c==JFileChooser.CANCEL_OPTION||c==JFileChooser.ERROR_OPTION) return;
 			f = jfc.getSelectedFile();
 			if (f.exists()) {
-				c=JOptionPane.showConfirmDialog(null, "File Already Exists\nConfirm Overwrite");
+				c=JOptionPane.showConfirmDialog(haxby.map.MapApp.anchor, "File Already Exists\nConfirm Overwrite");
 				if (c==JOptionPane.OK_OPTION) break;
 				if (c==JOptionPane.CANCEL_OPTION) return;
 			}

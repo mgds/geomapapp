@@ -578,6 +578,7 @@ public class SurveyPlannerSelector implements ActionListener, MouseListener, Mou
 		}
 		else if (cmd.equals("Extract elevation")) {
 			//load up the GMRT grid
+			sp.setLoadedGMRT(true);
 			gridToggle.doClick();
 		}
 		else if (e.getSource() == straightLineRB || e.getSource() == greatCircleRB) {

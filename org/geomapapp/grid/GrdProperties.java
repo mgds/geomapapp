@@ -98,7 +98,7 @@ public class GrdProperties {
 		//	}
 		//	global.add( new String[] {v.getName(), sb.toString() } );
 		//	if( v.getName().equals("source") ) {
-		//		javax.swing.JOptionPane.showMessageDialog( null, new javax.swing.JTextArea(v.getStringValue()));
+		//		javax.swing.JOptionPane.showMessageDialog( MapApp.anchor, new javax.swing.JTextArea(v.getStringValue()));
 		//		byte[] b = v.getStringValue().getBytes();
 		//		for( int k=0 ; k<b.length ; k++) {
 		//			if( b[k]>31&&b[k]<0x7e )System.out.println(b[k]+"\t"+(char)b[k]);

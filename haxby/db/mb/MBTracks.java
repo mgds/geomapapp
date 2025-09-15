@@ -112,6 +112,8 @@ public class MBTracks implements Database, Overlay, MouseListener {
 	protected JProgressBar pb;
 	protected JPanel progressPanel;
 	protected JLabel progressLabel;
+	
+	private String name = "Multibeam Bathymetry Swaths";
 
 	public MBTracks( XMap map, int size ) {
 		this.map = map;
@@ -446,7 +448,11 @@ public class MBTracks implements Database, Overlay, MouseListener {
 	}
 
 	public String getDBName() {
-		return "Multibeam Bathymetry Swaths";
+		return name;
+	}
+	
+	public void setDBName(String newName) {
+		name = newName;
 	}
 
 	public String getCommand() {

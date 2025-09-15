@@ -128,6 +128,15 @@ public class SurveyPlanner extends JFrame implements Database, MouseListener, Mo
 	public String getDescription() {
 		return "Waypoints and Survey Planner";
 	}
+	
+	public boolean didLoadGMRT() {
+		return dig.didLoadGMRT;
+	}
+	
+	public void setLoadedGMRT(boolean loaded) {
+		dig.didLoadGMRT = loaded;
+	}
+	
 	@Override
 	public void draw(Graphics2D g) {
 		if(!loaded) return;
@@ -156,7 +165,7 @@ public class SurveyPlanner extends JFrame implements Database, MouseListener, Mo
 		final Object[] options = {"Accept"};
 		String disclaimerText = "<html> <p>The displayed maps, images, data tables and this portal are not to be used for navigation purposes.</p></html>";
 
-		JOptionPane.showOptionDialog(null, disclaimerText, "Waypoints and Survey Planner Disclaimer", 
+		JOptionPane.showOptionDialog(MapApp.anchor, disclaimerText, "Waypoints and Survey Planner Disclaimer", 
 				JOptionPane.OK_OPTION, JOptionPane.WARNING_MESSAGE,  null,  options, options[0]);
 		
 	}
@@ -254,6 +263,11 @@ public class SurveyPlanner extends JFrame implements Database, MouseListener, Mo
 		//reset all buttons and field on the right-side menu
 		waypoints = false;
 		SurveyLine.setIsStraightLine(false);
+		if(didLoadGMRT()) {
+			spSel.gridToggle.doClick();
+			spSel.gridToggle.setSelected(false);
+			setLoadedGMRT(false);
+		}
 		dig = new Digitizer(map);
 		spSel = new SurveyPlannerSelector(this, dig);
 		display = new SurveyPlannerDataDisplay(this, dig);

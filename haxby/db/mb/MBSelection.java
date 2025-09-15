@@ -2,8 +2,10 @@ package haxby.db.mb;
 
 import haxby.nav.Nearest;
 import haxby.util.BrowseURL;
+import haxby.util.VersionUtil;
 
 import javax.swing.*;
+import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -19,6 +21,7 @@ public class MBSelection implements ActionListener, ItemListener, MouseListener 
 	DefaultListModel cruisesListModel;
 	JButton downloadB;
 	JPanel dialogPane;
+	JLabel updateDate;
 
 	public MBSelection( MBTracks tracks ) {
 		this.tracks = tracks;
@@ -26,6 +29,10 @@ public class MBSelection implements ActionListener, ItemListener, MouseListener 
 	}
 	void initDialog() {
 		JPanel panel = new JPanel(new GridLayout(0, 1));
+		
+		updateDate = new JLabel("<html><body><center>Portal content last updated: " + VersionUtil.getReleaseDate("GMRT") + "</center></body></html>", SwingConstants.CENTER);
+		updateDate.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
+		panel.add(updateDate);
 
 		plot = new JCheckBox("View All Expeditions", true);
 		panel.add(plot);

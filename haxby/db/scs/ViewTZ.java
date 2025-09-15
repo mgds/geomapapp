@@ -60,12 +60,12 @@ public class ViewTZ implements XYPoints, MouseMotionListener {
 			}
 			in.close();
 		} catch( Exception ex) {
-			JOptionPane.showMessageDialog(null, "could not load "+tzFile.getName() );
+			JOptionPane.showMessageDialog(MapApp.anchor, "could not load "+tzFile.getName() );
 			reset();
 			return;
 		}
 		if( tz.size()<2 ) {
-			JOptionPane.showMessageDialog(null, "no data in "+tzFile.getName() );
+			JOptionPane.showMessageDialog(MapApp.anchor, "no data in "+tzFile.getName() );
 			reset();
 			return;
 		}

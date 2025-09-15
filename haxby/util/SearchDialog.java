@@ -80,7 +80,7 @@ public class SearchDialog extends JPanel {
 	public static void main(String[] args) {
 		SearchDialog search = new SearchDialog();
 		int ok = search.showDialog( null );
-	//	JOptionPane.showConfirmDialog(null, search, "Search", 
+	//	JOptionPane.showConfirmDialog(MapApp.anchor, search, "Search", 
 	//			JOptionPane.OK_CANCEL_OPTION,
 	//			JOptionPane.PLAIN_MESSAGE);
 		double[] wesn = search.getWESN();

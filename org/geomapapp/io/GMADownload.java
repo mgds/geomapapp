@@ -7,7 +7,11 @@ import haxby.util.URLFactory;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
@@ -16,6 +20,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.StringTokenizer;
 
@@ -33,250 +38,123 @@ import javax.swing.border.Border;
 public class GMADownload {
 	public static String root_path = PathUtil.getPath("ROOT_PATH", MapApp.BASE_URL);
 	public static String public_home_path = PathUtil.getPath("PUBLIC_HOME_PATH");
-
+	
 	public static void download(String oldVersion, String newVersion) {
-
-//		GMA 1.5.2: main panel too crowded, create some gap between the components in it
-		JPanel main = new JPanel(new BorderLayout( 10, 10 ));
-
-		JLabel label = new JLabel(
-			"<html><body><center><bold><h1>"
-			+"A New Version of <I>GeoMapApp</I> " + newVersion + " <br>"
-			+"is Available for Download</h1>"
-			+"<br>If you have trouble installing <i>GeoMapApp "
-			+newVersion+"</i>, go to:<br>" + public_home_path + "</center>"
-			+"<br>* The current version you are running is <b>"+oldVersion
-			+"</b><hr></body></html>");
-		main.add(label, "North");
-
-		// try to find the executable file
-		File userDir = new File(System.getProperty("user.dir"));
-
-		boolean found = false;
-		File[] files = null;
-		if( userDir.exists() ) {
-			files = gmaFiles(userDir);
-			if( files!=null && files.length>0) found=true;
-		}
-		if( !found ) {
-			String pathSep = System.getProperty("path.separator");
-			String classPath = System.getProperty("java.class.path");
-			StringTokenizer st = new StringTokenizer(classPath,pathSep);
-		//	System.out.println( classPath );
-		//	System.out.println( userDir.getPath() );
-			while( !found && st.hasMoreTokens() ) {
-				File classDir = new File(st.nextToken());
-				if( !classDir.exists() )continue;
-				files = gmaFiles(userDir);
-				if( files!=null && files.length>0) found=true;
-			}
-		}
-
-		JPanel which = new JPanel(new GridLayout(0,1));
-		which.setBorder(BorderFactory.createTitledBorder(
-				"Select a Recommended Format"));
-		ButtonGroup gp = new ButtonGroup();
-		JCheckBox exe = new JCheckBox(".exe - for Windows");
-		gp.add(exe);
-		which.add(exe);
-		JCheckBox app = new JCheckBox(".app - for Macs (Downloads as .dmg, double-click to open)");
-		gp.add(app);
-		which.add(app);
-		JCheckBox jar = new JCheckBox(".jar - Any Platform");
-		gp.add(jar);
-		which.add(jar);
-
-		// Get OS name
-		String operatingSystem = System.getProperty("os.name").toLowerCase();
-
-		if(operatingSystem.contains("win")) {
-			exe.setSelected(true);
-			app.setSelected(false);
-			jar.setSelected(false);
-		} else if(operatingSystem.contains("mac")) {
-			app.setSelected(true);
-			exe.setEnabled(false);
-			jar.setSelected(false);
-		} else if (operatingSystem.contains("nix") ||
-				operatingSystem.contains("nux") ||
-				operatingSystem.contains("aix")){
-			jar.setSelected(true);
-			app.setSelected(false);
-			exe.setEnabled(false);
-		} else {
-			jar.setSelected(true);
-			app.setSelected(false);
-			exe.setEnabled(false);
-		}
-
-/*		if( found && files.length==1 ) {
-			if( files[0].getName().endsWith(".exe")) { 
-				exe.setSelected(true);
-			} else if( files[0].getName().endsWith(".dmg")) {
-				app.setSelected(true);
-			} else {
-				jar.setSelected( true );
-			}
-		}
-*/
-		JPanel options = new JPanel(new GridLayout(0,1));
-		options.setBorder(BorderFactory.createTitledBorder(
-				"Select an Option"));
-		gp = new ButtonGroup();
-		String downloadNowText = "<html><b>Download Now</b></html>";
-		JCheckBox download = new JCheckBox(downloadNowText);
-		gp.add(download);
-		options.add(download);
-		download.setSelected(true);
-		String downloadLaterText = "<html><b>Download Later</b></html>";
-		JCheckBox later = new JCheckBox(downloadLaterText);
-		gp.add(later);
-		options.add(later);
-
-		JButton updates = new JButton("Read What's New");
-		updates.addActionListener( new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				viewUpdates();
-			}
-		});
-		JPanel panel1 = new JPanel(new BorderLayout());
-		panel1.add(updates, BorderLayout.WEST);
-		panel1.add(options, BorderLayout.CENTER);
-		panel1.add(which,BorderLayout.SOUTH);
-
-//		GMA 1.5.2: Shift this panel up to incorporate mailing-lists panel
-//		main.add(panel1, "South");
-		main.add(panel1, "Center");
-
-//		***** GMA 1.5.2: Add panel to incorporate message that requests the user join the mailing lists
-		JButton joinAnnounceMailingList = new JButton ( "Join Mailing List" );
-		joinAnnounceMailingList.addActionListener( new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				joinAnnounce();
-			}
-		});
-		JPanel panel2 = new JPanel(new BorderLayout( 5, 5 ));
-		Border emptyBorder = BorderFactory.createEmptyBorder(10, 10, 10, 10);
-		Border lineBorder = BorderFactory.createLineBorder( Color.LIGHT_GRAY );
-		Border titledBorder = BorderFactory.createTitledBorder( lineBorder, "Help improve GeoMapApp" );
-		Border compBorder = BorderFactory.createCompoundBorder( titledBorder, emptyBorder );
-		panel2.setBorder( compBorder );	
-		JLabel joinText = new JLabel("Join the mailing list and provide feedback.");
-		panel2.add( joinText, BorderLayout.WEST );
-		panel2.add( joinAnnounceMailingList, BorderLayout.CENTER );
-		main.add(panel2, "South");
-//		***** GMA 1.5.2
-
-		int pane=  JOptionPane.showConfirmDialog(
-				null,
-				main,
-				"New Version Available",
-				JOptionPane.OK_CANCEL_OPTION,
-				JOptionPane.PLAIN_MESSAGE);
-		if(later.isSelected()) return;
-
-		// Switch from pointing to downloading file accroding to system and to point to webpage for download for that OS.
-		String name = "UnixInstall.html";
-		//String name = "GeoMapApp.jar";
-		if ( jar.isSelected() ) {
-			//name = "GeoMapApp.jar";
-			name = "UnixInstall.html";
-		}
-		else if ( exe.isSelected() ) {
-			//name = "GeoMapApp.exe";
-			name = "MSInstall.html";
-		}
-		else if ( app.isSelected() ) {
-			//name = "GeoMapApp.dmg";
-			name = "MacInstall.html";
-		}
-
-		String urlName = PathUtil.getPath("PUBLIC_HOME_PATH") + name;
-		if(pane == JOptionPane.OK_OPTION) {
-		try {
-			BrowseURL.browseURL(urlName);
-		} finally {
-				System.exit(0);
-		}
-		} else if (pane == JOptionPane.CLOSED_OPTION) {
-			System.exit(0);
-		} else if (pane == JOptionPane.CANCEL_OPTION) {
-			System.exit(0);
-		}
-		/*
-		File saveDir = found ? files[0].getParentFile() 
-				: new File(System.getProperty("user.home"));
-		JFileChooser chooser = new JFileChooser(saveDir);
-		try {
-			chooser.setSelectedFile( new File(saveDir, name));
-		} catch (NullPointerException e) { }
 		
-		int ok = chooser.showSaveDialog(null);
-		if( ok==chooser.CANCEL_OPTION ) {
-			ok = JOptionPane.showConfirmDialog(
-				null,
-				"Continue GeoMapApp startup?",
-				"Continue GeoMapApp?",
-				JOptionPane.YES_NO_OPTION);
-			if( ok==JOptionPane.YES_OPTION) return;
-			System.exit(0);
-		}
-		File f = chooser.getSelectedFile();
-
-		try {
-			URL url = URLFactory.url( urlName );
-			BufferedInputStream in = new BufferedInputStream(
-					url.openStream());
-			BufferedOutputStream out = new BufferedOutputStream(
-					new FileOutputStream( f ));
-			//byte[] data = new byte[32768];
-			byte[] data = new byte[512];
-			int length;
-
-			//while( (length=in.read(data, 0, 32768))!=-1) {
-			while( (length=in.read(data, 0, 512))!=-1) {
-				out.write(data, 0, length);
-			}
-			out.flush();
-			JOptionPane.showMessageDialog(null, "Update successful.\nPlease restart GeoMapApp");
-		} catch (IOException ex){
-			ex.printStackTrace();
-			File f2 = new File(f.getPath().substring(0, f.getPath().lastIndexOf('.'))+"Old"+
-						f.getPath().substring(f.getPath().lastIndexOf('.')));
-			try {
-				FileUtility.copy(f, f2);
-			} catch (IOException e) {
-				e.printStackTrace();
-				JOptionPane.showMessageDialog(null, 
-						"Cannot write to file.\nDownload from " + public_home_path,
-						"Error", JOptionPane.ERROR_MESSAGE);
-				ok = JOptionPane.showConfirmDialog(
-						null,
-						"Continue GeoMapApp startup?",
-						"Continue GeoMapApp?",
-						JOptionPane.YES_NO_OPTION);
-					if( ok==JOptionPane.YES_OPTION) return;
-					BrowseURL.browseURL(public_home_path);
+		JDialog dialog = new JDialog();
+		
+		ActionListener listener = new ActionListener() {
+			public void actionPerformed(ActionEvent event) {
+				//System.out.println(event);
+				String cmd = event.getActionCommand();
+				switch(cmd) {
+				case "update":
+					downloadNewVersion(newVersion);
+					break;
+				case "whatsNew":
+					viewUpdates(newVersion);
+					break;
+				case "mailingList":
+					joinAnnounce();
+					break;
+				case "ignore":
+					dialog.setVisible(false);
+					break;
+				case "quit":
 					System.exit(0);
-			}
-			JOptionPane.showMessageDialog(null, "GeoMapApp has been prepared to download.\nPlease repeat selections.");
-			Runtime r = Runtime.getRuntime();
-			if (System.getProperty("os.name").toLowerCase().indexOf("windows")>-1) {
-				try { 
-					if (f.getPath().indexOf(".jar")>-1)
-						r.exec("java -jar "+f2.getPath()); 
-					else
-						r.exec(f2.getPath()); 
+				default:
+					System.out.println("Unknown action command: " + cmd);
+					System.exit(1);
 				}
-				catch (IOException e) { }
-			} else {
-				try { r.exec("java -jar "+f2.getPath()); }
-				catch (IOException e) { }
 			}
-		} finally {
-			System.exit(0);
-		}
-		*/
+		};
+		
+		JPanel main = new JPanel(new GridBagLayout());
+		main.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+		GridBagConstraints gbc = new GridBagConstraints();
+		Dimension bigBtnSize = new Dimension(300, 50),
+				smallBtnSize = new Dimension(170, 30);
+		Insets leftSide = new Insets(0, 0, 6, 30),
+				rightSide = new Insets(0, 30, 6, 0);
+		gbc.anchor = GridBagConstraints.PAGE_START;
+		gbc.fill = GridBagConstraints.BOTH;
+		gbc.gridheight = 1;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 7;
+		gbc.weightx = 0.1;
+		gbc.weighty = 0.1;
+		JLabel label = new JLabel(
+				"<html><body><center><bold><h2>"
+				+ "An update for GeoMapApp, version " 
+				+ newVersion + ", has been released.</h2><br>");
+		main.add(label, gbc);
+		
+		gbc.fill = GridBagConstraints.NONE;
+		
+		gbc.gridwidth = 3;
+		gbc.gridx = 3;
+		gbc.gridy = 2;
+		gbc.insets = new Insets(0, 0, 20, 0);
+		JButton updateBtn = new JButton("<html><h3>Update GeoMapApp</h3></html>");
+		updateBtn.setActionCommand("update");
+		updateBtn.addActionListener(listener);
+		main.add(updateBtn, gbc);
+		
+		gbc.gridx = 2;
+		gbc.gridwidth = 2;
+		gbc.gridy = 4;
+		gbc.anchor = GridBagConstraints.LINE_END;
+		gbc.weightx = 0.1;
+		JButton whatsNewBtn = new JButton("What's New");
+		whatsNewBtn.setActionCommand("whatsNew");
+		whatsNewBtn.addActionListener(listener);
+		whatsNewBtn.setPreferredSize(smallBtnSize);
+		gbc.insets = leftSide;
+		main.add(whatsNewBtn, gbc);
+		
+		gbc.gridx = 4;
+		gbc.anchor = GridBagConstraints.LINE_START;
+		JButton joinMailingListBtn = new JButton("Join Mailing List");
+		joinMailingListBtn.setActionCommand("mailingList");
+		joinMailingListBtn.addActionListener(listener);
+		joinMailingListBtn.setPreferredSize(smallBtnSize);
+		gbc.insets = rightSide;
+		main.add(joinMailingListBtn, gbc);
+		
+		gbc.gridy = 6;
+		gbc.gridx = 2;
+		gbc.anchor = GridBagConstraints.LINE_END;
+		JButton ignoreBtn = new JButton("Run Without Updating");
+		ignoreBtn.setActionCommand("ignore");
+		ignoreBtn.addActionListener(listener);
+		ignoreBtn.setPreferredSize(smallBtnSize);
+		gbc.insets = leftSide;
+		main.add(ignoreBtn, gbc);
+		
+		gbc.gridx = 4;
+		gbc.anchor = GridBagConstraints.LINE_START;
+		JButton quitBtn = new JButton("Quit GeoMapApp");
+		quitBtn.setActionCommand("quit");
+		quitBtn.addActionListener(listener);
+		quitBtn.setPreferredSize(smallBtnSize);
+		gbc.insets = rightSide;
+		main.add(quitBtn, gbc);
+		
+		Dimension optimalSize = getUnion(quitBtn.getMinimumSize(), ignoreBtn.getMinimumSize(),
+				joinMailingListBtn.getMinimumSize(), whatsNewBtn.getMinimumSize());
+		whatsNewBtn.setPreferredSize(optimalSize);
+		joinMailingListBtn.setPreferredSize(optimalSize);
+		ignoreBtn.setPreferredSize(optimalSize);
+		quitBtn.setPreferredSize(optimalSize);
+
+		dialog.setTitle("New Version Available");
+		dialog.setModal(true);
+		dialog.setContentPane(main);
+		dialog.pack();
+		dialog.setLocationRelativeTo(MapApp.anchor);
+		MapApp.anchor = dialog;
+		dialog.setVisible(true);
 	}
 
 	static File[] gmaFiles(File userDir) {
@@ -314,6 +192,52 @@ public class GMADownload {
 	static void joinAnnounce() {
 		String url = PathUtil.getPath("ANNOUNCE_PATH");;
 		BrowseURL.browseURL( url );
+	}
+	
+	// GMA 3.7.6: add function to automatically determine which OS/arch you are on and download the right version
+	static void downloadNewVersion(String newVersion) {
+		String os = System.getProperty("os.name").toLowerCase();
+		String path = "MapApp/";
+		if(os.contains("win")) {
+			path += "GeoMapApp.exe";
+		}
+		else if(os.contains("mac")) {
+			String name = "GeoMapApp-" + newVersion + "-";
+			String whichArch = System.getProperty("os.arch");
+			if(whichArch.equals("aarch64")) {
+				name += "Silicon";
+			}
+			else {
+				name += "Intel";
+			}
+			name += ".dmg";
+			path += name;
+		}
+		else {
+			path += "GeoMapApp.jar";
+		}
+		String url = PathUtil.getPath("ROOT_PATH") + path;
+		try {
+			BrowseURL.browseURL(url);
+		}
+		finally {
+			System.exit(0);
+		}
+	}
+	
+	//Also add a way to view a specific version's updates
+	static void viewUpdates(String newVersion) {
+		String url = PathUtil.getPath("PUBLIC_HOME_PATH") + "eNewsletters/v" + newVersion.replace('.', '_') + ".html";
+		BrowseURL.browseURL( url );
+	}
+	
+	static Dimension getUnion(Dimension... dimensions) {
+		int width = 0, height = 0;
+		for(Dimension d : dimensions) {
+			if(width < d.width) width = d.width;
+			if(height < d.height) height = d.height; 
+		}
+		return new Dimension(width, height);
 	}
 
 }

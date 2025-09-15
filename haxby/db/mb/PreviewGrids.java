@@ -74,6 +74,7 @@ public class PreviewGrids
     }
     
     int maxRes = 4096;
+    MapApp.setup();
     MapApp mapApp = MapApp.createMapApp(new String[0]);
     XMap map = mapApp.getMap();
     
@@ -127,12 +128,13 @@ public class PreviewGrids
       }
     });
     
-    mapApp.addFocusOverlay(imageViewerCDev, "Dev cGrid Images");
     mapApp.addFocusOverlay(imageViewerProd, "Production GMRT Images");
     mapApp.addFocusOverlay(imageViewerDev, "Development GMRT Images");
+    mapApp.addFocusOverlay(imageViewerCDev, "Dev cGrid Images");
    
     String gridName = GridDialog.DEV;
     GridViewer gridViewer = new GridViewer(map, gridName, paths, maxRes);
+    gridViewer.setShown(false);
     GridDialog.GRID_LOADERS.put(gridName, gridViewer);
     GridDialog.GRID_UNITS.put(gridName, "m");
     GridDialog gridDialog = mapApp.getMapTools().getGridDialog();
@@ -166,11 +168,17 @@ public class PreviewGrids
 	private HashMap<String, String> paths;
     public int dy;
     public int dx;
+    private boolean shown;
     
     public GridViewer(XMap map, String name, HashMap<String, String> paths, int maxRes)
     {
       super(map, name);
       this.paths = paths;
+      shown = true;
+    }
+    
+    public void setShown(boolean b) {
+    	shown = b;
     }
     
 	public void loadGrid(Grid2DOverlay grid) {
@@ -189,6 +197,11 @@ public class PreviewGrids
 		  GridComposer.getGridNP(map.getClipRect2D(), grid, 512, zoom, true, paths.get("np_path"));
 	  else
 		  GridComposer.getGrid(grid.getMap().getClipRect2D(), grid, 512, zoom, true, paths.get("merc_path"), paths.get("merc_mbPath"));
+	}
+	
+	@Override
+	public boolean shouldShow() {
+		return shown;
 	}
   }
   

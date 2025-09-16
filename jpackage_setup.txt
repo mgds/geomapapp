@@ -1,17 +1,17 @@
 --name GeoMapApp 
---input dmg_in 
+--input target 
 --main-jar GeoMapApp.jar 
 --main-class haxby.map.MapApp 
 --dest dmg_out 
 --type dmg 
 --mac-sign 
---app-version 3.7.1
---copyright "GeoMapApp 3.7.1, Copyright © 2023 www.geomapapp.org"
+--app-version 3.7.6
+--copyright "GeoMapApp 3.7.6, Copyright © 2025 www.geomapapp.org"
 --name GeoMapApp 
 --vendor "org.GeoMapApp.www" 
 --java-options "-Dapple.laf.useScreenMenuBar=false" 
 --java-options "-Dgeomapapp.paths_location=http://app.geomapapp.org/gma_paths/GMA_paths.xml" 
---icon "resources/org/geomapapp/resources/icons/GeoMapApp.icns"
+--icon "src/main/resources/org/geomapapp/resources/icons/GeoMapApp.icns"
 --verbose
 --resource-dir dmg_resources
 --temp dmg_temp

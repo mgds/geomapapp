@@ -1,0 +1,1 @@
+rm .gma_launch

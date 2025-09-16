@@ -1,0 +1,6 @@
+#	$Id: rainbow.cpt 12822 2014-01-31 23:39:56Z remko $
+#
+# Standard rainbow colortable for hue = 300 (magenta) to 0 (red)
+#
+# COLOR_MODEL = hsv
+0	magenta	1	red

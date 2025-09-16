@@ -1,0 +1,6 @@
+#	$Id: polar.cpt 12822 2014-01-31 23:39:56Z remko $
+#
+# Simulates the POLAR colormap in Matlab
+#
+-1	blue	0	white
+0	white	1	red

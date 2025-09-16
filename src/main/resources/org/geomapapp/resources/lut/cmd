@@ -1,0 +1,19 @@
+java xb.image.MakeCPT cool
+java xb.image.MakeCPT copper
+java xb.image.MakeCPT gebco 2
+java xb.image.MakeCPT globe 2
+java xb.image.MakeCPT gray
+java xb.image.MakeCPT haxby
+java xb.image.MakeCPT hot
+java xb.image.MakeCPT jet
+java xb.image.MakeCPT no_green
+java xb.image.MakeCPT ocean 2
+java xb.image.MakeCPT polar
+java xb.image.MakeCPT rainbow
+java xb.image.MakeCPT red2green
+java xb.image.MakeCPT relief 2
+java xb.image.MakeCPT topo 2
+java xb.image.MakeCPT sealand 2
+java xb.image.MakeCPT seis
+java xb.image.MakeCPT split
+java xb.image.MakeCPT wysiwyg

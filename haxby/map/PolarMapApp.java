@@ -46,7 +46,7 @@ public class PolarMapApp implements ActionListener, KeyListener {
 		startup.pack();
 		Dimension win = startup.getSize();
 		startup.setLocation( (screen.width-win.width)/2, (screen.height-win.height)/2 );
-		startup.show();
+		startup.setVisible(true);
 // initialize map
 		PolarStereo proj = new PolarStereo(new Point2D.Double(300, 300),
 				-90., 1, PolarProjection.NORTH);
@@ -169,7 +169,7 @@ public class PolarMapApp implements ActionListener, KeyListener {
 		frame.pack();
 	//	frame.setSize( 1000, 800 );
 		startup.dispose();
-		frame.show();
+		frame.setVisible(true);
 	}
 	void initDB() {
 		db = new Database[1];

@@ -159,7 +159,7 @@ public class ExtrudeTool extends JPanel {
 		
 		dialog.setLocationRelativeTo(c);
 		
-		dialog.show();
+		dialog.setVisible(true);
 	}
 
 	public float getScale() {

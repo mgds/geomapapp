@@ -43,7 +43,7 @@ public class GridDecimate {
 		panel.add(button);
 		frame.getContentPane().add(panel, "North");
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	}
 	void open() {
 		chooser.setFileSelectionMode(chooser.DIRECTORIES_ONLY);

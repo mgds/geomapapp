@@ -375,7 +375,7 @@ public class MapPlaces implements Overlay {
 		File file = new File(gmaRoot, "places");
 		if( !file.exists() || !file.isDirectory() )return;
 		try {
-			loadPlaces( file.toURL(), "all.loc", root);
+			loadPlaces( file.toURI().toURL(), "all.loc", root);
 			} catch(Exception ex) {
 		}
 	}
@@ -399,7 +399,7 @@ public class MapPlaces implements Overlay {
 		File file = new File(gmaRoot, "places");
 		if( !file.exists() || !file.isDirectory() )return;
 		try {
-			loadPlaces( file.toURL(), "My Saved Places.loc", node);
+			loadPlaces( file.toURI().toURL(), "My Saved Places.loc", node);
 			} catch(Exception ex) {
 		}
 	}

@@ -26,6 +26,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.tree.TreeNode;
 
@@ -493,6 +494,8 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 			}
 			in.close();
 		} catch(IOException e) {
+			e.printStackTrace();
+			//JOptionPane.showMessageDialog(MapApp.anchor, e);
 			setUnits("m");
 			setDataType("Elevation");
 		}

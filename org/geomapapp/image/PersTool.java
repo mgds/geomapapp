@@ -477,7 +477,7 @@ public class PersTool extends JPanel
 				dialog.getContentPane().add(cancel, "West");
 				dialog.getContentPane().add(label);
 				dialog.pack();
-				dialog.show();
+				dialog.setVisible(true);
 				label.paintImmediately(label.getVisibleRect());
 				cancel.paintImmediately(cancel.getVisibleRect());
 		try {

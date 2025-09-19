@@ -52,7 +52,7 @@ public class ErrorMonitor implements Runnable,
 		try {
 			while( (s=in.readLine()) != null ) {
 				ok = false;
-				if( !dialog.isShowing() ) dialog.show();
+				if( !dialog.isShowing() ) dialog.setVisible(true);
 				synchronized( text.getTreeLock() ) {
 					text.append( s +"\n" );
 					JScrollBar sb = sp.getVerticalScrollBar();
@@ -66,7 +66,7 @@ public class ErrorMonitor implements Runnable,
 			ex.printStackTrace( err );
 			try {
 				while( (s=in.readLine()) != null ) {
-					if( !dialog.isShowing() ) dialog.show();
+					if( !dialog.isShowing() ) dialog.setVisible(true);
 					synchronized( text.getTreeLock() ) {
 						text.append( s +"\n" );
 						JScrollBar sb = sp.getVerticalScrollBar();

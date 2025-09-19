@@ -505,7 +505,7 @@ public class TableDB extends javax.swing.table.AbstractTableModel {
 		tagList.setListData(allTags);
 		tagChoice.setListData(chosenTags);
 		tagList.setListData( Tags.uniqueTags( currentRows, col, 500));
-		tagDialog.show();
+		tagDialog.setVisible(true);
 	}
 	protected void apply() {
 		if( chosenTags!=null && chosenTags.size()==0 )return;

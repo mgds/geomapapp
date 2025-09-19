@@ -111,7 +111,7 @@ public class IconEdit extends ImageComponent
 		initTools();
 		frame.getContentPane().add( tools, "North");
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		Point p = new Point(0,0);
 		zoomIn(p);
 		zoomIn(p);

@@ -558,11 +558,11 @@ public class MGGDataDisplay implements ActionListener, MouseListener {
 		String cruiseName = cruiseL.getSelectedValue();
 		List<String> cruiseList = cruiseL.getSelectedValuesList();
 		if (cruiseName != null && (cruiseName.equals("---Imported Files---") || cruiseName.contains("header only"))) return;
-		if ( cruiseL.getSelectedValues().length < 1 ) {
+		if ( cruiseL.getSelectedValuesList().size() < 1 ) {
 			JOptionPane.showMessageDialog(map.getTopLevelAncestor(), "Please select leg(s) to download");
 			return;
 		}
-		if ( cruiseL.getSelectedValues().length > 100 ) {
+		if ( cruiseL.getSelectedValuesList().size() > 100 ) {
 			int manyCruises = JOptionPane.showConfirmDialog(map.getTopLevelAncestor(), "Warning: More than 100 legs selected.  Continue?", "MGG Warning", JOptionPane.OK_CANCEL_OPTION );
 
 			if ( manyCruises == JOptionPane.CANCEL_OPTION ) {

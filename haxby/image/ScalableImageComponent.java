@@ -66,7 +66,7 @@ public class ScalableImageComponent
 		frame.setJMenuBar( bar );
 
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	}
 	void loadImage(File file) throws IOException {
 		BufferedInputStream in = new BufferedInputStream(

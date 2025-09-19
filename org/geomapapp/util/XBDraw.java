@@ -34,7 +34,7 @@ public class XBDraw {
 		if( dim.width>1200 )dim.width=1200;
 		if( dim.height>900 )dim.height=900;
 		frame.setSize(dim);
-		frame.show();
+		frame.setVisible(true);
 	}
 	void initTools() {
 		tools = new JPanel(new GridLayout(1, 0));

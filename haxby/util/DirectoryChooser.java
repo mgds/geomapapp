@@ -49,7 +49,7 @@ public class DirectoryChooser implements FileFilter,
 		JFrame frame = new JFrame("select a directory");
 		frame.getContentPane().add(panel);
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		while( waiting ) {
 			try {
 				Thread.currentThread().sleep(100L);

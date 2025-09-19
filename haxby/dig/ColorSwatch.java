@@ -75,7 +75,7 @@ public class ColorSwatch extends JComponent {
 		JFrame frame = new JFrame("test");
 		frame.getContentPane().add( panel );
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		frame.setDefaultCloseOperation( frame.EXIT_ON_CLOSE );
 	}
 }

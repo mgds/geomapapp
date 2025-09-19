@@ -54,7 +54,7 @@ public class ColorPane extends JComponent {
 		JFrame f = new JFrame();
 		f.getContentPane().add( p, "Center");
 		f.pack();
-		f.show();
+		f.setVisible(true);
 		f.setDefaultCloseOperation( f.EXIT_ON_CLOSE);
 	}
 }

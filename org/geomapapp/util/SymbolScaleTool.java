@@ -336,7 +336,7 @@ public class SymbolScaleTool extends JPanel {
 //		1.3.5: Set window title to user-inputted value
 		dialog.setTitle(scaleDialogName);
 		dialog.setLocationRelativeTo(owner);
-		dialog.show();
+		dialog.setVisible(true);
 	}
 	public void showDialog(JDialog owner) {
 		if( dialog==null ) {
@@ -355,7 +355,7 @@ public class SymbolScaleTool extends JPanel {
 //		1.3.5: Set window title to user-inputted value
 		dialog.setTitle(scaleDialogName);
 		dialog.setLocationRelativeTo(owner);
-		dialog.show();
+		dialog.setVisible(true);
 	}
 	public void hideDialog() {
 		dialog.setVisible(false);
@@ -381,7 +381,7 @@ public class SymbolScaleTool extends JPanel {
 		frame.getContentPane().add(tools);
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE);
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	}
 	
 	public XMap getMap() {

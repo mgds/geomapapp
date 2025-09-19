@@ -173,7 +173,7 @@ public class ViewTZ implements XYPoints, MouseMotionListener {
 		graph.addMouseMotionListener( z );
 		graph.addKeyListener( z );
 		graph.addMouseMotionListener( view );
-		frame.show();
+		frame.setVisible(true);
 		frame.setDefaultCloseOperation( frame.EXIT_ON_CLOSE );
 	}
 }

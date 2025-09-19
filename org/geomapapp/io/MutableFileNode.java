@@ -136,7 +136,7 @@ public class MutableFileNode // extends FileNode
 		System.out.println( (tree.getCellEditor()==null) );
 		frame.getContentPane().add(new javax.swing.JScrollPane(tree));
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		frame.setDefaultCloseOperation(
 			frame.EXIT_ON_CLOSE);
 	}

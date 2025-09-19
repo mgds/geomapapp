@@ -70,7 +70,7 @@ public class ImageOverlay extends JComponent {
 	}
 	void showDialog() {
 		if(dialog==null) initDialog();
-		dialog.show();
+		dialog.setVisible(true);
 	}
 	void initDialog() {
 		dialog = new JDialog((JFrame)getTopLevelAncestor(),
@@ -150,7 +150,7 @@ public class ImageOverlay extends JComponent {
 		}
 		if( bounds.contains(p) ) select = true;
 		if( redraw|| select )repaint();
-		if( !select ) dialog.hide();
+		if( !select ) dialog.setVisible(false);
 		else showDialog();
 	}
 	void resetPoint() {

@@ -98,7 +98,7 @@ public class ImportImage implements Runnable {
 		frame.getContentPane().add( panel, "North");
 		frame.getContentPane().add( new JScrollPane(area) );
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	
 //		GMA 1.4.8: Automatically bring up file chooser to select grid	
 		imageB.doClick();

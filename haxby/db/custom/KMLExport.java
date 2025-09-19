@@ -1124,7 +1124,7 @@ public class KMLExport {
 		}
 
 		public void left(){
-			Object o[] = visible.getSelectedValues();
+			Object o[] = visible.getSelectedValuesList().toArray();
 			for (int i = 0; i < o.length; i++) {
 				visibleV.remove(o[i]);
 				hiddenV.add((String) o[i]);
@@ -1135,7 +1135,7 @@ public class KMLExport {
 		}
 
 		public void right(){
-			Object o[] = hidden.getSelectedValues();
+			Object o[] = hidden.getSelectedValuesList().toArray();
 			for (int i = 0; i < o.length; i++) {
 				visibleV.add((String) o[i]);
 				hiddenV.remove(o[i]);

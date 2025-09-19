@@ -31,7 +31,7 @@ public class ViewSeis extends JComponent
 		frame.getContentPane().add( new JScrollPane( this ));
 		frame.pack();
 		frame.setSize( 1280, 1024);
-		frame.show();
+		frame.setVisible(true);
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		rotation=0.;

@@ -246,6 +246,6 @@ public class Buttons implements ItemListener {
 		box.add(b);
 		frame.getContentPane().add(box);
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	}
 }

@@ -122,7 +122,7 @@ System.out.println( headings.size() +" columns, "+ rows.size() +" rows");
 			sp.setViewportView( table );
 			sp.revalidate();
 		}
-		frame.show();
+		frame.setVisible(true);
 	}
 	void graph() {
 		int ok = graphDialog.showDialog();
@@ -136,7 +136,7 @@ System.out.println( headings.size() +" columns, "+ rows.size() +" rows");
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(g);
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
 	}
 	public void addChild() {

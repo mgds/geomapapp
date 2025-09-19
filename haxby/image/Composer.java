@@ -73,7 +73,7 @@ public class Composer extends JComponent
 		fileM.add( quitMI );
 		frame.setJMenuBar( bar );
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		textDialog = new TextDialog();
 	}
 	void loadImage() {

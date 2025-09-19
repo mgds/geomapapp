@@ -203,7 +203,7 @@ public class BalancePanel extends JPanel
 		JFrame colorDialog = new JFrame( "color balance" );
 		colorDialog.getContentPane().add( bp );
 		colorDialog.pack();
-		colorDialog.show();
+		colorDialog.setVisible(true);
 		colorDialog.setDefaultCloseOperation( colorDialog.EXIT_ON_CLOSE );
 	}
 }

@@ -84,7 +84,7 @@ public class BoxLayer implements Layer {
 			frame.getContentPane().add( info.getLabel(), "South" );
 			frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 			frame.pack();
-			frame.show();
+			frame.setVisible(true);
 		} catch( Exception ex) {
 			ex.printStackTrace();
 		}

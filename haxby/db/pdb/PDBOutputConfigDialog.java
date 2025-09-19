@@ -156,7 +156,7 @@ public class PDBOutputConfigDialog extends JDialog implements ActionListener {
 	}
 
 	public void left(){
-		Object o[] = visible.getSelectedValues();
+		Object o[] = visible.getSelectedValuesList().toArray();
 		for (int i = 0; i < o.length; i++) {
 			if (o[i] == model.getColumnName(xIndex)) continue;
 			if (o[i] == model.getColumnName(yIndex)) continue;
@@ -168,7 +168,7 @@ public class PDBOutputConfigDialog extends JDialog implements ActionListener {
 	}
 
 	public void right(){
-		Object o[] = hidden.getSelectedValues();
+		Object o[] = hidden.getSelectedValuesList().toArray();
 		for (int i = 0; i < o.length; i++) {
 			visibleV.add(o[i]);
 			hiddenV.remove(o[i]);

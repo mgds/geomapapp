@@ -103,7 +103,7 @@ public class TableViewer {
 			sp.setViewportView( table );
 			sp.revalidate();
 		}
-		frame.show();
+		frame.setVisible(true);
 	}
 	void graph() {
 		int ok = graphDialog.showDialog();
@@ -117,7 +117,7 @@ public class TableViewer {
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(g);
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
 	}
 	public void addChild() {

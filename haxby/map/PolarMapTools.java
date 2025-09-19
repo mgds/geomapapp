@@ -236,7 +236,7 @@ public class PolarMapTools implements ActionListener {
 		PolarMapTools tools = new PolarMapTools(null, null, null);
 		frame.getContentPane().add(tools.getTools(), "Center");
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		Box box = Box.createHorizontalBox();
 		ButtonGroup bg = new ButtonGroup();
 		JToggleButton tb = new JToggleButton(SELECT(false));

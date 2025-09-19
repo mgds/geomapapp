@@ -93,6 +93,6 @@ public class StartUp extends JComponent implements ActionListener {
 		JFrame frame = new JFrame("startup");
 		frame.getContentPane().add(s);
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	}
 }

@@ -31,7 +31,7 @@ public class SCSTools implements ActionListener {
 		return colorDialog;
 	}
 	public void showColorDialog() {
-		getColorDialog().show();
+		getColorDialog().setVisible(true);
 	}
 	public Box getPanel() {
 		if( panel==null ) initPanel();

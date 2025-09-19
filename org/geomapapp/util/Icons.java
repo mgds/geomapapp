@@ -278,7 +278,7 @@ public class Icons {
 		}
 		frame.getContentPane().add(box,"North");
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		frame.setDefaultCloseOperation( frame.EXIT_ON_CLOSE);
 	}
 }

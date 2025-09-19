@@ -153,7 +153,7 @@ public class ColorPanel extends JPanel
 		f.getContentPane().add( new ColorPanel( Color.blue, 255, swatch), "Center");
 		f.getContentPane().add(swatch, "South");
 		f.pack();
-		f.show();
+		f.setVisible(true);
 		f.setDefaultCloseOperation( f.EXIT_ON_CLOSE);
 	}
 }

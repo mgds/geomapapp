@@ -35,7 +35,7 @@ public class GrabMapApp implements Runnable {
 		});
 		frame.getContentPane().add(panel);
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	}
 	void record() {
 		FrameGrabber grabber = new FrameGrabber( app.getFrame() );

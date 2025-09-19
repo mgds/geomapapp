@@ -220,7 +220,7 @@ public class DigitizerOptionsDialog implements ActionListener,
 		color = startingColor[0];
 		setColors();
 		typeCB.setSelectedItem( obj[0].toString() );
-		colorDialog.show();
+		colorDialog.setVisible(true);
 	}
 
 	void setColors() {

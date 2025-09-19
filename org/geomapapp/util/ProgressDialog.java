@@ -45,13 +45,13 @@ public class ProgressDialog extends JPanel
 	public void run() {
 		add(comp);
 		dialog.pack();
-		dialog.show();
+		dialog.setVisible(true);
 		while(alive) {
 			try {
-				Thread.currentThread().sleep(200L);
+				Thread.sleep(200L);
 			} catch(InterruptedException e) {
 			}
 		}
-		dialog.hide();
+		dialog.setVisible(false);
 	}
 }

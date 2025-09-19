@@ -602,7 +602,7 @@ public class GTable extends TableDB implements Overlay {
 			JFrame f = new JFrame( c.getSelectedFile().getName() );
 			f.getContentPane().add(new JScrollPane(table));
 			f.pack();
-			f.show();
+			f.setVisible(true);
 		//	f.setDefaultCloseOperation(f.EXIT_ON_CLOSE);
 			map.repaint();
 		} catch(Throwable e) {

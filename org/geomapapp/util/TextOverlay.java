@@ -83,10 +83,10 @@ public class TextOverlay extends JComponent {
 			p = at.transform(p, null);
 		}
 		if( bounds.contains(p) ) {
-			dialog.show();
+			dialog.setVisible(true);
 			panel.focusText();
 		}
-		else dialog.hide();
+		else dialog.setVisible(false);
 	}
 	void resetPoint() {
 		if(point==null)return;
@@ -140,7 +140,7 @@ public class TextOverlay extends JComponent {
 	}
 	public Font hideDialog() {
 		if(dialog==null) return null;
-		dialog.hide();
+		dialog.setVisible(false);
 		return panel.resolveFont();
 	}
 	public void showDialog() {
@@ -148,7 +148,7 @@ public class TextOverlay extends JComponent {
 			if( parent==null ) return;
 			initDialog();
 		}
-		dialog.show();
+		dialog.setVisible(true);
 	}
 	void initDialog() {
 		if( parent==null ) return;

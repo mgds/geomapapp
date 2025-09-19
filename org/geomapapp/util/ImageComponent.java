@@ -125,7 +125,7 @@ public class ImageComponent extends ScalableComponent {
 	}
 	public void showColorDialog() {
 		if(  colorDialog==null )initBalance();
-		colorDialog.show();
+		colorDialog.setVisible(true);
 	}
 	public boolean open() throws IOException {
 		initChooser();

@@ -468,6 +468,6 @@ public class ShapeSuite extends AbstractTableModel {
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(new JScrollPane(table));
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	}
 }

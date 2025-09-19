@@ -62,6 +62,6 @@ public class Arrow extends JComponent
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(arrow);
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	}
 }

@@ -22,7 +22,7 @@ public class HTMLTable {
 			JFrame frame = new JFrame();
 			frame.getContentPane().add(new JScrollPane(pane));
 			frame.pack();
-			frame.show();
+			frame.setVisible(true);
 			frame.addWindowListener(new WindowAdapter() {
 				public void windowClosing(WindowEvent e) {
 					open();
@@ -41,7 +41,7 @@ public class HTMLTable {
 			JFrame f = new JFrame( );
 			f.getContentPane().add(new JScrollPane(table));
 			f.pack();
-			f.show();
+			f.setVisible(true);
 			f.setDefaultCloseOperation(f.EXIT_ON_CLOSE);
 		} catch(IOException e) {
 			e.printStackTrace();

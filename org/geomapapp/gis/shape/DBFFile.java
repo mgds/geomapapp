@@ -316,7 +316,7 @@ StringBuffer sb = new StringBuffer( ""+maxC);
 			JFrame frame = new JFrame(f.getName());
 			frame.getContentPane().add(new JScrollPane(t));
 			frame.pack();
-			frame.show();
+			frame.setVisible(true);
 			frame.setDefaultCloseOperation(frame.EXIT_ON_CLOSE);
 		} catch(IOException ex) {
 			ex.printStackTrace();

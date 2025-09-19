@@ -167,7 +167,7 @@ public class MCSSave implements ActionListener, Runnable {
 	Container comp = (Container)image.getParent();
 	Point point = comp.getLocationOnScreen();
 	frame.setLocation( point.x+20, point.y+20 );
-			frame.show();
+			frame.setVisible(true);
 			canceled = false;
 			byte[] buf = new byte[32768];
 			URLConnection con = url.openConnection();

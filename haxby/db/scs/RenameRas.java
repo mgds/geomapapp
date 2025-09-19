@@ -52,7 +52,7 @@ public class RenameRas extends JComponent
 		frame.getContentPane().add( new JScrollPane( this ), "Center");
 		frame.getContentPane().add( panel, "North");
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		rotation=0.;

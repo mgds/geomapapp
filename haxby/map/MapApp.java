@@ -1193,7 +1193,7 @@ public class MapApp implements ActionListener,
 		Dimension win = startup.getSize();
 		//startup.setLocation( (screen.width-win.width)/2, (screen.height-win.height)/2 );
 		startup.setLocationRelativeTo(anchor);
-		startup.show();
+		startup.setVisible(true);
 		Mercator proj = ProjectionFactory.getMercator( 640 );
 		double lat = proj.getLatitude( -260. );
 		proj = new Mercator( 0., lat, 640, Projection.SPHERE, DEFAULT_LONGITUDE_RANGE);
@@ -1234,7 +1234,7 @@ public class MapApp implements ActionListener,
 		startup.pack();
 		Dimension win = startup.getSize();
 		startup.setLocation( (screen.width-win.width)/2, (screen.height-win.height)/2 );
-		startup.show();
+		startup.setVisible(true);
 
 		// See if existing projection is open
 		try {
@@ -3737,7 +3737,7 @@ public class MapApp implements ActionListener,
 			System.out.println("Not able to create logGridImportsFile");
 		}
 		
-		option.hide();
+		option.setVisible(false);
 		option.dispose();
 		map.addMouseListener(zoomer);
 
@@ -4633,7 +4633,7 @@ public class MapApp implements ActionListener,
 		inputDevPasswordPanel.setVisible(true);
 		serverPanel.repaint();
 		option.pack();
-		option.show();
+		option.setVisible(true);
 	}
 
 	public void removeDevPasswordField() {
@@ -4642,7 +4642,7 @@ public class MapApp implements ActionListener,
 			inputDevPasswordPanel.setVisible(false);
 			serverPanel.repaint();
 			option.pack();
-			option.show();
+			option.setVisible(true);
 		}
 	}
 

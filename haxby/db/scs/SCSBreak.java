@@ -174,7 +174,7 @@ public class SCSBreak extends JComponent
 		frame.getContentPane().add( scrollPane, "Center");
 		frame.getContentPane().add( dialog, "West");
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		addKeyListener( this );
 		addMouseListener(this);
 		addMouseMotionListener(this);

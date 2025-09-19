@@ -80,7 +80,7 @@ public class SRTMtoGRD {
 		});
 		frame.getContentPane().add( box);
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 		ActionListener al = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				update();

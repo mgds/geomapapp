@@ -292,7 +292,7 @@ public class ViewShapes {
 		Dimension dim = dialog.getPreferredSize();
 		dialog.setSize( new Dimension(dim.width*2/3, 200) );
 		split.setDividerLocation(dim.width/3);
-		dialog.show();
+		dialog.setVisible(true);
 
 		dialog.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {

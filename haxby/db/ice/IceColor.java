@@ -78,6 +78,6 @@ public class IceColor extends JComponent {
 		frame.setDefaultCloseOperation( frame.EXIT_ON_CLOSE);
 		frame.getContentPane().add( new IceColor() );
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	}
 }

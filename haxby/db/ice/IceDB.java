@@ -335,7 +335,7 @@ public class IceDB extends MouseAdapter
 					xyFrame.getContentPane().add( graph, "Center" );
 					xyFrame.pack();
 				//	xyFrame.setSize(400, 400);
-					xyFrame.show();
+					xyFrame.setVisible(true);
 					xyFrame.setDefaultCloseOperation(xyFrame.DO_NOTHING_ON_CLOSE);
 					return true;
 				}
@@ -417,7 +417,7 @@ public class IceDB extends MouseAdapter
 			core = (IceCore) node.getUserObject();
 			node = (DefaultMutableTreeNode)tp.getParentPath().getLastPathComponent();
 			IceExpedition e = (IceExpedition)node.getUserObject();
-			Object[] selection = expList.getSelectedValues();
+			Object[] selection = expList.getSelectedValuesList().toArray();
 			boolean ok = false;
 			for( int i=0 ; i<selection.length ; i++) {
 				if( e==selection[i] ) {
@@ -480,7 +480,7 @@ public class IceDB extends MouseAdapter
 		float y = (float)p.getY();
 		int exped = selExpedition;
 		int nExped = expeditions.size();
-		Object[] selection = expList.getSelectedValues();
+		Object[] selection = expList.getSelectedValuesList().toArray();
 		if(selCore!=-1) {
 			IceCore core = ((IceExpedition)expeditions.get( (exped)%nExped)).cores[selCore];
 			core.setHighlight(false);

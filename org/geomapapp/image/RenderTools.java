@@ -591,7 +591,7 @@ public class RenderTools extends JPanel {
 		}
 	}
 	public void showDialog() {
-		dialog.show();
+		dialog.setVisible(true);
 	}
 	public static void main(String[] args) {
 		RenderTools tools = new RenderTools();
@@ -599,6 +599,6 @@ public class RenderTools extends JPanel {
 		frame.setDefaultCloseOperation( frame.EXIT_ON_CLOSE);
 		frame.getContentPane().add(tools);
 		frame.pack();
-		frame.show();
+		frame.setVisible(true);
 	}
 }

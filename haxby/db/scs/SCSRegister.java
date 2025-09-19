@@ -139,7 +139,7 @@ public class SCSRegister extends JComponent
 		frame.pack();
 		frame.setSize( 1200, 900 );
 		split.setDividerLocation( 500 );
-		frame.show();
+		frame.setVisible(true);
 		
 		frame.getContentPane().add( split, "Center" );
 		

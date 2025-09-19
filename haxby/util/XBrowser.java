@@ -80,7 +80,7 @@ public class XBrowser extends WindowAdapter
 		frame.pack();
 		frame.setSize( 780, 800 );
 		DisplayUtil.setRelativeLocation(frame, 40, 40, MapApp.anchor);
-		frame.show();
+		frame.setVisible(true);
 		setEnabled();
 	}
 	public void hyperlinkUpdate(HyperlinkEvent e) {

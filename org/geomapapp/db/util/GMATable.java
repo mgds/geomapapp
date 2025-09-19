@@ -99,7 +99,7 @@ public class GMATable extends TableDB implements Overlay {
 			Vector row = (Vector)allRows.get(k);
 			while( row.size()<headings.size() )row.add(null);
 			while( row.size()>headings.size() )row.remove(row.size()-1);
-			row.add( new Integer(k));
+			row.add( Integer.valueOf(k));
 			row.add( xy );
 		}
 		table = createTable();
@@ -290,7 +290,7 @@ public class GMATable extends TableDB implements Overlay {
 				if( inside ) {
 				//	newXY.add(xytest[k]);
 					newRows.add( test.get(k) );
-					if( sel>=0 )selIndices.add(new Integer(newRows.size()-1));
+					if( sel>=0 )selIndices.add(Integer.valueOf(newRows.size()-1));
 				}
 			}
 			newRows.trimToSize();
@@ -430,7 +430,7 @@ public class GMATable extends TableDB implements Overlay {
 			for( int k=0 ; k<4; k++) input.readByte();
 			len = input.read();
 			rLen += len;
-			lengths.add( new Integer( len ));
+			lengths.add( Integer.valueOf( len ));
 			for( int k=17 ; k<32; k++) input.readByte();
 			index += 32;
 		//	System.out.println( name +"\n\t"+ type +"\t"+ len);

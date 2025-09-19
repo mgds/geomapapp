@@ -93,7 +93,7 @@ public class TableDB extends javax.swing.table.AbstractTableModel {
 		latCol = parent.latCol;
 		lonCol = parent.lonCol;
 		columnOrder = new Vector();
-		for( int k=0 ; k<headings.size() ; k++) columnOrder.add(new Integer(k));
+		for( int k=0 ; k<headings.size() ; k++) columnOrder.add(Integer.valueOf(k));
 	}
 	public TableDB( Vector headings, Vector rows, StringBuffer comments) {
 		this.comments = comments;
@@ -102,7 +102,7 @@ public class TableDB extends javax.swing.table.AbstractTableModel {
 		resolveLonLat();
 		resolveClasses();
 		columnOrder = new Vector();
-		for( int k=0 ; k<headings.size() ; k++) columnOrder.add(new Integer(k));
+		for( int k=0 ; k<headings.size() ; k++) columnOrder.add(Integer.valueOf(k));
 	}
 	public TableDB(String url) throws IOException {
 		this(url, "\t");
@@ -152,7 +152,7 @@ public class TableDB extends javax.swing.table.AbstractTableModel {
 		if(s==null) throw new IOException("no data in file");
 		headings = parseRow(s);
 		columnOrder = new Vector();
-		for( int k=0 ; k<headings.size() ; k++) columnOrder.add(new Integer(k));
+		for( int k=0 ; k<headings.size() ; k++) columnOrder.add(Integer.valueOf(k));
 
 		rows = new Vector();
 		
@@ -221,7 +221,7 @@ public class TableDB extends javax.swing.table.AbstractTableModel {
 					}
 					else if( classes[i]==Byte.class ) row.setElementAt( new Byte((byte)Double.parseDouble(s)), i);
 					else if( classes[i]==Short.class ) row.setElementAt( new Short((short)Double.parseDouble(s)), i);
-					else if( classes[i]==Integer.class ) row.setElementAt( new Integer(Integer.parseInt(s)), i);
+					else if( classes[i]==Integer.class ) row.setElementAt( Integer.valueOf(Integer.parseInt(s)), i);
 					else if( classes[i]==Double.class ) row.setElementAt( new Double(Double.parseDouble(s)), i);
 					else if( classes[i]==Boolean.class )
 						row.setElementAt( new Boolean(ColClass.isTrue(s)), i );
@@ -640,7 +640,7 @@ public class TableDB extends javax.swing.table.AbstractTableModel {
 		final Vector tmp = new Vector(currentRowsIndices.size());
 		for( int k=0 ; k<order.length ; k++) {
 			Vector v = new Vector(2);
-			v.add(new Integer(k));
+			v.add(Integer.valueOf(k));
 			if ( getCurrentRow(k).size()<column+1 ) {
 				v.add(null);
 			}

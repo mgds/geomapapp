@@ -34,15 +34,15 @@ public class BaseMapSelect implements ActionListener {
 	public static final Map<Integer, String> IMAGE_PATH = new HashMap<Integer, String>();
 	public static final Map<Integer, String> NAMES = new HashMap<Integer, String>();
 	static {
-		IMAGE_PATH.put(new Integer(MapApp.MERCATOR_MAP), "smallMercV3.jpg");
-		IMAGE_PATH.put(new Integer(MapApp.SOUTH_POLAR_MAP), "smallSPV3.jpg");
-		IMAGE_PATH.put(new Integer(MapApp.NORTH_POLAR_MAP), "smallNPV3.jpg");
-		IMAGE_PATH.put(new Integer(MapApp.WORLDWIND), "smallWW.jpg");
+		IMAGE_PATH.put(Integer.valueOf(MapApp.MERCATOR_MAP), "smallMercV3.jpg");
+		IMAGE_PATH.put(Integer.valueOf(MapApp.SOUTH_POLAR_MAP), "smallSPV3.jpg");
+		IMAGE_PATH.put(Integer.valueOf(MapApp.NORTH_POLAR_MAP), "smallNPV3.jpg");
+		IMAGE_PATH.put(Integer.valueOf(MapApp.WORLDWIND), "smallWW.jpg");
 
-		NAMES.put(new Integer(MapApp.MERCATOR_MAP), "Mercator");
-		NAMES.put(new Integer(MapApp.SOUTH_POLAR_MAP), "South Polar");
-		NAMES.put(new Integer(MapApp.NORTH_POLAR_MAP), "North Polar");
-		NAMES.put(new Integer(MapApp.WORLDWIND), "Globe");
+		NAMES.put(Integer.valueOf(MapApp.MERCATOR_MAP), "Mercator");
+		NAMES.put(Integer.valueOf(MapApp.SOUTH_POLAR_MAP), "South Polar");
+		NAMES.put(Integer.valueOf(MapApp.NORTH_POLAR_MAP), "North Polar");
+		NAMES.put(Integer.valueOf(MapApp.WORLDWIND), "Globe");
 	}
 
 	JLabel selected,
@@ -81,7 +81,7 @@ public class BaseMapSelect implements ActionListener {
 		JLabel label = new JLabel( "Choose a Base Map Projection:  ");
 		label.setForeground( Color.black);
 
-		selected = new JLabel( NAMES.get(new Integer(maps[initialMapSelection])).toString() + " Selected" + '\n');
+		selected = new JLabel( NAMES.get(Integer.valueOf(maps[initialMapSelection])).toString() + " Selected" + '\n');
 		selected.setForeground( Color.decode("#496781"));
 
 		JPanel panelN = new JPanel( new BorderLayout() );
@@ -165,7 +165,7 @@ public class BaseMapSelect implements ActionListener {
 		ClassLoader cl = getClass().getClassLoader();
 		try {
 			String imagePath = PathUtil.getPath("STARTUP_PATH", MapApp.BASE_URL+"/gma_startup/") +
-					IMAGE_PATH.get(new Integer(map));
+					IMAGE_PATH.get(Integer.valueOf(map));
 				BufferedInputStream in = new BufferedInputStream((haxby.util.URLFactory.url(imagePath)).openStream());
 					//JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
 					//BufferedImage image = decoder.decodeAsBufferedImage();
@@ -176,18 +176,18 @@ public class BaseMapSelect implements ActionListener {
 			
 		} catch (Exception ex) {
 			String imagePath = "org/geomapapp/resources/maps/startup/" +
-									IMAGE_PATH.get(new Integer(map));
+									IMAGE_PATH.get(Integer.valueOf(map));
 			URL url = cl.getResource(imagePath);
 			JToggleButton tb = new JToggleButton( new ImageIcon(url));
 			return tb;
-			//return new JToggleButton( NAMES.get(new Integer(map)).toString() );
+			//return new JToggleButton( NAMES.get(Integer.valueOf(map)).toString() );
 		}
 	}
 
 	public void actionPerformed(ActionEvent evt) {
 		for (int i = 0; i < mapsTB.length; i++) {
 			if (mapsTB[i].isSelected())
-				selected.setText(NAMES.get(new Integer(maps[i])).toString() + " Selected");
+				selected.setText(NAMES.get(Integer.valueOf(maps[i])).toString() + " Selected");
 		}
 	}
 }

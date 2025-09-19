@@ -23,13 +23,13 @@ public class Taxon {
 			for( int k=0 ; k<10 ; k++ ) genera[k] = new Vector();
 			Vector species = new Vector();
 			
-			Integer lastID = new Integer(-1);
+			Integer lastID = Integer.valueOf(-1);
 			String lastGenus = "";
 			while( (s=in.readLine()) != null ) {
 				st = new StringTokenizer(s, "\t");
 				if( st.countTokens()<4 )continue;
 				int gp = Integer.parseInt( st.nextToken().trim() );
-				Integer id = new Integer(st.nextToken().trim());
+				Integer id = Integer.valueOf(st.nextToken().trim());
 				if( id.equals(lastID) )continue;
 				lastID = id;
 				group[id.intValue()] = (byte)gp;

@@ -214,14 +214,14 @@ public class Navigation {
 			int i1 = seg[0];
 			int i2 = seg[1];
 			Vector segControl = new Vector();
-			segControl.add( new Integer(i1) );
-			segControl.add( new Integer(i2) );
+			segControl.add( Integer.valueOf(i1) );
+			segControl.add( Integer.valueOf(i2) );
 			int imax = i2;
 			int k=1;
 			while(i1<imax) {
 				i2 = ((Integer)segControl.get(k)).intValue();
 				while( (i=segment(i1,i2, test)) != -1 ) {
-					segControl.add(k, new Integer(i) );
+					segControl.add(k, Integer.valueOf(i) );
 					i2=i;
 				}
 				k++;

@@ -409,7 +409,7 @@ public class ShapeSuite extends AbstractTableModel {
 	public Object getValueAt(int row, int column) {
 		ESRIShapefile shape = shapeFiles.get(row);
 		if( column==0 ) return shape.getName();
-		else if( column==1 ) return new Integer(shape.getType());
+		else if( column==1 ) return Integer.valueOf(shape.getType());
 		else if( column==2 ) return new Boolean(shape.isVisible());
 		else if( column==3 ) return shape.getDefaultOutline();
 		else if( column==4 ) return shape.getDefaultLW();

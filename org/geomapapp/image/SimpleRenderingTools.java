@@ -88,8 +88,8 @@ public class SimpleRenderingTools extends RenderingTools {
 					fire( new PropertyChangeEvent(
 						this, 
 						"STATE_CHANGE", 
-						(Object)(new Integer(0)), 
-						(Object)(new Integer(1)) 
+						(Object)(Integer.valueOf(0)), 
+						(Object)(Integer.valueOf(1)) 
 						));
 				}
 			};

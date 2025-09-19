@@ -117,7 +117,7 @@ public class PDBAnalysisModel extends SortableTableModel {
 		for(int i=0 ; i<codes.length ; i++) {
 			if( !codes[i] )continue;
 			int g = dt.getGroupIndex( i );
-			if(g>=0 && g<ng)gp[g].add(new Integer(i));
+			if(g>=0 && g<ng)gp[g].add(Integer.valueOf(i));
 			nCode++;
 		}
 		cols = new int[nCode];
@@ -154,7 +154,7 @@ public class PDBAnalysisModel extends SortableTableModel {
 	private synchronized void updateAnalysisIndexMap() {
 		analysisToIndex.clear();
 		for (int i = 0; i < analyses.size(); i++) {
-			analysisToIndex.put(analyses.get(i), new Integer(i));
+			analysisToIndex.put(analyses.get(i), Integer.valueOf(i));
 		}
 	}
 

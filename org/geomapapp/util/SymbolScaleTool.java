@@ -91,8 +91,8 @@ public class SymbolScaleTool extends JPanel {
 				fire( new PropertyChangeEvent(
 					this, 
 					"STATE_CHANGE", 
-					(new Integer(0)), 
-					(new Integer(1)) 
+					(Integer.valueOf(0)), 
+					(Integer.valueOf(1)) 
 					));
 			}
 		};

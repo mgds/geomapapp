@@ -196,7 +196,7 @@ public class NetCDFGrid {
 //		nc.addVariable("z", float.class, xydims);
 //		nc.addVariableAttribute("z", "scale_factor", new Double(1));
 //		nc.addVariableAttribute("z", "add_offset", new Double(0));
-//		nc.addVariableAttribute("z", "node_offset", new Integer(0));
+//		nc.addVariableAttribute("z", "node_offset", Integer.valueOf(0));
 //		nc.addVariableAttribute("z", "fill_value", new Float( Float.NaN ) );
 //
 //		nc.create();

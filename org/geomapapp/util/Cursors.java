@@ -33,7 +33,7 @@ public class Cursors {
 			{5,	18}
 		};
 	public static Cursor getCursor( int which ) {
-		Cursor c = (Cursor) cursorCache.get(new Integer(which));
+		Cursor c = (Cursor) cursorCache.get(Integer.valueOf(which));
 		if (c != null) return c;
 
 		try {
@@ -45,7 +45,7 @@ public class Cursors {
 			System.out.println(im.getWidth() + "\t" + im.getHeight());
 			
 			c = Toolkit.getDefaultToolkit().createCustomCursor(im, new Point(hotSpot[which][0],hotSpot[which][1]), name);
-			cursorCache.put(new Integer(which), c);
+			cursorCache.put(Integer.valueOf(which), c);
 			return c;
 		} catch(Exception ex) {
 			return Cursor.getDefaultCursor();

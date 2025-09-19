@@ -202,7 +202,7 @@ public class PDBDataSetGraph implements 	XYPoints2,
 					b=Color.BLACK;
 
 			if (table.getSelectionModel().isSelectedIndex(i)) {
-				selected.add(new Integer(i));
+				selected.add(Integer.valueOf(i));
 				continue;
 			}
 
@@ -609,12 +609,12 @@ public class PDBDataSetGraph implements 	XYPoints2,
 					continue outer;
 				}
 			}
-			diffList.add(new Integer(oldSelection[i])); 
+			diffList.add(Integer.valueOf(oldSelection[i])); 
 		}
 
 		for (int i = 0; i < newSelection.length; i++) {
 			if (newSelection[i] != -1)
-				diffList.add(new Integer(newSelection[i]));
+				diffList.add(Integer.valueOf(newSelection[i]));
 		}
 
 		int[] diff = new int[diffList.size()];
@@ -650,7 +650,7 @@ public class PDBDataSetGraph implements 	XYPoints2,
 					b=Color.BLACK;
 
 			if (table.getSelectionModel().isSelectedIndex(i)) {
-				selected.add(new Integer(i));
+				selected.add(Integer.valueOf(i));
 				continue;
 			}
 

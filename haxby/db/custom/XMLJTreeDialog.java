@@ -249,7 +249,7 @@ public class XMLJTreeDialog extends JDialog implements ActionListener,
 			Vector v = new Vector();
 			v.add(new Object[] {"name",name});
 			v.add(new Object[] {"url",url});
-			v.add(new Object[] {"type",c==0?new Integer(UnknownDataSet.ASCII_URL):new Integer(UnknownDataSet.EXCEL_URL)});
+			v.add(new Object[] {"type",c==0?Integer.valueOf(UnknownDataSet.ASCII_URL):Integer.valueOf(UnknownDataSet.EXCEL_URL)});
 			XMLTreeNode node = new XMLTreeNode(v);
 			node.setUserObject(name);
 			node.setTag("Folder");

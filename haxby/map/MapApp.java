@@ -189,9 +189,9 @@ public class MapApp implements ActionListener,
 	public static final int DEFAULT_LONGITUDE_RANGE = Projection.RANGE_180W_to_180E;
 	public static final List<Integer> SUPPORTED_MAPS = new LinkedList<Integer>();
 	static {
-		SUPPORTED_MAPS.add(new Integer(MERCATOR_MAP));
-		SUPPORTED_MAPS.add(new Integer(SOUTH_POLAR_MAP));
-		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
+		SUPPORTED_MAPS.add(Integer.valueOf(MERCATOR_MAP));
+		SUPPORTED_MAPS.add(Integer.valueOf(SOUTH_POLAR_MAP));
+		SUPPORTED_MAPS.add(Integer.valueOf(NORTH_POLAR_MAP));
 	}
 
 	public final static String VERSION = "3.7.6"; //September 15th, 2025

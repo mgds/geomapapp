@@ -395,7 +395,7 @@ public class TranscodeMain {
             if (parts.length > 1) {
                 String filterArgs = parts[1];
                 String[] split = filterArgs.split(":");
-                Integer[] params = new Integer[split.length];
+                Integer[] params = Integer.valueOf[split.length];
                 for (int i = 0; i < split.length; i++) {
                     params[i] = Integer.parseInt(split[i]);
                 }

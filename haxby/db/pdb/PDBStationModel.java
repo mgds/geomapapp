@@ -232,7 +232,7 @@ public class PDBStationModel extends SortableTableModel {
 	private synchronized void updateStationIndexMap() {
 		stationToIndex.clear();
 		for (int i = 0; i < current.length; i++) {
-			stationToIndex.put(PDBStation.get(current[i]), new Integer(i));
+			stationToIndex.put(PDBStation.get(current[i]), Integer.valueOf(i));
 		}
 	}
 
@@ -244,9 +244,9 @@ public class PDBStationModel extends SortableTableModel {
 			ascent = true;
 		lastSortedCol = col;
 
-		Integer[] tmp = new Integer[current.length];
+		Integer[] tmp = Integer.valueOf[current.length];
 		for (int i = 0; i < current.length; i++)
-			tmp[i] = new Integer(current[i]);
+			tmp[i] = Integer.valueOf(current[i]);
 		Arrays.sort(tmp, columnSorter);
 		for (int i = 0; i < current.length; i++)
 			current[i] = tmp[i].intValue();
@@ -258,9 +258,9 @@ public class PDBStationModel extends SortableTableModel {
 	public synchronized void sortRows() {
 		ascent = !ascent;
 
-		Integer[] tmp = new Integer[current.length];
+		Integer[] tmp = Integer.valueOf[current.length];
 		for (int i = 0; i < current.length; i++)
-			tmp[i] = new Integer(current[i]);
+			tmp[i] = Integer.valueOf(current[i]);
 		Arrays.sort(tmp, rowSorter);
 		for (int i = 0; i < current.length; i++)
 			current[i] = tmp[i].intValue();
@@ -271,7 +271,7 @@ public class PDBStationModel extends SortableTableModel {
 
 	private Object getValueAt(PDBStation s, int col) {
 		if( col==0 ) {
-			return new Integer(s.howManySamples());
+			return Integer.valueOf(s.howManySamples());
 		} else if( col==4 ) {
 			return new Float( s.getLongitude());
 		} else if( col==5 ) {

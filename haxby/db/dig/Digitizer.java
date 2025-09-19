@@ -1033,7 +1033,7 @@ public class Digitizer implements Database,
 		   protected Transferable createTransferable(JComponent c) {
 		      assert (c == table);
 		      table.addColumnSelectionInterval(0, table.getColumnCount()-1);
-		      return new DataHandler(new Integer(table.getSelectedRow()), localObjectFlavor.getMimeType());
+		      return new DataHandler(Integer.valueOf(table.getSelectedRow()), localObjectFlavor.getMimeType());
 		   }
 
 		   @Override

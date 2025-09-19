@@ -167,8 +167,8 @@ public class XBGtoShape {
 		record.add( new Float((float)scale) );
 		record.add( new Float((float)range[0]) );
 		record.add( new Float((float)range[1]) );
-	//	record.add( new Integer(minRes) );
-	//	record.add( new Integer(maxRes) );
+	//	record.add( Integer.valueOf(minRes) );
+	//	record.add( Integer.valueOf(maxRes) );
 
 	//	shapes.addShape( box, record );
 

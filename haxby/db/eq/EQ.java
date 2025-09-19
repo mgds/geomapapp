@@ -391,7 +391,7 @@ public class EQ implements Database, ActionListener {
 				if( (float)eq.dep<minD || (float)eq.dep>maxD )continue;
 				if( (float)eq.mag<minM || (float)eq.mag>maxM )continue;
 				current.add( eq );
-				currentIndexInEQ.add(new Integer(k));
+				currentIndexInEQ.add(Integer.valueOf(k));
 			}
 			current.trimToSize();
 			currentIndexInEQ.trimToSize();

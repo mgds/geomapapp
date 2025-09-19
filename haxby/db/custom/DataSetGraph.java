@@ -388,7 +388,7 @@ public class DataSetGraph implements 	XYPoints2,
 			if (ds.f2!=null&&i<ds.f2.length&&Float.isNaN(ds.f2[i])) continue;
 
 			int index = ds.tm.displayToDataIndex.get(i);
-			if (ds.selected[index] != os[index]) v.add(new Integer(i));
+			if (ds.selected[index] != os[index]) v.add(i);
 		}
 		indices=new int[v.size()];
 		for (int i = 0; i < indices.length; i++) 

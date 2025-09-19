@@ -34,7 +34,7 @@ public class Xgrd {
 			for(int y=y1 ; y<height ; y++) {
 				short[] line = grid.readRow(y);
 				buf = new StringBuffer();
-				buf.append((new Integer(y)).toString());
+				buf.append((Integer.valueOf(y)).toString());
 				for(int i=0 ; i<width ; i+=100 )buf.append("\t"+line[i]);
 				System.out.println(buf.toString());
 			}

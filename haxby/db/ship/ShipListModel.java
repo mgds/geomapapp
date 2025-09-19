@@ -20,7 +20,7 @@ public class ShipListModel extends AbstractListModel{
 	
 	public void addTrack(ShipTrack track, int index){
 		tracks.add(track);
-		indices.add(new Integer(index));
+		indices.add(Integer.valueOf(index));
 	}
 	
 	public void clearTracks(){

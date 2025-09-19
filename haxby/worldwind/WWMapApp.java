@@ -113,7 +113,7 @@ public class WWMapApp extends MapApp implements PropertyChangeListener {
 	private static final String VO_NAME = "Virtual Ocean " + WWMapApp.VERSION;
 
 	static {
-		SUPPORTED_MAPS.add(0, new Integer(MapApp.WORLDWIND));
+		SUPPORTED_MAPS.add(0, Integer.valueOf(MapApp.WORLDWIND));
 	}
 
 	protected Model wwModel;

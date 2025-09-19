@@ -16,7 +16,7 @@ public class MGGTableModel extends XBTableModel {
 	}
 	void addTrack( MGGTrack track, int index ) {
 		tracks.add(track);
-		indices.add(new Integer(index));
+		indices.add(Integer.valueOf(index));
 	}
 	void clearTracks() {
 		tracks = new Vector(mgg.tracks.length);

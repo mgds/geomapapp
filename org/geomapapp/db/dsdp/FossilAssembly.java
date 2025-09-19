@@ -67,7 +67,7 @@ public class FossilAssembly extends JComponent {
 			int[] codes = entries[k].getCodes();
 			float depth = entries[k].depth;
 			for( int i=0 ; i<codes.length ; i++) {
-				Integer pick = new Integer(codes[i]);
+				Integer pick = Integer.valueOf(codes[i]);
 				int j = v.indexOf(pick);
 				if( j<0 ) {
 					v.add(pick);

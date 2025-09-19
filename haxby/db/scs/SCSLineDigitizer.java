@@ -387,7 +387,7 @@ public class SCSLineDigitizer extends AbstractListModel
 						(double)register.image.getHeight());
 					shapes.add( line );
 					segments.add( points );
-					modes.add( new Integer(3) );
+					modes.add( Integer.valueOf(3) );
 					int index = modes.size()-1;
 					boolean done=false;
 					do {
@@ -426,7 +426,7 @@ public class SCSLineDigitizer extends AbstractListModel
 						(double)register.image.getHeight());
 					shapes.add( line );
 					segments.add( points );
-					modes.add( new Integer(5) );
+					modes.add( Integer.valueOf(5) );
 					int index = modes.size()-1;
 					boolean done=false;
 					do {
@@ -459,7 +459,7 @@ public class SCSLineDigitizer extends AbstractListModel
 						(double)register.image.getWidth(), p.y);
 					shapes.add( line );
 					segments.add( points );
-					modes.add( new Integer(4) );
+					modes.add( Integer.valueOf(4) );
 					int index = modes.size()-1;
 					boolean done=false;
 					do {
@@ -514,7 +514,7 @@ public class SCSLineDigitizer extends AbstractListModel
 			gaps.add( new double[] {(double)x1, (double)x2} );
 			shapes.add(path1);
 			segments.add( points );
-			modes.add( new Integer(mode) );
+			modes.add( Integer.valueOf(mode) );
 			points=null;
 			register.repaint();
 		}
@@ -573,7 +573,7 @@ public class SCSLineDigitizer extends AbstractListModel
 		if( mode==1 && evt.getKeyCode()== evt.VK_ENTER ) {
 			shapes.add( path );
 			segments.add( points );
-			modes.add( new Integer(mode) );
+			modes.add( Integer.valueOf(mode) );
 			path = null;
 			points = null;
 			register.repaint();

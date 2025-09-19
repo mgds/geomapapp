@@ -58,7 +58,7 @@ public class DBFFile extends // org.geomappapp.db.util.GTable {
 		Vector tmp = new Vector(records.size());
 		for( int k=0 ; k<order.length ; k++) {
 			Vector v = new Vector(2);
-			v.add(new Integer(k));
+			v.add(Integer.valueOf(k));
 			v.add( ((Vector)records.get(k)).get(column) );
 			tmp.add(v);
 		}
@@ -134,7 +134,7 @@ public class DBFFile extends // org.geomappapp.db.util.GTable {
 			for( int k=0 ; k<4; k++) input.readByte();
 			len = input.read();
 			rLen += len;
-			lengths.add( new Integer( len ));
+			lengths.add( Integer.valueOf( len ));
 			for( int k=17 ; k<32; k++) input.readByte();
 			index += 32;
 		//	System.out.println( name +"\n\t"+ type +"\t"+ len);

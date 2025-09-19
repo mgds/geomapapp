@@ -80,7 +80,7 @@ public class ImportGrid implements Runnable {
 
 	private static Map<Integer, FileFilter> gridFilter = new HashMap<Integer, FileFilter>();
 	static {
-		gridFilter.put(new Integer(0), new FileFilter() {
+		gridFilter.put(Integer.valueOf(0), new FileFilter() {
 			// Add different file extensions to choose from
 			String[] extensions = new String[] { ".grd", ".nc", ".GRD", ".NC" };
 			String description = "NetCDF grid files ( *.grd, *.nc )";
@@ -101,7 +101,7 @@ public class ImportGrid implements Runnable {
 			}
 		});
 
-		gridFilter.put(new Integer(2), new FileFilter() {
+		gridFilter.put(Integer.valueOf(2), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".asc") )return false;
@@ -114,7 +114,7 @@ public class ImportGrid implements Runnable {
 			}
 		});
 
-		gridFilter.put(new Integer(3), new FileFilter() {
+		gridFilter.put(Integer.valueOf(3), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".hdr") )return false;
@@ -128,7 +128,7 @@ public class ImportGrid implements Runnable {
 		});
 
 //		***** GMA 1.6.6: Add new filter for GEODAS grids
-		gridFilter.put(new Integer(4), new FileFilter() {
+		gridFilter.put(Integer.valueOf(4), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".g98") )return false;
@@ -141,7 +141,7 @@ public class ImportGrid implements Runnable {
 			}
 		});
 
-		gridFilter.put(new Integer(5), new FileFilter() {
+		gridFilter.put(Integer.valueOf(5), new FileFilter() {
 			public boolean accept(File f) {
 				if( f.isDirectory() ) return true;
 				if( !f.getName().toLowerCase().endsWith(".asc") )return false;
@@ -419,7 +419,7 @@ public class ImportGrid implements Runnable {
 				chooser.setMultiSelectionEnabled( true );
 				chooser.setFileSelectionMode( JFileChooser.FILES_ONLY );
 
-				FileFilter fileFilter = (FileFilter) gridFilter.get( new Integer(gridType));
+				FileFilter fileFilter = (FileFilter) gridFilter.get( Integer.valueOf(gridType));
 
 				chooser.addChoosableFileFilter(fileFilter);
 				chooser.setFileFilter(fileFilter);

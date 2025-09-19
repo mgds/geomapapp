@@ -103,8 +103,8 @@ public class MainUtils {
 
         private Integer getIntegerFlagInternal(Map<String, String> longFlags, Map<String, String> shortFlags, Flag flag,
                 Integer defaultValue) {
-            return longFlags.containsKey(flag.getLongName()) ? new Integer(longFlags.get(flag.getLongName()))
-                    : (shortFlags.containsKey(flag.getShortName()) ? new Integer(shortFlags.get(flag.getShortName()))
+            return longFlags.containsKey(flag.getLongName()) ? Integer.valueOf(longFlags.get(flag.getLongName()))
+                    : (shortFlags.containsKey(flag.getShortName()) ? Integer.valueOf(shortFlags.get(flag.getShortName()))
                             : defaultValue);
         }
 

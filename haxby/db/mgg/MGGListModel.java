@@ -15,7 +15,7 @@ public class MGGListModel extends AbstractListModel {
 	}
 	public void addTrack( MGGTrack track, int index ) {
 		tracks.add(track);
-		indices.add(new Integer(index));
+		indices.add(Integer.valueOf(index));
 	}
 	public void clearTracks() {
 		if( tracks.size()==0 ) return;

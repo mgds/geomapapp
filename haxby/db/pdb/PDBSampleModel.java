@@ -122,7 +122,7 @@ public class PDBSampleModel extends SortableTableModel {
 			if( !codes[i] )continue;
 			int g = dt.getGroupIndex( i );
 			if(g>=0 && g<ng) {
-				gp[g].add(new Integer(i));
+				gp[g].add(Integer.valueOf(i));
 				nCode++;
 			}
 		}
@@ -159,7 +159,7 @@ public class PDBSampleModel extends SortableTableModel {
 	private synchronized void updateSampleIndexMap() {
 		sampleToIndex.clear();
 		for (int i = 0; i < samples.size(); i++) {
-			sampleToIndex.put(samples.get(i), new Integer(i));
+			sampleToIndex.put(samples.get(i), Integer.valueOf(i));
 		}
 	}
 

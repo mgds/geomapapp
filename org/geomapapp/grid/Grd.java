@@ -163,7 +163,7 @@ public class Grd {
 		Attribute title = new Attribute( "title", "Geographic Grid" );
 		Attribute history = new Attribute( "history", "Created by GeoMapApp" );
 		Attribute source = new Attribute( "source", "Spherical Mercator Projected with -Jm1 " + "-R" + wesn[0] + "/" + wesn[1] + "/" + wesn[2] + "/" + wesn[3] );
-		Attribute node_offset = new Attribute( "node_offset", new Integer(0) );
+		Attribute node_offset = new Attribute( "node_offset", Integer.valueOf(0) );
 		nc.addGlobalAttribute(conventions);
 		nc.addGlobalAttribute(title);
 		nc.addGlobalAttribute(history);
@@ -251,7 +251,7 @@ public class Grd {
 
 		nc.addVariableAttribute("z", "scale_factor", new Double(1));
 		nc.addVariableAttribute("z", "add_offset", new Double(0));
-		nc.addVariableAttribute("z", "node_offset", new Integer(0));
+		nc.addVariableAttribute("z", "node_offset", Integer.valueOf(0));
 		nc.addVariableAttribute("z", "fill_value", new Float( Float.NaN ) );
 
 		nc.create();

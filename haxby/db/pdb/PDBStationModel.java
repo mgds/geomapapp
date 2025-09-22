@@ -244,7 +244,7 @@ public class PDBStationModel extends SortableTableModel {
 			ascent = true;
 		lastSortedCol = col;
 
-		Integer[] tmp = Integer.valueOf[current.length];
+		Integer[] tmp = new Integer[current.length];
 		for (int i = 0; i < current.length; i++)
 			tmp[i] = Integer.valueOf(current[i]);
 		Arrays.sort(tmp, columnSorter);
@@ -258,7 +258,7 @@ public class PDBStationModel extends SortableTableModel {
 	public synchronized void sortRows() {
 		ascent = !ascent;
 
-		Integer[] tmp = Integer.valueOf[current.length];
+		Integer[] tmp = new Integer[current.length];
 		for (int i = 0; i < current.length; i++)
 			tmp[i] = Integer.valueOf(current[i]);
 		Arrays.sort(tmp, rowSorter);

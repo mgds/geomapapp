@@ -20,6 +20,8 @@ The code is implemented in Java.
     *	Known Application Bugs
 
 # Release History
+* 09/15/2025 v3.7.6 Public release of v3.7.6 of GeoMapApp.
+* 04/22/2025 v3.7.5 Public release of v3.7.5 of GeoMapApp.
 * 08/05/2024 v3.7.4 Public release of v3.7.4 of GeoMapApp.
 * 04/15/2024 v3.7.3 Public release of v3.7.3 of GeoMapApp.
 * 03/06/2024 v3.7.2 Public release of v3.7.2 of GeoMapApp.
@@ -48,14 +50,11 @@ The Apache License file for this product.
 ## README.md
 This file.
 
-## build.xml
-The build file used to create the signed Unix and Windows jar files.
+## pom.xml
+The build file used to compile GMA and create the unsigned jar files. Since it's a Maven build, it also manages GMA's dependencies.
 
-## buildUnsigned.xml
-The build file used to create the unsigned Apple jar files.
+## src/main/java
+Contains the Java source code for GeoMapApp.
 
-## haxby/ and org/
-Directories that contain the Java source code for GeoMapApp.
-
-## resources/
+## src/main/resources/
 A directory that contains the various resources required by GeoMapApp, e.g. external libraries, images, icons, color look up tables, etc.

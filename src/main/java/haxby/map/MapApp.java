@@ -297,6 +297,7 @@ public class MapApp implements ActionListener,
 	protected File portalCacheDir = new File(menusCacheDir, "portals");
 	protected File portalSelectFile = new File(menusCacheDir, "default_portals.txt");
 	protected File portalSelectFileOld = new File(menusCacheDir, "default_portals.dat");
+	protected File showMailingListFile = new File(parentRoot, "hideMailingListDialog");
 	protected JPanel inputDevPasswordPanel;
 	protected JTextField inputDevPasswordText;
 	protected JLabel inputDevPasswordLabel;
@@ -372,6 +373,8 @@ public class MapApp implements ActionListener,
 	public JFrame layerManagerDialog;
 	
 	private static MapApp theApp;
+	
+	public static boolean shouldShowMailingListPopup = true;
 	
 	// Menu Listener action bring to front
 	public MenuListener listener = new MenuListener() {
@@ -576,6 +579,20 @@ public class MapApp implements ActionListener,
 
 		VersionUtil.init(BASE_URL + "versions.json");
 		checkVersion();
+		shouldShowMailingListPopup = shouldShowMailingListPopup && !showMailingListFile.exists();
+
+		if(shouldShowMailingListPopup) {
+			showMailingListPopup();
+		}
+		else {
+			if(!showMailingListFile.exists()) {
+				try {
+					showMailingListFile.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 
 		// User chooses
 		if (which == -1) {
@@ -929,6 +946,65 @@ public class MapApp implements ActionListener,
 			ex.printStackTrace();
 			// System.exit(0);
 		}*/
+	}
+	
+	public void showMailingListPopup() {
+		JDialog dialog = new JDialog((Frame)null, "Join GeoMapApp Mailing List", true);
+		ActionListener listener = new ActionListener() {
+			boolean isShowingAgain = true;
+			private void createNewFileIfNotExists() {
+				try {
+					if(!showMailingListFile.exists()) {
+						showMailingListFile.createNewFile();
+					}
+				}
+				catch(IOException e) {
+					e.printStackTrace();
+				}
+			}
+			public void actionPerformed(ActionEvent event) {
+				String cmd = event.getActionCommand();
+				switch(cmd) {
+				case "mailingList":
+					String url = PathUtil.getPath("ANNOUNCE_PATH");;
+					BrowseURL.browseURL( url );
+					if(!isShowingAgain) {
+						createNewFileIfNotExists();
+					}
+					dialog.setVisible(false);
+					break;
+				case "nojoin":
+					dialog.setVisible(false);
+					if(!isShowingAgain) {
+						createNewFileIfNotExists();
+					}
+					break;
+				case "noshow":
+					if(event.getSource() instanceof JCheckBox) {
+						isShowingAgain = !((JCheckBox)event.getSource()).isSelected();
+					}
+					break;
+				}
+			}
+		};
+		JPanel panel = new JPanel();
+		dialog.add(panel);
+		JButton joinMailingListBtn = new JButton("Join Mailing List");
+		joinMailingListBtn.setActionCommand("mailingList");
+		joinMailingListBtn.addActionListener(listener);
+		panel.add(joinMailingListBtn);
+		JButton dontJoinBtn = new JButton("Don't Join Mailing List Right Now");
+		dontJoinBtn.setActionCommand("nojoin");
+		dontJoinBtn.addActionListener(listener);
+		panel.add(dontJoinBtn);
+		JCheckBox dontShowAgain = new JCheckBox("Don't Show This Window Again", false);
+		dontShowAgain.setActionCommand("noshow");
+		dontShowAgain.addActionListener(listener);
+		panel.add(dontShowAgain);
+		dialog.pack();
+		dialog.setLocationRelativeTo(anchor);
+		anchor = dialog;
+		dialog.setVisible(true);
 	}
 	
 	public static boolean isJar() {

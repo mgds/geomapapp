@@ -3,7 +3,9 @@ package haxby.db.mb;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
@@ -11,15 +13,22 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.BindException;
+import java.net.ConnectException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Vector;
 
 import javax.imageio.ImageIO;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import org.geomapapp.geom.MapProjection;
 import org.geomapapp.grid.Grid2D;
@@ -63,6 +72,51 @@ public class PreviewCruise
     if ((!(cruiseDir.startsWith("http://") || cruiseDir.startsWith("https://"))) && (!cruiseDir.startsWith("file:/"))) {
       cruiseDir = "file://" + new File(cruiseDir).getPath();
     }
+    //first, check if the cruise directory exists. If not, show a helpful message and exit.
+    boolean validUrl = true;
+    do try {
+		URL url = new URL(cruiseDir);
+		InputStream is = url.openStream();
+		validUrl = true;
+	} catch (MalformedURLException e) {
+		System.err.println("Malformed URL: " + cruiseDir);
+		System.exit(1);
+	} catch (IOException e) {
+		validUrl = false;
+		System.err.println("Could not open " + cruiseDir);
+		e.printStackTrace();
+		Object msg = "";
+		JTextField newUrlField = null;
+		if(e instanceof ConnectException) {
+			msg = "Couldn't connect to " + cruiseDir + ". Ensure you are physically on campus or using the LDEO VPN.";
+		}
+		else if(e instanceof FileNotFoundException) {
+			String msgText = "Couldn't find the cruise at " + cruiseDir + ". Is the URL correct?";
+			msg = new JPanel(new GridLayout(0, 1));
+			JPanel thePanel = (JPanel)msg;
+			JPanel subPanel = new JPanel();
+			JLabel label = new JLabel(msgText);
+			thePanel.add(label);
+			JLabel otherLabel = new JLabel("Try again with another URL:");
+			newUrlField = new JTextField();
+			newUrlField.setPreferredSize(new Dimension(350, 30));
+			newUrlField.setMinimumSize(newUrlField.getPreferredSize());
+			subPanel.add(otherLabel);
+			subPanel.add(newUrlField);
+			thePanel.add(subPanel);
+		}
+		int option = JOptionPane.showOptionDialog(null, msg, "Trouble Loading Cruise", JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.ERROR_MESSAGE, null, null, null);
+		if(option == JOptionPane.CANCEL_OPTION) {
+			System.exit(1);
+		}
+		if(null == newUrlField || "".equals(newUrlField.getText().trim())) {
+			System.exit(1);
+		}
+		else {
+			cruiseDir = newUrlField.getText();
+		}
+	} while(!validUrl);
     
     if (inputArgs.length >= 3) {
     	String tilesPath = inputArgs[2];

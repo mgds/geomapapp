@@ -4,7 +4,7 @@ Java application for exploring geoscience data.
 # Overview
 GeoMapApp is an earth science exploration and visualization application that is continually being expanded as part of the Marine Geoscience Data System (MGDS) at the Lamont-Doherty Earth Observatory of Columbia University. The application provides direct access to the Global Multi-Resolution Topography (GMRT) compilation that hosts high resolution (~100 m node spacing) bathymetry from multibeam data for ocean areas and ASTER (Advanced Spaceborne Thermal Emission and Reflection Radiometer) and NED (National Elevation Dataset) topography datasets for the global land masses.
 
-If you are not interested in the code, go to [our website](https://www.geomapapp.org/) for more information.
+If you are not interested in the code but somehow found yourself here, go to [our website](https://www.geomapapp.org/) for more information.
 
 This code base also includes the code for Virtual Ocean. Virtual Ocean integrated the GeoMapApp tool suite with the NASA World Wind 3-D earth browser to create a powerful platform for interdisciplinary research and education. Virtual Ocean is no longer supported.
 

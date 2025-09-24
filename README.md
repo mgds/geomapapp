@@ -8,7 +8,8 @@ This code base also includes the code for Virtual Ocean. Virtual Ocean integrate
 
 The code is implemented in Java.
 
-# Requirements
+# Requirements For Compilation
+*  Maven for dependency management.
 *  Java SE Development Kit 8 or higher.
 *	Developers must have convenient access to the source code as well as modern IDE (Integrated Development Environment) tools to easily participate in the project’s life-cycle. Concurrent editing of the same source should be naturally supported.
 *	The project leader should have robust, industry-standard versioning tools to manage the incoming code from contributors (accept, revert & modify changes). 
@@ -51,7 +52,7 @@ The Apache License file for this product.
 This file.
 
 ## pom.xml
-The build file used to compile GMA and create the unsigned jar files. Since it's a Maven build, it also manages GMA's dependencies.
+The build file used to compile GMA and create the unsigned jar files. Since it's a Maven build, it also manages GMA's dependencies. You should be able to build GMA locally with `mvn clean compile` and make a jar with `mvn clean compile package`.
 
 ## src/main/java
 Contains the Java source code for GeoMapApp.

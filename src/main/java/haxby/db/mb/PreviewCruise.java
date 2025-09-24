@@ -25,6 +25,7 @@ import java.net.URLConnection;
 import java.util.Vector;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -88,10 +89,12 @@ public class PreviewCruise
 		Object msg = "";
 		JTextField newUrlField = null;
 		if(e instanceof ConnectException) {
-			msg = "Couldn't connect to " + cruiseDir + ". Ensure you are physically on campus or using the LDEO VPN.";
+			msg = "Couldn't connect to " + cruiseDir + ".\nEnsure you are physically on campus or using the LDEO VPN, then try again.";
+			JOptionPane.showMessageDialog(null, msg, e.getMessage(), JOptionPane.ERROR_MESSAGE);
+			System.exit(1);
 		}
-		else if(e instanceof FileNotFoundException) {
-			String msgText = "Couldn't find the cruise at " + cruiseDir + ". Is the URL correct?";
+		else {
+			String msgText = e instanceof FileNotFoundException ? ("Couldn't find the cruise at " + cruiseDir + ".\nIs the URL correct?") : ("Couldn't connect to " + cruiseDir + " (" + e.getMessage() + ").");
 			msg = new JPanel(new GridLayout(0, 1));
 			JPanel thePanel = (JPanel)msg;
 			JPanel subPanel = new JPanel();
@@ -104,7 +107,7 @@ public class PreviewCruise
 			subPanel.add(otherLabel);
 			subPanel.add(newUrlField);
 			thePanel.add(subPanel);
-		}
+}
 		int option = JOptionPane.showOptionDialog(null, msg, "Trouble Loading Cruise", JOptionPane.OK_CANCEL_OPTION,
 				JOptionPane.ERROR_MESSAGE, null, null, null);
 		if(option == JOptionPane.CANCEL_OPTION) {

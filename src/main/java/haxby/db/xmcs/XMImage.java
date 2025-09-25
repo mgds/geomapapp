@@ -1268,11 +1268,11 @@ public class XMImage extends haxby.util.ScaledComponent
 //		***** GMA 1.6.2
 
 		if (multiple) { // Save as a zip
-			File file = new File(getID() + ".zip");
+			File file = new File(getCruiseID() + "_" + getID() + ".zip");
 			while (true) {
 				
 				FileDialog fd = new FileDialog((Frame)null, "Save", FileDialog.SAVE);
-				fd.setDirectory(System.getProperty("user.home"));
+				//fd.setDirectory(System.getProperty("user.home"));
 				fd.setFile(file.getName());
 				fd.setVisible(true);
 				
@@ -1294,13 +1294,13 @@ public class XMImage extends haxby.util.ScaledComponent
 					new FileOutputStream(file)));
 			try {
 				if (imageCB.isSelected()) {
-					ZipEntry ze = new ZipEntry(getID() + ".jpg");
+					ZipEntry ze = new ZipEntry(getCruiseID() + "_" + getID() + ".jpg");
 					zos.putNextEntry(ze);
 					saveJPEG(zos);
 					MapApp.sendLogMessage("Saving_or_Downloading&portal=Digital Seismic Reflection Profiles (MCS & SCS)&what=image_viewport&cruise="+this.line.getCruiseID()+"&line=" +(String) this.line.lineID );
 				}
 				if (imageFullCB.isSelected()) {
-					ZipEntry ze = new ZipEntry(getID() + "Full.jpg");
+					ZipEntry ze = new ZipEntry(getCruiseID() + "_" + getID() + "Full.jpg");
 					zos.putNextEntry(ze);
 					saveFullJPEG(zos);
 					MapApp.sendLogMessage("Saving_or_Downloading&portal=Digital Seismic Reflection Profiles (MCS & SCS)&what=image_full&cruise="+this.line.getCruiseID()+"&line=" +(String) this.line.lineID );
@@ -1318,7 +1318,7 @@ public class XMImage extends haxby.util.ScaledComponent
 //				***** GMA 1.6.2
 
 				if (navCB.isSelected()) {
-					ZipEntry ze = new ZipEntry(getID() + ".nav");
+					ZipEntry ze = new ZipEntry(getCruiseID() + "_" + getID() + ".nav");
 					zos.putNextEntry(ze);
 					saveNAV(zos);
 					MapApp.sendLogMessage("Saving_or_Downloading&portal=Digital Seismic Reflection Profiles (MCS & SCS)&what=nav&cruise="+this.line.getCruiseID()+"&line=" +(String) this.line.lineID );
@@ -1333,11 +1333,11 @@ public class XMImage extends haxby.util.ScaledComponent
 			setCursor(Cursor.getDefaultCursor());
 		} else if (imageCB.isSelected()) { // Save image
 
-			File file = new File(getID() + "_viewport.jpg");
+			File file = new File(getCruiseID() + "_" + getID() + "_viewport.jpg");
 			while (true) {
 				//replaced JFileChoosers with FileDialog as JFileChooser was freezing in some instances
 				FileDialog fd = new FileDialog((Frame)null, "Save", FileDialog.SAVE);
-				fd.setDirectory(System.getProperty("user.home"));
+				//fd.setDirectory(System.getProperty("user.home"));
 				fd.setFile(file.getName());
 				fd.setVisible(true);
 				
@@ -1369,11 +1369,11 @@ public class XMImage extends haxby.util.ScaledComponent
 
 			setCursor(Cursor.getDefaultCursor());
 		} else if (imageFullCB.isSelected()) { // Save Full image
-			File file = new File(getID() + ".jpg");
+			File file = new File(getCruiseID() + "_" + getID() + ".jpg");
 			while (true) {
 				
 				FileDialog fd = new FileDialog((Frame)null, "Save", FileDialog.SAVE);
-				fd.setDirectory(System.getProperty("user.home"));
+				//fd.setDirectory(System.getProperty("user.home"));
 				fd.setFile(file.getName());
 				fd.setVisible(true);
 				
@@ -1404,11 +1404,11 @@ public class XMImage extends haxby.util.ScaledComponent
 			}
 			setCursor(Cursor.getDefaultCursor());
 		} else if (navCB.isSelected()) { // Save Full image
-			File file = new File(getID() + ".nav");
+			File file = new File(getCruiseID() + "_" + getID() + ".nav");
 			while (true) {
 				
 				FileDialog fd = new FileDialog((Frame)null, "Save", FileDialog.SAVE);
-				fd.setDirectory(System.getProperty("user.home"));
+				//fd.setDirectory(System.getProperty("user.home"));
 				fd.setFile(file.getName());
 				fd.setVisible(true);
 				

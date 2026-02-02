@@ -33,3 +33,4 @@ haxby_org
 *.swo
 build_tmp
 codesign.p12
+**/.DS_Store

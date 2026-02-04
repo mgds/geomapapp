@@ -655,45 +655,6 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 			}
 		}
 	}
-	private void convertShapes(MathTransform transform) {
-		if(null != transform) {
-			Vector<Object> newShapes = new Vector<>(shapes.size());
-			for(Object o : shapes) {
-				if(o instanceof ESRIMultiPoint) {
-					ESRIPoint[] points = ((ESRIMultiPoint)o).getPoints();
-					//dimension is always 2 (x, y)
-					double[] coords = new double[2*points.length];
-					for(int i = 0; i < points.length; i++) {
-						coords[2*i] = points[i].getX();
-						coords[2*i+1] = points[i].getY();
-					}
-					double[] newCoords = new double[coords.length];
-					try {
-						transform.transform(coords, 0, newCoords, 0, points.length);
-						ESRIMultiPoint emp = (ESRIMultiPoint) ((ESRIMultiPoint)o).clone();
-						emp.x = 0;
-						emp.y = 0;
-						ESRIPoint[] newPoints = emp.getPoints();
-						double minX = java.lang.Double.MAX_VALUE, maxX = -java.lang.Double.MAX_VALUE, minY = java.lang.Double.MAX_VALUE, maxY = -java.lang.Double.MAX_VALUE;
-						for(int i = 0; i < newPoints.length; i++) {
-							newPoints[i] = new ESRIPoint(newCoords[2*i], newCoords[2*i+1]);
-							if(newPoints[i].getX() < minX) minX = newPoints[i].getX();
-							if(newPoints[i].getX() > maxX) maxX = newPoints[i].getX();
-							if(newPoints[i].getY() < minY) minY = newPoints[i].getY();
-							if(newPoints[i].getY() > maxY) maxY = newPoints[i].getY();
-						}
-						emp.width = maxX - minX;
-						emp.height = maxY - minY;
-						newShapes.add(emp);
-					} catch (TransformException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
-			shapes = newShapes;
-		}
-	}
 	public Vector readShapes() throws IOException {
 		if( !exists() ) throw new FileNotFoundException();
 		boolean url = path.startsWith( "http" ) || path.startsWith( "file://" );

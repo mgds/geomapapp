@@ -2,6 +2,12 @@ package org.geomapapp.gis.shape;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.io.BufferedInputStream;
@@ -28,8 +34,16 @@ import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.swing.JDialog;
+import javax.swing.JEditorPane;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.tree.TreeNode;
 
 import org.geomapapp.geom.MapProjection;
@@ -51,6 +65,7 @@ import org.opengis.referencing.operation.TransformException;
 
 import haxby.map.MapApp;
 import haxby.map.XMap;
+import haxby.util.BrowseURL;
 import haxby.util.URLFactory;
 import haxby.util.WESNSupplier;
 import haxby.util.XBTable;
@@ -119,6 +134,53 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 			e.printStackTrace();
 		}
 		
+	}
+	
+	private boolean cancelled = false;
+	
+	public boolean isCancelled() {
+		return cancelled;
+	}
+	
+	private boolean userProceedDespiteBigFile() {
+		long freeMemory = Runtime.getRuntime().freeMemory();
+		if(((long)header.length) * 2 > freeMemory) {
+			JLabel warning = new JLabel("Importing this file may slow GeoMapApp to a halt.");
+			Font font = warning.getFont();
+			StringBuffer style = new StringBuffer("font-family:" + font.getFamily() + ";");
+		    style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
+		    style.append("font-size:" + font.getSize() + "pt;");
+		    style.append("max-width: 400px; width:350px");
+			JEditorPane instructions = new JEditorPane("text/html", "<html><body style=\""+style+"\">To avoid this problem in the future, download the latest jar from <a href=\"https://www.geomapapp.org/UnixInstall.html\">https://www.geomapapp.org/UnixInstall.html</a> and run it from your Terminal or Command Prompt with the following command:</body></html>");
+			instructions.addHyperlinkListener(new HyperlinkListener() {
+				@Override
+				public void hyperlinkUpdate(HyperlinkEvent e) {
+					if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED))
+		            	BrowseURL.browseURL(e.getURL().toString());
+				}
+			});
+			instructions.setEditable(false);
+			instructions.setBackground(warning.getBackground());
+			JLabel question = new JLabel("Continue importing?");
+			JPanel panel = new JPanel();
+			panel.setLayout(new GridLayout(0, 1));
+			long memNeeded = (header.length * 2 - freeMemory) + Runtime.getRuntime().maxMemory();
+			long numDigits = String.valueOf(memNeeded).length();
+			long quot = Math.round(Math.ceil(memNeeded/(double)Math.round(Math.pow(10, numDigits-1))));
+			long roundNumber = Math.round(Math.pow(10, numDigits-1)) * quot;
+			String recommended = (roundNumber >= 1e9)?((roundNumber/(int)1e9)+"g"):((roundNumber >= 1e6)?((roundNumber/(int)1e6)+"m"):((roundNumber >= 1e3)?(roundNumber/(int)1e3 + "k"):(String.valueOf(roundNumber))));
+			JTextField jtf = new JTextField("java -jar -Xmx" + recommended + " GeoMapApp.jar");
+			Font font2 = jtf.getFont();
+			jtf.setFont(new Font(Font.MONOSPACED, font2.getStyle(), font2.getSize()));
+			jtf.setEditable(false);
+			panel.add(warning);
+			panel.add(instructions);
+			panel.add(jtf);
+			panel.add(question);
+			int ans = JOptionPane.showConfirmDialog(MapApp.anchor, panel, "WARNING: LARGE FILE", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			return JOptionPane.YES_OPTION == ans;
+		}
+		return true;
 	}
 	
 	public ESRIShapefile(String name, int type, Vector names, Vector classes) {
@@ -698,6 +760,9 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 		DataInputStream shp = new DataInputStream(
 				new BufferedInputStream(in));
 		header = MainHeader.getHeader(shp);
+		cancelled = !userProceedDespiteBigFile();
+		if(cancelled) return;
+		MapApp.getApp().startWaiting();
 		int t = header.type%10;
 	//	if( header.type-t == 10 || header.type==31 )
 		if( header.type==31 )

@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -1847,6 +1848,19 @@ public class MapApp implements ActionListener,
 	public void setFrameSize( int width, int height ) {
 		frame.setSize( width, height );
 		vPane.resetToPreferredSizes();
+	}
+	
+	private int whichCursor = Cursor.DEFAULT_CURSOR;
+	
+	public void startWaiting() {
+		whichCursor = anchor.getCursor().getType();
+		if(null!=anchor) anchor.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		if(null!=layerManagerDialog) layerManagerDialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+	}
+	
+	public void stopWaiting() {
+		if(null!=anchor) anchor.setCursor(Cursor.getPredefinedCursor(whichCursor));
+		if(null!=layerManagerDialog)layerManagerDialog.setCursor(Cursor.getPredefinedCursor(whichCursor));
 	}
 
 	public void mapFocus() {

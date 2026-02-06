@@ -145,13 +145,14 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 	private boolean userProceedDespiteBigFile() {
 		long freeMemory = Runtime.getRuntime().freeMemory();
 		if(((long)header.length) * 2 > freeMemory) {
-			JLabel warning = new JLabel("Importing this file may slow GeoMapApp to a halt.");
+			JLabel warning = new JLabel("This is a large shapefile. Due to a potential lack of computer memory, importing this file may slow GeoMapApp to a halt.");
 			Font font = warning.getFont();
 			StringBuffer style = new StringBuffer("font-family:" + font.getFamily() + ";");
 		    style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
 		    style.append("font-size:" + font.getSize() + "pt;");
 		    style.append("max-width: 400px; width:350px");
-			JEditorPane instructions = new JEditorPane("text/html", "<html><body style=\""+style+"\">To avoid this problem in the future, download the latest jar from <a href=\"https://www.geomapapp.org/UnixInstall.html\">https://www.geomapapp.org/UnixInstall.html</a> and run it from your Terminal or Command Prompt with the following command:</body></html>");
+			JEditorPane instructions = new JEditorPane("text/html", "<html><body style=\""+style+"\">Allocate more memory to GeoMapApp to avoid this problem, as follows:\n" +
+					"<ol><li>Download the latest GeoMapApp.jar file from <a href=\"https://www.geomapapp.org/UnixInstall.html\">https://www.geomapapp.org/UnixInstall.html</a>.</li><li>Open a Terminal or Command Prompt window and <code style=\"display:inline\">cd</code> (change directory) to the directory containing the GeoMapApp.jar file.</li><li>Run the following command:</li></ol></body></html>");
 			instructions.addHyperlinkListener(new HyperlinkListener() {
 				@Override
 				public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -161,7 +162,7 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 			});
 			instructions.setEditable(false);
 			instructions.setBackground(warning.getBackground());
-			JLabel question = new JLabel("Continue importing?");
+			JLabel question = new JLabel("Continue importing this large shapefile? (This may slow GeoMapApp.)");
 			JPanel panel = new JPanel();
 			panel.setLayout(new GridLayout(0, 1));
 			long memNeeded = (header.length * 2 - freeMemory) + Runtime.getRuntime().maxMemory();
@@ -177,7 +178,7 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 			panel.add(instructions);
 			panel.add(jtf);
 			panel.add(question);
-			int ans = JOptionPane.showConfirmDialog(MapApp.anchor, panel, "WARNING: LARGE FILE", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			int ans = JOptionPane.showConfirmDialog(MapApp.anchor, panel, "WARNING: ATTEMPTING TO IMPORT A LARGE SHAPEFILE", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 			return JOptionPane.YES_OPTION == ans;
 		}
 		return true;

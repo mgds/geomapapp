@@ -2,7 +2,10 @@ package org.geomapapp.gis.shape;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
@@ -34,6 +37,7 @@ import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.swing.BoxLayout;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
@@ -42,6 +46,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.tree.TreeNode;
@@ -146,6 +152,7 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 		long freeMemory = Runtime.getRuntime().freeMemory();
 		if(((long)header.length) * 2 > freeMemory) {
 			JLabel warning = new JLabel("This is a large shapefile. Due to a potential lack of computer memory, importing this file may slow GeoMapApp to a halt.");
+			warning.setAlignmentX(Component.LEFT_ALIGNMENT);
 			Font font = warning.getFont();
 			StringBuffer style = new StringBuffer("font-family:" + font.getFamily() + ";");
 		    style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
@@ -160,23 +167,38 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 		            	BrowseURL.browseURL(e.getURL().toString());
 				}
 			});
+			instructions.setAlignmentX(Component.LEFT_ALIGNMENT);
 			instructions.setEditable(false);
 			instructions.setBackground(warning.getBackground());
 			JLabel question = new JLabel("Continue importing this large shapefile? (This may slow GeoMapApp.)");
+			question.setAlignmentX(Component.LEFT_ALIGNMENT);
 			JPanel panel = new JPanel();
-			panel.setLayout(new GridLayout(0, 1));
+			BoxLayout bl = new BoxLayout(panel, BoxLayout.Y_AXIS);
+			panel.setLayout(bl);
+			panel.setAlignmentX(Component.LEFT_ALIGNMENT);
 			long memNeeded = (header.length * 2 - freeMemory) + Runtime.getRuntime().maxMemory();
 			long numDigits = String.valueOf(memNeeded).length();
 			long quot = Math.round(Math.ceil(memNeeded/(double)Math.round(Math.pow(10, numDigits-1))));
 			long roundNumber = Math.round(Math.pow(10, numDigits-1)) * quot;
 			String recommended = (roundNumber >= 1e9)?((roundNumber/(int)1e9)+"g"):((roundNumber >= 1e6)?((roundNumber/(int)1e6)+"m"):((roundNumber >= 1e3)?(roundNumber/(int)1e3 + "k"):(String.valueOf(roundNumber))));
 			JTextField jtf = new JTextField("java -jar -Xmx" + recommended + " GeoMapApp.jar");
+			jtf.setAlignmentX(Component.LEFT_ALIGNMENT);
 			Font font2 = jtf.getFont();
 			jtf.setFont(new Font(Font.MONOSPACED, font2.getStyle(), font2.getSize()));
+			jtf.setColumns(jtf.getText().length());
+			FontMetrics fm = jtf.getFontMetrics(jtf.getFont());
+			Dimension preferred = new Dimension(fm.stringWidth(jtf.getText())*6/5, fm.getHeight()*3/2);
+			jtf.setMinimumSize(preferred);
+			jtf.setPreferredSize(preferred);
+			jtf.setMaximumSize(preferred);
 			jtf.setEditable(false);
 			panel.add(warning);
+			panel.add(new JLabel(" ")); //for spacing
 			panel.add(instructions);
 			panel.add(jtf);
+			panel.add(new JLabel(" ")); //for spacing
+			panel.add(new JLabel(" ")); //for spacing
+			panel.add(new JLabel(" ")); //for spacing
 			panel.add(question);
 			int ans = JOptionPane.showConfirmDialog(MapApp.anchor, panel, "WARNING: ATTEMPTING TO IMPORT A LARGE SHAPEFILE", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 			return JOptionPane.YES_OPTION == ans;

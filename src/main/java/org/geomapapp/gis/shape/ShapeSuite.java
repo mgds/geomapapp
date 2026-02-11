@@ -82,6 +82,7 @@ public class ShapeSuite extends AbstractTableModel {
 			MapApp.getApp().stopWaiting();
 			return false;
 		}
+		importCancelled = false;
 		if((map!=null) && (shape.getMap()==null)) {
 			shape.setMap(map);
 		}
@@ -117,6 +118,7 @@ public class ShapeSuite extends AbstractTableModel {
 				importCancelled = true;
 				return false;
 			}
+			importCancelled = false;
 			if( map!=null ) shape.setMap(map);
 			shapeFiles.add( shape );
 			map.addOverlay(shape.filename, shape);
@@ -133,6 +135,7 @@ public class ShapeSuite extends AbstractTableModel {
 			importCancelled = true;
 			return false;
 		}
+		importCancelled = false;
 
 		if (containsShape(shape))
 			return false;
@@ -357,6 +360,9 @@ public class ShapeSuite extends AbstractTableModel {
 		File[] sel = chooser.getSelectedFiles();
 		for( int k=0 ; k<sel.length ; k++) {
 			addShapeFile(sel[k]);
+			if(importCancelled) {
+				return false;
+			}
 			MapApp.sendLogMessage("Shape_File_Imported&name="+sel[k].getName());
 		}
 		chooser.setMultiSelectionEnabled(multi);

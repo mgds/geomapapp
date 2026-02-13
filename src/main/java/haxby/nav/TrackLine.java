@@ -55,6 +55,66 @@ public class TrackLine{
 	public int getTypes() {
 		return mask;
 	}
+	
+	private Point2D.Double getClosestPointInSegment(Point2D start, Point2D end, double x, double y) {
+		if(start.getY() == end.getY()) {
+			return new Point2D.Double(x, start.getY());
+		}
+		double slope = (end.getY() - start.getY()) / (end.getX() - start.getX());
+		double perpSlope = -1 / slope;
+		//Use point-slope form
+		//base equation: Y - y1 = m*(X - x1)
+		//solve for Y: Y = m*X - m*x1 + y1
+		//segment: Y = slope*X - slope*start.getX() + start.getY()
+		//imaginary: Y = perpSlope*X - perpSlope*x + y
+		//set them equal: slope*X - slope*start.getX() + start.getY() = perpSlope*X - perpSlope*x + y
+		//isolate X: slope*X - perpSlope*X = slope*start.getX() - perpSlope*x + y - start.getY()
+		//continue: X*(slope - perpSlope) = slope*start.getX() - perpSlope*x + y - start.getY()
+		//final: X = (slope*start.getX() - perpSlope*x + y - start.getY()) / (slope - perpSlope)
+		double newX = (slope*start.getX() - perpSlope*x + y - start.getY()) / (slope - perpSlope);
+		double newY = slope * newX - slope * start.getX() + start.getY();
+		return new Point2D.Double(newX, newY);
+	}
+	
+	public Point2D.Double getClosestPoint(double x, double y) {
+		if(contains(x, y)) {
+			return new Point2D.Double(x, y);
+		}
+		double closestDist = Double.MAX_VALUE;
+		int closestSeg = -1;
+		Point2D.Double[] closestPoints = new Point2D.Double[cpts.length];
+		for(int i = 0; i < cpts.length; i++) {
+			if(cpts[i].length == 0) continue;
+			if(cpts[i].length == 1) {
+				closestPoints[i] = new Point2D.Double(cpts[i][0].getX(), cpts[i][0].getY());
+				double dist = closestPoints[i].distance(x, y);
+				if(dist < closestDist) {
+					closestSeg = i;
+					closestDist = dist;
+				}
+			}
+			//first segment
+			Point2D.Double closestOfSeg = getClosestPointInSegment(cpts[i][0], cpts[i][1], x, y);
+			double dist = closestOfSeg.distance(x, y);
+			for(int j = 2; j < cpts[i].length; j++) {
+				Point2D.Double pt = getClosestPointInSegment(cpts[i][j-1], cpts[i][j], x, y);
+				double curDist = pt.distance(x, y);
+				if(curDist < dist) {
+					closestOfSeg = pt;
+					dist = curDist;
+				}
+			}
+			closestPoints[i] = closestOfSeg;
+			if(dist < closestDist) {
+				closestDist = dist;
+				closestSeg = i;
+			}
+		}
+		if(closestSeg < 0) {
+			System.out.println("This shouldn't happen");
+		}
+		return closestPoints[closestSeg];
+	}
 
 	// returns true if any point in the track line is within the area, or if the line intersects the area
 	public boolean intersects( Rectangle2D area ) {

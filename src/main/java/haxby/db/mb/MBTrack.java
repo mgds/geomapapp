@@ -54,6 +54,14 @@ public class MBTrack {
 	public boolean firstNearPoint( double x, double y, Nearest n) {
 		return nav.firstNearPoint( x, y, n);
 	}
+	public boolean isNear(double x, double y) {
+		double squareSide = 30;
+		Rectangle2D rect = new Rectangle2D.Double(x - squareSide/2, y - squareSide/2, squareSide, squareSide);
+		return nav.intersects(rect);
+	}
+	public Point2D.Double getClosestPoint(double x, double y) {
+		return nav.getClosestPoint(x, y);
+	}
 
 	public TrackLine getNav() {
 		return nav;

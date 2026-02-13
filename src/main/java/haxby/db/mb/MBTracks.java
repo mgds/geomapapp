@@ -29,17 +29,20 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -593,6 +596,7 @@ public class MBTracks implements Database, Overlay, MouseListener {
 			int i0 = selectedCruise;
 			while( i0<0 ) i0+=size;
 			if( back ) i0+=size;
+			Map<Integer, Integer> contenders = new HashMap<>();
 			for( int k=0 ; k<size ; k++) {
 				int i = back ?
 					(i0 - (1+k))%size :
@@ -607,8 +611,10 @@ public class MBTracks implements Database, Overlay, MouseListener {
 						(j0 - (1+kk))%files.size() :
 						(j0 + 1+kk )%files.size();
 					MBTrack track = (MBTrack) files.get(j);
-					if( !track.contains(x, y) ) continue;
-					if( track.firstNearPoint(x, y, nearest) ) {
+					if( !track.isNear(x, y) ) continue;
+					Point2D.Double pt = track.getClosestPoint(x, y);
+					if( track.firstNearPoint(pt.x, pt.y, nearest) ) {
+						/*
 						mbSel.cruises.setSelectedIndex( i );
 						synchronized (map.getTreeLock()) {
 							Graphics2D g = map.getGraphics2D();
@@ -621,7 +627,38 @@ public class MBTracks implements Database, Overlay, MouseListener {
 							updateDisplay(cruise, track, nearest);
 							return;
 						}
+						*/
+						contenders.put(i, j);
 					}
+				}
+				if(contenders.size() > 0) {
+					//find the closest cruise/track to the point clicked
+					List<Integer> contendingKeys = contenders.keySet().stream().collect(Collectors.toList());
+					int closest = contendingKeys.get(0);
+					double minDist = ((MBTrack)files.get(contenders.get(closest))).getClosestPoint(x, y).distance(x, y);
+					for(int index = 1; index < contendingKeys.size(); index++) {
+						MBTrack thisTrack = (MBTrack)files.get(contendingKeys.get(index));
+						Point2D.Double curClosest = thisTrack.getClosestPoint(x, y);
+						double curDist = curClosest.distance(x, y);
+						if(curDist < minDist) {
+							closest = contendingKeys.get(index);
+							minDist = curDist;
+						}
+					}
+					//select that cruise/track it's part of
+					mbSel.cruises.setSelectedIndex(closest);
+					synchronized(map.getTreeLock()) {
+						Graphics2D g = map.getGraphics2D();
+						if(closest != selectedCruise) {
+							drawSelectedCruise(g, Color.black);
+						}
+						selectedCruise = closest;
+						selectedTrack = contenders.get(closest);
+						drawSelectedCruise(g, Color.white);
+						drawSelectedTrack(g, cruiseColor);
+						updateDisplay((MBCruise)cruises.get(closest), (MBTrack)files.get(contenders.get(closest)), nearest);
+					}
+					return;
 				}
 			}
 		display.setText( "none selected" );

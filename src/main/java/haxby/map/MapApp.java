@@ -1851,16 +1851,29 @@ public class MapApp implements ActionListener,
 	}
 	
 	private int whichCursor = Cursor.DEFAULT_CURSOR;
+	private boolean isWaiting = false;
 	
-	public void startWaiting() {
-		whichCursor = anchor.getCursor().getType();
-		if(null!=anchor) anchor.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-		if(null!=layerManagerDialog) layerManagerDialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+	public synchronized void startWaiting() {
+		new Thread(new Runnable() {
+			public void run() {
+				if(!isWaiting) {
+					whichCursor = anchor.getCursor().getType();
+					frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					map.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					isWaiting = true;
+				}
+			}
+		}).start();
 	}
 	
-	public void stopWaiting() {
-		if(null!=anchor) anchor.setCursor(Cursor.getPredefinedCursor(whichCursor));
-		if(null!=layerManagerDialog)layerManagerDialog.setCursor(Cursor.getPredefinedCursor(whichCursor));
+	public synchronized void stopWaiting() {
+		new Thread(new Runnable() {
+			public void run() {
+				frame.setCursor(Cursor.getPredefinedCursor(whichCursor));
+				map.setCursor(Cursor.getPredefinedCursor(whichCursor));
+				isWaiting = false;
+			}
+		}).start();
 	}
 
 	public void mapFocus() {
@@ -3159,6 +3172,7 @@ public class MapApp implements ActionListener,
 			}
 		}
 
+		//stopWaiting();
 		if (db == null) {
 			return;
 		}

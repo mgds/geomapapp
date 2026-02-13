@@ -123,7 +123,6 @@ public class ShapeSuite extends AbstractTableModel {
 			shapeFiles.add( shape );
 			map.addOverlay(shape.filename, shape);
 			fireTableStructureChanged();
-			MapApp.getApp().stopWaiting();
 			return true;
 		}
 		String path = file.getParent();
@@ -358,6 +357,7 @@ public class ShapeSuite extends AbstractTableModel {
 			return false;
 		}
 		File[] sel = chooser.getSelectedFiles();
+		MapApp.getApp().startWaiting();
 		for( int k=0 ; k<sel.length ; k++) {
 			addShapeFile(sel[k]);
 			if(importCancelled) {

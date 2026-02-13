@@ -130,6 +130,12 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 	private CoordinateReferenceSystem wgs84 = null;
 	private CoordinateReferenceSystem crs = null;
 	
+	private volatile int bytesRead = 0;
+	
+	public synchronized long percentRead() {
+		return Math.round((double)bytesRead/header.length * 50);
+	}
+	
 	private void setupWgs84() {
 		Hints hints = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
 		CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("EPSG", hints);
@@ -785,7 +791,6 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 		header = MainHeader.getHeader(shp);
 		cancelled = !userProceedDespiteBigFile();
 		if(cancelled) return;
-		MapApp.getApp().startWaiting();
 		int t = header.type%10;
 	//	if( header.type-t == 10 || header.type==31 )
 		if( header.type==31 )
@@ -1217,7 +1222,6 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 				}
 			}
 		}
-		System.out.println("Done reading");
 	}
 	public void setMap(XMap map) {
 		if(map==null)return;

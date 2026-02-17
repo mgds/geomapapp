@@ -583,7 +583,7 @@ public class MBTracks implements Database, Overlay, MouseListener {
 			if(evt.isControlDown())return;
 			if(evt.isShiftDown())return;
 			double zoom = map.getZoom();
-			Nearest nearest = new Nearest(null, 0, 0, Math.pow(2./zoom, 2) );
+			Nearest nearest = new Nearest(null, 0, 0, 4*Math.pow(2./zoom, 2) );
 			Insets insets = map.getMapBorder().getBorderInsets(map);
 			double x = (evt.getX()-insets.left)/zoom;
 			double y = (evt.getY()-insets.top)/zoom;

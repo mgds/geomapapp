@@ -117,6 +117,8 @@ public class MBTracks implements Database, Overlay, MouseListener {
 	protected JLabel progressLabel;
 	
 	private String name = "Multibeam Bathymetry Swaths";
+	
+	private static final boolean DEBUG_SELECTION = true;
 
 	public MBTracks( XMap map, int size ) {
 		this.map = map;
@@ -569,6 +571,9 @@ public class MBTracks implements Database, Overlay, MouseListener {
 	}
 	public void mouseClicked( MouseEvent evt) {
 		p = evt.getPoint();
+		if(DEBUG_SELECTION) {
+			System.out.println("Clicked at " + p);
+		}
 		if ( evt.getSource().equals(retrievePingFile) ) {
 			PathUtil.loadNewPaths(MARINE_GEO_PATH_URLS);
 			String DOWNLOAD_PING_FILE_PATH = PathUtil.getPath("DOWNLOAD_PING_FILE_PATH", 
@@ -596,7 +601,9 @@ public class MBTracks implements Database, Overlay, MouseListener {
 			int i0 = selectedCruise;
 			while( i0<0 ) i0+=size;
 			if( back ) i0+=size;
-			Map<Integer, Integer> contenders = new HashMap<>();
+			int closestCruise = -1;
+			int closestTrackOfClosestCruise = -1;
+			double closestDistance = 30; //if it's too far away, don't consider it
 			for( int k=0 ; k<size ; k++) {
 				int i = back ?
 					(i0 - (1+k))%size :
@@ -611,67 +618,80 @@ public class MBTracks implements Database, Overlay, MouseListener {
 						(j0 - (1+kk))%files.size() :
 						(j0 + 1+kk )%files.size();
 					MBTrack track = (MBTrack) files.get(j);
-					if( !track.isNear(x, y) ) continue;
-					Point2D.Double pt = track.getClosestPoint(x, y);
-					if( track.firstNearPoint(pt.x, pt.y, nearest) ) {
-						/*
-						mbSel.cruises.setSelectedIndex( i );
-						synchronized (map.getTreeLock()) {
-							Graphics2D g = map.getGraphics2D();
-						//	if(i==selectedCruise && j==selectedTrack)return;
-							if( i!=selectedCruise) drawSelectedCruise(g, Color.black);
-							selectedCruise = i;
-							selectedTrack = j;
-							drawSelectedCruise(g, Color.white);
-							drawSelectedTrack(g, cruiseColor);
-							updateDisplay(cruise, track, nearest);
-							return;
+					//if(track.firstNearPoint(x, y, nearest)) {
+						Point2D.Double closestThisTrack = track.getClosestPoint(x, y);
+						if(null != closestThisTrack) {
+							double thisDist = closestThisTrack.distance(x, y);
+							if(thisDist < closestDistance) {
+								if(DEBUG_SELECTION) {
+									System.out.println("Found a cruise/track closer than " + closestDistance + ": cruise " + i + ", track " + j + " (distance " + thisDist + ")");
+								}
+								closestCruise = i;
+								closestTrackOfClosestCruise = j;
+								closestDistance = thisDist;
+							}
 						}
-						*/
-						contenders.put(i, j);
-					}
+					//}
+					//if( !track.isNear(x, y) ) continue;
+//					Point2D.Double pt = track.getClosestPoint(x, y);
+//					if( track.firstNearPoint(pt.x, pt.y, nearest) ) {
+//						/*
+//						mbSel.cruises.setSelectedIndex( i );
+//						synchronized (map.getTreeLock()) {
+//							Graphics2D g = map.getGraphics2D();
+//						//	if(i==selectedCruise && j==selectedTrack)return;
+//							if( i!=selectedCruise) drawSelectedCruise(g, Color.black);
+//							selectedCruise = i;
+//							selectedTrack = j;
+//							drawSelectedCruise(g, Color.white);
+//							drawSelectedTrack(g, cruiseColor);
+//							updateDisplay(cruise, track, nearest);
+//							return;
+//						}
+//						*/
+//						
+//					}
 				}
-				if(contenders.size() > 0) {
-					//find the closest cruise/track to the point clicked
-					List<Integer> contendingKeys = contenders.keySet().stream().collect(Collectors.toList());
-					int closest = contendingKeys.get(0);
-					double minDist = ((MBTrack)files.get(contenders.get(closest))).getClosestPoint(x, y).distance(x, y);
-					for(int index = 1; index < contendingKeys.size(); index++) {
-						MBTrack thisTrack = (MBTrack)files.get(contendingKeys.get(index));
-						Point2D.Double curClosest = thisTrack.getClosestPoint(x, y);
-						double curDist = curClosest.distance(x, y);
-						if(curDist < minDist) {
-							closest = contendingKeys.get(index);
-							minDist = curDist;
-						}
+			}
+			//if there is a cruise close enough to be considered "clicked on", select it
+			if(-1 < closestCruise && -1 < closestTrackOfClosestCruise) {
+				if(DEBUG_SELECTION) {
+					System.out.println("That is the closest cruise/track");
+				}
+				int i = closestCruise, j = closestTrackOfClosestCruise;
+				MBCruise cruise = (MBCruise)cruises.get(i);
+				Vector files = cruise.tracks;
+				MBTrack track = (MBTrack) files.get(j);
+				mbSel.cruises.setSelectedIndex(i);
+				synchronized(map.getTreeLock()) {
+					Graphics2D g = map.getGraphics2D();
+					if(i != selectedCruise) {
+						drawSelectedCruise(g, Color.black);
 					}
-					//select that cruise/track it's part of
-					mbSel.cruises.setSelectedIndex(closest);
-					synchronized(map.getTreeLock()) {
-						Graphics2D g = map.getGraphics2D();
-						if(closest != selectedCruise) {
-							drawSelectedCruise(g, Color.black);
-						}
-						selectedCruise = closest;
-						selectedTrack = contenders.get(closest);
-						drawSelectedCruise(g, Color.white);
-						drawSelectedTrack(g, cruiseColor);
-						updateDisplay((MBCruise)cruises.get(closest), (MBTrack)files.get(contenders.get(closest)), nearest);
-					}
+					selectedCruise = i;
+					selectedTrack = j;
+					drawSelectedCruise(g, Color.white);
+					drawSelectedTrack(g, cruiseColor);
+					updateDisplay(cruise, track, nearest);
+				}
+			}
+			//otherwise, make sure no cruise is selected
+			else {
+				display.setText( "none selected" );
+				if(DEBUG_SELECTION) {
+					System.out.println("No cruises within " + closestDistance);
+				}
+				mbSel.cruises.setSelectedItem( null );
+				if(selectedCruise==-1) {
 					return;
 				}
+				synchronized (map.getTreeLock()) {
+					Graphics2D g = map.getGraphics2D();
+					drawSelectedCruise(g, Color.black);
+				}
+				selectedCruise = -1;
+				selectedTrack = -1;
 			}
-		display.setText( "none selected" );
-			mbSel.cruises.setSelectedItem( null );
-			if(selectedCruise==-1) {
-				return;
-			}
-			synchronized (map.getTreeLock()) {
-				Graphics2D g = map.getGraphics2D();
-				drawSelectedCruise(g, Color.black);
-			}
-			selectedCruise = -1;
-			selectedTrack = -1;
 		}
 	}
 	public Object getSelectionObject(double x, double y, double distanceSq) {

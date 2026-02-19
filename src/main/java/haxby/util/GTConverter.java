@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.function.Function;
 
 import org.geomapapp.geom.MapProjection;
+import org.geomapapp.geom.Mercator;
+import org.geomapapp.geom.MercatorProjection;
 import org.geomapapp.geom.RectangularProjection;
 import org.geomapapp.geom.UTM;
 import org.geomapapp.geom.UTMProjection;
@@ -23,6 +25,8 @@ import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.Matrix;
 import org.opengis.referencing.operation.Projection;
+
+import haxby.map.MapApp;
 
 /**
  * This class converts between GeoMapApp's internally defined Grid2D objects and GeoTools's GridCoverage2D objects.
@@ -150,6 +154,18 @@ public class GTConverter {
 				int whichZone = Integer.parseInt(code.substring(3));
 				UTM utm = new UTM(whichZone, 2, whichHemisphere);
 				return utm;
+			}
+			//world mercator
+			else if(code.equals("3395")) {
+				Envelope2D coordRange = geom.getEnvelope2D();
+				GridEnvelope2D gridRange = geom.getGridRange2D();
+				DirectPosition low = coordRange.getLowerCorner(), high = coordRange.getUpperCorner();
+				double rlon = low.getOrdinate(0), rlat = low.getOrdinate(1);
+				//guessing based on another Mercator instance
+				int res=2;
+				while( res < MapApp.getApp().getMap().getZoom()*1.4 ) res *= 2;
+				Mercator merc = new Mercator(rlon, rlat, res*640, 0.0, low.getOrdinate(0) < 0 ? Mercator.RANGE_180W_to_180E : Mercator.RANGE_0_to_360);
+				return merc;
 			}
 			//assume geographic projection
 			else {

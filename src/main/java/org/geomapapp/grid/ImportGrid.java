@@ -287,6 +287,11 @@ public class ImportGrid implements Runnable {
 					pd.setUtmHemisphere(((UTM)proj).getHemisphere());
 					proj2 = new UTMProjection(xOffset-tileOffsetX, yOffset-tileOffsetY, posDx, posDy, (UTM)proj);
 				}
+				else if(proj instanceof Mercator) {
+					appendNewText(" Mercator\n");
+					System.out.println("I have no idea what to do here. Create a new MercatorProjection? Which one and with what params?");
+					System.exit(0);
+				}
 				else {
 					appendNewText(" Rectangular\n");
 					RectangularProjection rproj = (RectangularProjection)proj;

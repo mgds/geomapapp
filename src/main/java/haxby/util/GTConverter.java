@@ -6,6 +6,8 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.function.Function;
 
+import javax.swing.JOptionPane;
+
 import org.geomapapp.geom.MapProjection;
 import org.geomapapp.geom.Mercator;
 import org.geomapapp.geom.MercatorProjection;
@@ -143,6 +145,15 @@ public class GTConverter {
 		return new Grid2DWrapper(grid, lowest, highest, xOffset, yOffset, dx, dy);
 	}
 	
+	private static void displayPopup(String projName) {
+		String htmlMsg = "<html><body>This GeoTIFF grid is in " + projName + " projection.";
+		htmlMsg += "<br><br>Currently, GeoMapApp can import GeoTIFF grids in Geographic (degrees) and UTM projections.";
+		htmlMsg += "<br><br>Please convert your grid to one of those projections to import it in GeoMapApp.";
+		htmlMsg += "<br><br>GIS tools and packages such as GDAL can be used for that conversion.";
+		htmlMsg += "</body></html>";
+		JOptionPane.showMessageDialog(MapApp.anchor, htmlMsg, "Incompatible Projection", JOptionPane.WARNING_MESSAGE);
+	}
+	
 	public static MapProjection getGmaProj(GridGeometry2D geom) {
 		CoordinateReferenceSystem crs = geom.getCoordinateReferenceSystem();
 		String epsgPrjStr = String.valueOf(crs.getIdentifiers().toArray()[0]);
@@ -155,17 +166,11 @@ public class GTConverter {
 				UTM utm = new UTM(whichZone, 2, whichHemisphere);
 				return utm;
 			}
-			//world mercator
-			else if(code.equals("3395")) {
-				Envelope2D coordRange = geom.getEnvelope2D();
-				GridEnvelope2D gridRange = geom.getGridRange2D();
-				DirectPosition low = coordRange.getLowerCorner(), high = coordRange.getUpperCorner();
-				double rlon = low.getOrdinate(0), rlat = low.getOrdinate(1);
-				//guessing based on another Mercator instance
-				int res=2;
-				while( res < MapApp.getApp().getMap().getZoom()*1.4 ) res *= 2;
-				Mercator merc = new Mercator(rlon, rlat, res*640, 0.0, low.getOrdinate(0) < 0 ? Mercator.RANGE_180W_to_180E : Mercator.RANGE_0_to_360);
-				return merc;
+			//world mercator (probably EPSG:3395)
+			else if(crs.getName().getCode().toUpperCase().contains("WORLD MERCATOR")) {
+				displayPopup("World Mercator");
+				System.err.println("Incompatible projection: " + epsgPrjStr);
+				return null;
 			}
 			//assume geographic projection
 			else {
@@ -177,6 +182,7 @@ public class GTConverter {
 				return rp;
 			}
 		}
+		displayPopup(crs.getName().getCode());
 		System.err.println("Unknown projection: " + epsgPrjStr);
 		return null;
 	}

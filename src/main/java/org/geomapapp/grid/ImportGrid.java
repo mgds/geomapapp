@@ -270,7 +270,7 @@ public class ImportGrid implements Runnable {
 		}
 		
 		public Grid2D getGrid() {
-			if(null == grid) {
+			if(null == grid && null != proj) {
 				GridGeometry2D geom = gridCoverage.getGridGeometry();
 				Matrix m = ((AffineTransform2D)geom.getGridToCRS2D()).getMatrix();
 				double xOffset = m.getElement(0, 2),
@@ -286,11 +286,6 @@ public class ImportGrid implements Runnable {
 					appendNewText(" UTM\n");
 					pd.setUtmHemisphere(((UTM)proj).getHemisphere());
 					proj2 = new UTMProjection(xOffset-tileOffsetX, yOffset-tileOffsetY, posDx, posDy, (UTM)proj);
-				}
-				else if(proj instanceof Mercator) {
-					appendNewText(" Mercator\n");
-					System.out.println("I have no idea what to do here. Create a new MercatorProjection? Which one and with what params?");
-					System.exit(0);
 				}
 				else {
 					appendNewText(" Rectangular\n");

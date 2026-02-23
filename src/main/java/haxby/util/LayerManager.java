@@ -566,6 +566,10 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			}
 			else if(layer instanceof RectSupplier) {
 				bounds = ((RectSupplier) layer).getRect();
+				if(bounds.getWidth() > 980. || bounds.getHeight() > 4000.) {
+					//it's global, so no need for a zoom button
+					bounds = null;
+				}
 			}
 			if(null != wesn || null != bounds) {
 				JButton zoomB = createButton(Icons.ZOOM_IN);

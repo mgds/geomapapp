@@ -80,9 +80,11 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		allLonOptions.addAll(lonInName);
 		allLonOptions.addAll(latlonOptions.stream().filter(str -> !str.toLowerCase().contains("lon")).collect(Collectors.toList()));
 		lat = new JComboBox<String>(allLatOptions);
-		if (ds.latIndex!=-1)lat.setSelectedIndex(ds.latIndex-1);
+		if (ds.latIndex!=-1) {
+			lat.setSelectedItem(latlonOptions.get(ds.latIndex-1));
+		}
 		else {
-			for (int i = 1; i < allLatOptions.size(); i++) {
+			for (int i = 0; i < allLatOptions.size(); i++) {
 				if (allLatOptions.get(i).toString().toLowerCase().contains("lat")) {
 					lat.setSelectedIndex(i);
 					break;
@@ -93,9 +95,11 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 
 		panel.add(new JLabel("Longitude Column: "));
 		lon = new JComboBox<String>(allLonOptions);
-		if (ds.lonIndex!=-1)lon.setSelectedIndex(ds.lonIndex-1);
+		if (ds.lonIndex!=-1) {
+			lon.setSelectedItem(latlonOptions.get(ds.lonIndex-1));;
+		}
 		else {
-			for (int i = 1; i < allLonOptions.size(); i++) {
+			for (int i = 0; i < allLonOptions.size(); i++) {
 				if (allLonOptions.get(i).toString().toLowerCase().contains("lon")) {
 					lon.setSelectedIndex(i);
 					break;
@@ -369,7 +373,7 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		ds.tm.editable=editable.isSelected();
 		List<String> latInName = latlonOptions.stream().filter(str -> str.toLowerCase().contains("lat")).collect(Collectors.toList());
 		List<String> lonInName = latlonOptions.stream().filter(str -> str.toLowerCase().contains("lon")).collect(Collectors.toList());
-		List<Integer> latIndices = new ArrayList<>(latInName.size()), lonIndices = new ArrayList(lonInName.size());
+		List<Integer> latIndices = new ArrayList<>(latInName.size()), lonIndices = new ArrayList<>(lonInName.size());
 		for(int i = 0; i < latlonOptions.size(); i++) {
 			if(latlonOptions.get(i).contains("lat")) {
 				latIndices.add(i);
@@ -496,19 +500,25 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		symbolSize.setValue(100);
 			
 		String choice = latlonOptions.get(0);
-		for (int i = 1; i < latlonOptions.size(); i++)
-			if (latlonOptions.get(i).toString().toLowerCase().startsWith("lat")) {
-				choice = latlonOptions.get(i);
-				break;
+		if(!choice.toLowerCase().contains("lat")) {
+			for (int i = 1; i < latlonOptions.size(); i++) {
+				if (latlonOptions.get(i).toLowerCase().contains("lat")) {
+					choice = latlonOptions.get(i);
+					break;
+				}
 			}
+		}
 		lat.setSelectedItem(choice);
 		
 		choice = latlonOptions.get(0);
-		for (int i = 1; i < latlonOptions.size(); i++) 
-			if (latlonOptions.get(i).toString().toLowerCase().startsWith("lon")) {
-				choice = latlonOptions.get(i);
-				break;
+		if(!choice.toLowerCase().contains("lon") ) {
+			for (int i = 1; i < latlonOptions.size(); i++) {
+				if (latlonOptions.get(i).toLowerCase().contains("lon")) {
+					choice = latlonOptions.get(i);
+					break;
+				}
 			}
+		}
 		lon.setSelectedItem(choice);
 
 		int rgbIndex = 0;
@@ -541,25 +551,31 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		color.setBackground(ds.getColor());
 		symbolSize.setValue(ds.symbolSize);
 		
-		if (ds.latIndex!=-1)lat.setSelectedIndex(ds.latIndex-1);
+		if (ds.latIndex!=-1)lat.setSelectedItem(latlonOptions.get(ds.latIndex-1));
 		else {
 			String choice = latlonOptions.get(0);
-			for (int i = 1; i < latlonOptions.size(); i++)
-				if (latlonOptions.get(i).toString().toLowerCase().startsWith("lat")) {
-					choice = latlonOptions.get(i);
-					break;
+			if(!choice.toLowerCase().contains("lat")) {
+				for (int i = 1; i < latlonOptions.size(); i++) {
+					if (latlonOptions.get(i).toLowerCase().contains("lat")) {
+						choice = latlonOptions.get(i);
+						break;
+					}
 				}
+			}
 			lat.setSelectedItem(choice);
 		}
 		
-		if (ds.lonIndex!=-1)lon.setSelectedIndex(ds.lonIndex-1);
+		if (ds.lonIndex!=-1)lon.setSelectedItem(latlonOptions.get(ds.lonIndex-1));
 		else {
 			String choice = latlonOptions.get(0);
-			for (int i = 1; i < latlonOptions.size(); i++) 
-				if (latlonOptions.get(i).toString().toLowerCase().startsWith("lon")) {
-					choice = latlonOptions.get(i);
-					break;
+			if(!choice.toLowerCase().contains("lat")) {
+				for (int i = 1; i < latlonOptions.size(); i++) {
+					if (latlonOptions.get(i).toLowerCase().contains("lon")) {
+						choice = latlonOptions.get(i);
+						break;
+					}
 				}
+			}
 			lon.setSelectedItem(choice);
 		}
 		

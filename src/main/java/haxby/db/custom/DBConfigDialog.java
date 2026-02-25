@@ -45,11 +45,16 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 	JButton color;
 	JFormattedTextField lineThick;
 	Vector<String> latlonOptions, columnOptions;
+	boolean okClicked = false;
+	private JButton cancelBtn;
 
 	public DBConfigDialog(Frame owner, UnknownDataSet ds){
 		super((Frame) null,"Config " + ds.desc.name, true);
 		this.ds=ds;
 		initGUI(owner);
+	}
+	public boolean wasOkClicked() {
+		return okClicked;
 	}
 
 	public void annotate() {
@@ -274,10 +279,11 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		b.addActionListener(this);
 		b.setActionCommand("reset");
 		panel.add(b);
-		b = new JButton("Cancel");
-		b.addActionListener(this);
-		b.setActionCommand("cancel");
-		panel.add(b);
+		cancelBtn = new JButton("Cancel");
+		cancelBtn.addActionListener(this);
+		cancelBtn.setActionCommand("cancel");
+		cancelBtn.setVisible(okClicked);
+		panel.add(cancelBtn);
 
 		getContentPane().add(panel,BorderLayout.SOUTH);
 		pack();
@@ -326,7 +332,9 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		}
 	}
 
-	public void ok(){	
+	public void ok(){
+		okClicked = true;
+		cancelBtn.setVisible(okClicked);
 		if(track.isSelected()) {
 			Vector<Integer> dangerIndices = new Vector<>();
 			Vector<Integer> lineNumAdjuster = new Vector<>();
@@ -663,5 +671,12 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 
 		super.dispose();
 
+	}
+	
+	@Override
+	public void setVisible(boolean show) {
+		cancelBtn.setVisible(okClicked);
+		panel.repaint();
+		super.setVisible(show);
 	}
 }

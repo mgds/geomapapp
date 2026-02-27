@@ -1,5 +1,5 @@
 --name GeoMapApp 
---input target 
+--input release 
 --main-jar GeoMapApp.jar 
 --main-class haxby.map.MapApp 
 --dest dmg_out 
@@ -10,7 +10,7 @@
 --name GeoMapApp 
 --vendor "org.GeoMapApp.www" 
 --java-options "-Dapple.laf.useScreenMenuBar=false" 
---java-options "-Dgeomapapp.paths_location=http://app.geomapapp.org/gma_paths/GMA_paths.xml" 
+--java-options "-Dgeomapapp.paths_location=https://app.geomapapp.org/gma_paths/GMA_paths.xml" 
 --icon "src/main/resources/org/geomapapp/resources/icons/GeoMapApp.icns"
 --verbose
 --resource-dir dmg_resources

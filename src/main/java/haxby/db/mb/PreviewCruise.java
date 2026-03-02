@@ -377,6 +377,7 @@ public class PreviewCruise
         return;
       }
       Projection proj = null;
+      PreviewCruise.MAP_PROJ = MapApp.getApp().getMapType();
       if (PreviewCruise.MAP_PROJ == 0) {
         proj = ProjectionFactory.getMercator(640 * res);
       } else if (PreviewCruise.MAP_PROJ == 1) {

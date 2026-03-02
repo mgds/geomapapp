@@ -560,21 +560,47 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 
 			//Gets WESN location and Zoom Icon Button
 			double[] wesn = null;
-			if (layer instanceof WESNSupplier)
+			Rectangle2D bounds = null;
+			if (layer instanceof WESNSupplier) {
 				wesn = ((WESNSupplier) layer).getWESN();
-			if (wesn != null) {
+			}
+			else if(layer instanceof RectSupplier) {
+				bounds = ((RectSupplier) layer).getRect();
+				if(bounds.getWidth() > 980. || bounds.getHeight() > 4000.) {
+					//it's global, so no need for a zoom button
+					bounds = null;
+				}
+			}
+			if(null != wesn || null != bounds) {
 				JButton zoomB = createButton(Icons.ZOOM_IN);
 				zoomB.setToolTipText("Zoom To");
-				zoomB.addActionListener( new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						map.setZoomHistoryPast(map);
-						map.zoomToWESN(((WESNSupplier) LayerPanel.this.layer).getWESN());
-						map.setZoomHistoryNext(map);
-					}
-				});
+				if(null == bounds) {
+					zoomB.addActionListener( new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							map.setZoomHistoryPast(map);
+							map.zoomToWESN(((WESNSupplier) LayerPanel.this.layer).getWESN());
+							map.setZoomHistoryNext(map);
+						}
+					});
+				}
+				else {
+					zoomB.addActionListener( new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							map.setZoomHistoryPast(map);
+							map.zoomToRect(((RectSupplier) LayerPanel.this.layer).getRect());
+							map.setZoomHistoryNext(map);
+						}
+					});
+				}
 				box.add(zoomB);
-				MapApp.sendLogMessage("Loaded_Content&name="+inputLayerName.trim()+"&WESN="+wesn[0]+","+wesn[1]+","+wesn[2]+","+wesn[3]);
-			} else {
+				if(null == bounds) {
+					MapApp.sendLogMessage("Loaded_Content&name="+inputLayerName.trim()+"&WESN="+wesn[0]+","+wesn[1]+","+wesn[2]+","+wesn[3]);
+				}
+				else {
+					MapApp.sendLogMessage("Loaded_Content&name="+inputLayerName.trim()+"&bounds="+bounds);
+				}
+			}
+			else {
 				MapApp.sendLogMessage("Loaded_Content&name="+inputLayerName.trim());
 			}
 

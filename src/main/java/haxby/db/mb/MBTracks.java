@@ -65,9 +65,10 @@ import haxby.proj.Projection;
 import haxby.util.BrowseURL;
 import haxby.util.FilesUtil;
 import haxby.util.PathUtil;
+import haxby.util.RectSupplier;
 import haxby.util.URLFactory;
 
-public class MBTracks implements Database, Overlay, MouseListener {
+public class MBTracks implements Database, Overlay, MouseListener, RectSupplier {
 	protected XMap map;
 //	MBTrack[] tracks;
 	protected Vector cruises;
@@ -713,5 +714,22 @@ public class MBTracks implements Database, Overlay, MouseListener {
 		//	text += ", time = "+(t/1000);
 		}
 		display.setText( text);
+	}
+	
+	public Rectangle2D getRect() {
+		Rectangle2D ret = ((MBTrack)((MBCruise)cruises.get(0)).tracks.get(0)).getBounds();
+		for(int i = 0; i < cruises.size(); i++) {
+			MBCruise curCruise = (MBCruise)cruises.get(i);
+			for(int j = 0; j < curCruise.tracks.size(); j++) {
+				MBTrack curTrack = (MBTrack)curCruise.tracks.get(j);
+				Rectangle2D curBounds = curTrack.getBounds();
+				double newX = Math.min(ret.getX(), curBounds.getX());
+				double newY = Math.min(ret.getY(), curBounds.getY());
+				double newXRight = Math.max(ret.getX() + ret.getWidth(), curBounds.getX() + curBounds.getWidth());
+				double newYTop = Math.max(ret.getY() + ret.getHeight(), curBounds.getY() + curBounds.getHeight());
+				ret = new Rectangle2D.Double(newX, newY, newXRight-newX, newYTop-newY);
+			}
+		}
+		return ret;
 	}
 }

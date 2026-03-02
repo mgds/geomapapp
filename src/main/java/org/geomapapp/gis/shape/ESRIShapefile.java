@@ -454,7 +454,7 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 		//latter option.
 		if (url) {
 			unitsUrl = URLFactory.url(path+filename+".units.txt");
-			if (unitsUrl.getProtocol().equals("http")) {
+			if (unitsUrl.getProtocol().equals("http") || unitsUrl.getProtocol().equals("https")) {
 				HttpURLConnection huc = (HttpURLConnection)  unitsUrl.openConnection();
 				huc.setRequestMethod("HEAD");
 				if (huc.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

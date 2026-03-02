@@ -188,7 +188,7 @@ public class Radar implements ActionListener,
 		btn = new JButton("view-2");
 		btn.addActionListener(this);
 		panel1.add(btn);
-		btn = new JButton("Cruise Info");
+		btn = new JButton("Survey Info");
 		btn.addActionListener(this);
 		panel1.add(btn);
 //		btn = new JButton("Download Cruise Data");

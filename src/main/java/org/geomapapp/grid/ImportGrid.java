@@ -270,7 +270,7 @@ public class ImportGrid implements Runnable {
 		}
 		
 		public Grid2D getGrid() {
-			if(null == grid) {
+			if(null == grid && null != proj) {
 				GridGeometry2D geom = gridCoverage.getGridGeometry();
 				Matrix m = ((AffineTransform2D)geom.getGridToCRS2D()).getMatrix();
 				double xOffset = m.getElement(0, 2),

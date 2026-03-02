@@ -182,6 +182,8 @@ public class UnknownDataSet implements MouseListener,
 
 	private ArrayList<Boolean> oldPlottableStatus = null;
 	
+	private boolean hasLoaded = false;
+	
 	public UnknownDataSet(DBDescription desc, String input, String delim, CustomDB db){
 		this(desc,input,delim,db,false);
 	}
@@ -552,6 +554,7 @@ public class UnknownDataSet implements MouseListener,
 		//System.out.println(skipPrompts);
 		final DBConfigDialog config = 
 			new DBConfigDialog((Frame)map.getTopLevelAncestor(),this);
+		config.okClicked = hasLoaded;
 
 		if (skipPrompts) {
 			config.addWindowListener(new WindowAdapter() {
@@ -579,6 +582,7 @@ public class UnknownDataSet implements MouseListener,
 			db.map.requestFocus();
 			db.repaintMap();
 		}
+		hasLoaded = config.okClicked;
 	}
 
 	//Return only columns that contain numerical data

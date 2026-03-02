@@ -9,8 +9,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -43,11 +45,16 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 	JButton color;
 	JFormattedTextField lineThick;
 	Vector<String> latlonOptions, columnOptions;
+	boolean okClicked = false;
+	private JButton cancelBtn;
 
 	public DBConfigDialog(Frame owner, UnknownDataSet ds){
 		super((Frame) null,"Config " + ds.desc.name, true);
 		this.ds=ds;
 		initGUI(owner);
+	}
+	public boolean wasOkClicked() {
+		return okClicked;
 	}
 
 	public void annotate() {
@@ -66,30 +73,40 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 
 		latlonOptions = new Vector<String>(ds.header.size()-1);
 		latlonOptions.addAll(ds.header.subList(1, ds.header.size()));
-		lat = new JComboBox<String>(latlonOptions);
-		if (ds.latIndex!=-1)lat.setSelectedIndex(ds.latIndex-1);
+		List<String> latInName = latlonOptions.stream().filter(str -> str.toLowerCase().contains("lat")).collect(Collectors.toList());
+		List<String> lonInName = latlonOptions.stream().filter(str -> str.toLowerCase().contains("lon")).collect(Collectors.toList());
+		Vector<String> allLatOptions = new Vector<>(latInName.size() + latlonOptions.size());
+		allLatOptions.addAll(latInName);
+		allLatOptions.addAll(latlonOptions.stream().filter(str -> !str.toLowerCase().contains("lat")).collect(Collectors.toList()));
+		Vector<String> allLonOptions = new Vector<>(lonInName.size() + latlonOptions.size());
+		allLonOptions.addAll(lonInName);
+		allLonOptions.addAll(latlonOptions.stream().filter(str -> !str.toLowerCase().contains("lon")).collect(Collectors.toList()));
+		lat = new JComboBox<String>(allLatOptions);
+		if (ds.latIndex!=-1) {
+			lat.setSelectedItem(latlonOptions.get(ds.latIndex-1));
+		}
 		else {
-			String choice = latlonOptions.get(0);
-			for (int i = 1; i < latlonOptions.size(); i++)
-				if (latlonOptions.get(i).toString().toLowerCase().startsWith("lat")) {
-					choice = latlonOptions.get(i);
+			for (int i = 0; i < allLatOptions.size(); i++) {
+				if (allLatOptions.get(i).toString().toLowerCase().contains("lat")) {
+					lat.setSelectedIndex(i);
 					break;
 				}
-			lat.setSelectedItem(choice);
+			}
 		}
 		panel.add(lat);
 
 		panel.add(new JLabel("Longitude Column: "));
-		lon = new JComboBox<String>(latlonOptions);
-		if (ds.lonIndex!=-1)lon.setSelectedIndex(ds.lonIndex-1);
+		lon = new JComboBox<String>(allLonOptions);
+		if (ds.lonIndex!=-1) {
+			lon.setSelectedItem(latlonOptions.get(ds.lonIndex-1));;
+		}
 		else {
-			String choice = latlonOptions.get(0);
-			for (int i = 1; i < latlonOptions.size(); i++) 
-				if (latlonOptions.get(i).toString().toLowerCase().startsWith("lon")) {
-					choice = latlonOptions.get(i);
+			for (int i = 0; i < allLonOptions.size(); i++) {
+				if (allLonOptions.get(i).toString().toLowerCase().contains("lon")) {
+					lon.setSelectedIndex(i);
 					break;
 				}
-			lon.setSelectedItem(choice);
+			}
 		}
 		panel.add(lon);
 
@@ -262,10 +279,11 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		b.addActionListener(this);
 		b.setActionCommand("reset");
 		panel.add(b);
-		b = new JButton("Cancel");
-		b.addActionListener(this);
-		b.setActionCommand("cancel");
-		panel.add(b);
+		cancelBtn = new JButton("Cancel");
+		cancelBtn.addActionListener(this);
+		cancelBtn.setActionCommand("cancel");
+		cancelBtn.setVisible(okClicked);
+		panel.add(cancelBtn);
 
 		getContentPane().add(panel,BorderLayout.SOUTH);
 		pack();
@@ -314,7 +332,9 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		}
 	}
 
-	public void ok(){	
+	public void ok(){
+		okClicked = true;
+		cancelBtn.setVisible(okClicked);
 		if(track.isSelected()) {
 			Vector<Integer> dangerIndices = new Vector<>();
 			Vector<Integer> lineNumAdjuster = new Vector<>();
@@ -356,8 +376,33 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		
 		ds.desc.name=name.getText();
 		ds.tm.editable=editable.isSelected();
-		ds.latIndex = lat.getSelectedIndex() + 1;
-		ds.lonIndex = lon.getSelectedIndex() + 1;
+		List<String> latInName = latlonOptions.stream().filter(str -> str.toLowerCase().contains("lat")).collect(Collectors.toList());
+		List<String> lonInName = latlonOptions.stream().filter(str -> str.toLowerCase().contains("lon")).collect(Collectors.toList());
+		List<Integer> latIndices = new ArrayList<>(latInName.size()), lonIndices = new ArrayList<>(lonInName.size());
+		for(int i = 0; i < latlonOptions.size(); i++) {
+			if(latlonOptions.get(i).contains("lat")) {
+				latIndices.add(i);
+			}
+			if(latlonOptions.get(i).contains("lon")) {
+				lonIndices.add(i);
+			}
+		}
+		if(lat.getSelectedIndex() < latInName.size()) {
+			ds.latIndex = latIndices.get(lat.getSelectedIndex())+1;
+		}
+		else {
+			int theIndex = latlonOptions.indexOf(lat.getSelectedItem());
+			ds.latIndex = theIndex+1;
+		}
+		if(lon.getSelectedIndex() < lonInName.size()) {
+			ds.lonIndex = lonIndices.get(lon.getSelectedIndex())+1;
+		}
+		else {
+			int theIndex = latlonOptions.indexOf(lon.getSelectedItem());
+			ds.lonIndex = theIndex+1;
+		}
+		//ds.latIndex = lat.getSelectedIndex() + 1;
+		//ds.lonIndex = lon.getSelectedIndex() + 1;
 		ds.rgbIndex = rgb.getSelectedIndex();
 		ds.polylineIndex = polyline.getSelectedIndex() ;
 		ds.setColor(color.getBackground());
@@ -460,19 +505,25 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		symbolSize.setValue(100);
 			
 		String choice = latlonOptions.get(0);
-		for (int i = 1; i < latlonOptions.size(); i++)
-			if (latlonOptions.get(i).toString().toLowerCase().startsWith("lat")) {
-				choice = latlonOptions.get(i);
-				break;
+		if(!choice.toLowerCase().contains("lat")) {
+			for (int i = 1; i < latlonOptions.size(); i++) {
+				if (latlonOptions.get(i).toLowerCase().contains("lat")) {
+					choice = latlonOptions.get(i);
+					break;
+				}
 			}
+		}
 		lat.setSelectedItem(choice);
 		
 		choice = latlonOptions.get(0);
-		for (int i = 1; i < latlonOptions.size(); i++) 
-			if (latlonOptions.get(i).toString().toLowerCase().startsWith("lon")) {
-				choice = latlonOptions.get(i);
-				break;
+		if(!choice.toLowerCase().contains("lon") ) {
+			for (int i = 1; i < latlonOptions.size(); i++) {
+				if (latlonOptions.get(i).toLowerCase().contains("lon")) {
+					choice = latlonOptions.get(i);
+					break;
+				}
 			}
+		}
 		lon.setSelectedItem(choice);
 
 		int rgbIndex = 0;
@@ -505,25 +556,31 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		color.setBackground(ds.getColor());
 		symbolSize.setValue(ds.symbolSize);
 		
-		if (ds.latIndex!=-1)lat.setSelectedIndex(ds.latIndex-1);
+		if (ds.latIndex!=-1)lat.setSelectedItem(latlonOptions.get(ds.latIndex-1));
 		else {
 			String choice = latlonOptions.get(0);
-			for (int i = 1; i < latlonOptions.size(); i++)
-				if (latlonOptions.get(i).toString().toLowerCase().startsWith("lat")) {
-					choice = latlonOptions.get(i);
-					break;
+			if(!choice.toLowerCase().contains("lat")) {
+				for (int i = 1; i < latlonOptions.size(); i++) {
+					if (latlonOptions.get(i).toLowerCase().contains("lat")) {
+						choice = latlonOptions.get(i);
+						break;
+					}
 				}
+			}
 			lat.setSelectedItem(choice);
 		}
 		
-		if (ds.lonIndex!=-1)lon.setSelectedIndex(ds.lonIndex-1);
+		if (ds.lonIndex!=-1)lon.setSelectedItem(latlonOptions.get(ds.lonIndex-1));
 		else {
 			String choice = latlonOptions.get(0);
-			for (int i = 1; i < latlonOptions.size(); i++) 
-				if (latlonOptions.get(i).toString().toLowerCase().startsWith("lon")) {
-					choice = latlonOptions.get(i);
-					break;
+			if(!choice.toLowerCase().contains("lat")) {
+				for (int i = 1; i < latlonOptions.size(); i++) {
+					if (latlonOptions.get(i).toLowerCase().contains("lon")) {
+						choice = latlonOptions.get(i);
+						break;
+					}
 				}
+			}
 			lon.setSelectedItem(choice);
 		}
 		
@@ -614,5 +671,12 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 
 		super.dispose();
 
+	}
+	
+	@Override
+	public void setVisible(boolean show) {
+		cancelBtn.setVisible(okClicked);
+		panel.repaint();
+		super.setVisible(show);
 	}
 }

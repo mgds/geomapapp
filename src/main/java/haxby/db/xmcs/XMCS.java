@@ -278,7 +278,9 @@ public class XMCS implements ActionListener,
 			return panel;
 		}
 
-		JPanel panel1 = new JPanel(new GridLayout(0,1));
+		JPanel panel1 = new JPanel();
+		BoxLayout layout = new BoxLayout(panel1, BoxLayout.Y_AXIS);
+		panel1.setLayout(layout);
 
 		mcsDataSelect = new JRadioButton[4];
 		mcsDataSelect[0] = new JRadioButton("LDEO & UTIG MCS");
@@ -328,13 +330,26 @@ public class XMCS implements ActionListener,
 			mcsDataSelect[3].setEnabled(false);
 		}
 
+		JPanel mcsDataSelectPanel = new JPanel(new GridLayout(0, 1));
+		int dsPanelPrefHeight = 0;
+		int dsPanelPrefWidth = 0;
 		for (int i = 0; i < mcsDataSelect.length; i++) {
 			 bGroupMCS.add(mcsDataSelect[i]);
 			mcsDataSelect[i].addActionListener(this);
-			panel1.add(mcsDataSelect[i]);
+			mcsDataSelectPanel.add(mcsDataSelect[i]);
 		}
 		mcsDataSelect[0].setSelected(true);
+		panel1.add(mcsDataSelectPanel);
+		for(int i = 0; i < mcsDataSelect.length; i++) {
+			dsPanelPrefHeight += mcsDataSelect[i].getPreferredSize().height;
+			dsPanelPrefWidth = Math.max(dsPanelPrefWidth, mcsDataSelect[i].getPreferredSize().width);
+		}
+		Dimension dsPanelPrefSize = new Dimension(dsPanelPrefWidth, dsPanelPrefHeight);
+		mcsDataSelectPanel.setPreferredSize(dsPanelPrefSize);
+		mcsDataSelectPanel.setMaximumSize(dsPanelPrefSize);
 
+		JPanel listPanel = new JPanel(new GridLayout(0, 1));
+		Box clPanel = Box.createVerticalBox();
 		label1 = new JLabel("Cruise");
 		cruiseList = new JComboBox();
 		cruiseList.addItem("- Select -");
@@ -342,16 +357,23 @@ public class XMCS implements ActionListener,
 			cruiseList.addItem(cruises[i]);
 		}
 
+		clPanel.add( label1);
+		clPanel.add( cruiseList );
+		listPanel.add(clPanel);
+		clPanel.setPreferredSize(clPanel.getLayout().minimumLayoutSize(clPanel));
+
 		JButton btn;
-		Box box = Box.createVerticalBox();
 
-		panel1.add( label1);
-		panel1.add( cruiseList );
-
+		JPanel llPanel = new JPanel();
 		lineList = new JComboBox();
 		lineList.addItem("- Select Line -");
 		lineList.setVisible(false);
-		panel1.add(lineList);
+		llPanel.add(lineList);
+		listPanel.add(llPanel);
+		panel1.add(listPanel);
+		Dimension listsPrefSize = listPanel.getLayout().minimumLayoutSize(listPanel);
+		listPanel.setPreferredSize(listsPrefSize);
+		listPanel.setMaximumSize(listsPrefSize);
 
 		btn = new JButton("Load View 1");
 		btn.setActionCommand("view-1");
@@ -375,7 +397,7 @@ public class XMCS implements ActionListener,
 		gp1.add(orientV);
 		panel1.add( orientV );
 
-		box.add(panel1);
+		//box.add(panel1);
 
 		cruiseList.addActionListener(this);
 		lineList.addActionListener(this);
@@ -383,8 +405,12 @@ public class XMCS implements ActionListener,
 
 		panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-		panel.add(box);
-		panel.setPreferredSize(new Dimension(170, panel.getY())); //Set Size
+		panel1.setPreferredSize(panel1.getLayout().minimumLayoutSize(panel1));
+		panel.add(panel1);
+		//panel.setPreferredSize(new Dimension(170, panel.getY())); //Set Size
+		panel.setPreferredSize(panel.getLayout().minimumLayoutSize(panel));
+		//TODO figure out why this panel is so big!
+		panel.setMaximumSize(panel.getPreferredSize());
 		return panel;
 	}
 

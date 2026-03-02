@@ -101,6 +101,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
@@ -5226,6 +5227,10 @@ public class MapApp implements ActionListener,
 			public void run() {
 				dbLabel.setText( cDB.getDBName() );
 				dialog.add( cDB.getSelectionDialog(), "Center");
+				Dimension minLayoutSize = dialog.getLayout().minimumLayoutSize(dialog);
+				Dimension dialogSize = new Dimension(dialog.getPreferredSize().width, minLayoutSize.height);
+				dialog.setPreferredSize(dialogSize);
+				dialog.setMaximumSize(dialog.getPreferredSize());
 				hPane.setRightComponent( dialogScroll );
 
 				if( cDB.getSelectionDialog() != null ) {

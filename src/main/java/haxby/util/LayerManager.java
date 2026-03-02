@@ -1065,6 +1065,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 				addLayerBack(layerPanel.layer);
 				app.getMapTools().getGridDialog().startGridLoad();
 				app.getMapTools().getGridDialog().showDialog();
+				app.stopWaiting();
 				return;
 			}
 		}else if ( layerPanel.layer instanceof ESRIShapefile ) {

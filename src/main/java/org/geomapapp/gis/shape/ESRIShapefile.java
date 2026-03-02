@@ -2,6 +2,15 @@ package org.geomapapp.gis.shape;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.GridLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.io.BufferedInputStream;
@@ -21,12 +30,26 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.swing.BoxLayout;
+import javax.swing.JDialog;
+import javax.swing.JEditorPane;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.tree.TreeNode;
 
 import org.geomapapp.geom.MapProjection;
@@ -36,9 +59,19 @@ import org.geomapapp.image.MultiImage;
 import org.geomapapp.io.LittleIO;
 import org.geomapapp.util.ParseLink;
 import org.geomapapp.util.ScalableComponent;
+import org.geotools.data.shapefile.ShapefileDataStore;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.ReferencingFactoryFinder;
+import org.geotools.util.factory.Hints;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.crs.CRSAuthorityFactory;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 
 import haxby.map.MapApp;
 import haxby.map.XMap;
+import haxby.util.BrowseURL;
 import haxby.util.URLFactory;
 import haxby.util.WESNSupplier;
 import haxby.util.XBTable;
@@ -94,6 +127,91 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 	
 	float[] wesn = null;
 	
+	private CoordinateReferenceSystem wgs84 = null;
+	private CoordinateReferenceSystem crs = null;
+	
+	private volatile int bytesRead = 0;
+	
+	public synchronized long percentRead() {
+		return Math.round((double)bytesRead/header.length * 50);
+	}
+	
+	private void setupWgs84() {
+		Hints hints = new Hints(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE);
+		CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("EPSG", hints);
+		try {
+			wgs84 = factory.createCoordinateReferenceSystem("EPSG:4326");
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	private boolean cancelled = false;
+	
+	public boolean isCancelled() {
+		return cancelled;
+	}
+	
+	private boolean userProceedDespiteBigFile() {
+		long freeMemory = Runtime.getRuntime().freeMemory();
+		if(((long)header.length) * 2 > freeMemory) {
+			JLabel warning = new JLabel("This is a large shapefile. Due to a potential lack of computer memory, importing this file may slow GeoMapApp to a halt.");
+			warning.setAlignmentX(Component.LEFT_ALIGNMENT);
+			Font font = warning.getFont();
+			StringBuffer style = new StringBuffer("font-family:" + font.getFamily() + ";");
+		    style.append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";");
+		    style.append("font-size:" + font.getSize() + "pt;");
+		    style.append("max-width: 400px; width:350px");
+			JEditorPane instructions = new JEditorPane("text/html", "<html><body style=\""+style+"\">Allocate more memory to GeoMapApp to avoid this problem, as follows:\n" +
+					"<ol><li>Download the latest GeoMapApp.jar file from <a href=\"https://www.geomapapp.org/UnixInstall.html\">https://www.geomapapp.org/UnixInstall.html</a>.</li><li>Open a Terminal or Command Prompt window and <code style=\"display:inline\">cd</code> (change directory) to the directory containing the GeoMapApp.jar file.</li><li>Run the following command:</li></ol></body></html>");
+			instructions.addHyperlinkListener(new HyperlinkListener() {
+				@Override
+				public void hyperlinkUpdate(HyperlinkEvent e) {
+					if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED))
+		            	BrowseURL.browseURL(e.getURL().toString());
+				}
+			});
+			instructions.setAlignmentX(Component.LEFT_ALIGNMENT);
+			instructions.setEditable(false);
+			instructions.setBackground(warning.getBackground());
+			JLabel question = new JLabel("Continue importing this large shapefile? (This may slow GeoMapApp.)");
+			question.setAlignmentX(Component.LEFT_ALIGNMENT);
+			JPanel panel = new JPanel();
+			BoxLayout bl = new BoxLayout(panel, BoxLayout.Y_AXIS);
+			panel.setLayout(bl);
+			panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+			long memNeeded = (header.length * 2 - freeMemory) + Runtime.getRuntime().maxMemory();
+			long numDigits = String.valueOf(memNeeded).length();
+			long quot = Math.round(Math.ceil(memNeeded/(double)Math.round(Math.pow(10, numDigits-1))));
+			long roundNumber = Math.round(Math.pow(10, numDigits-1)) * quot;
+			String recommended = (roundNumber >= 1e9)?((roundNumber/(int)1e9)+"g"):((roundNumber >= 1e6)?((roundNumber/(int)1e6)+"m"):((roundNumber >= 1e3)?(roundNumber/(int)1e3 + "k"):(String.valueOf(roundNumber))));
+			JTextField jtf = new JTextField("java -jar -Xmx" + recommended + " GeoMapApp.jar");
+			jtf.setAlignmentX(Component.LEFT_ALIGNMENT);
+			Font font2 = jtf.getFont();
+			jtf.setFont(new Font(Font.MONOSPACED, font2.getStyle(), font2.getSize()));
+			jtf.setColumns(jtf.getText().length());
+			FontMetrics fm = jtf.getFontMetrics(jtf.getFont());
+			Dimension preferred = new Dimension(fm.stringWidth(jtf.getText())*6/5, fm.getHeight()*3/2);
+			jtf.setMinimumSize(preferred);
+			jtf.setPreferredSize(preferred);
+			jtf.setMaximumSize(preferred);
+			jtf.setEditable(false);
+			panel.add(warning);
+			panel.add(new JLabel(" ")); //for spacing
+			panel.add(instructions);
+			panel.add(jtf);
+			panel.add(new JLabel(" ")); //for spacing
+			panel.add(new JLabel(" ")); //for spacing
+			panel.add(new JLabel(" ")); //for spacing
+			panel.add(question);
+			int ans = JOptionPane.showConfirmDialog(MapApp.anchor, panel, "WARNING: ATTEMPTING TO IMPORT A LARGE SHAPEFILE", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			return JOptionPane.YES_OPTION == ans;
+		}
+		return true;
+	}
+	
 	public ESRIShapefile(String name, int type, Vector names, Vector classes) {
 		filename = name;
 		dbfFile = new DBFFile(names, classes);
@@ -101,9 +219,11 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 		header.type = type;
 		shapes = new Vector();
 		children = new Vector();
+		setupWgs84();
 		initColors();
 	}
 	public ESRIShapefile( ZipInputStream zip ) throws IOException {
+		setupWgs84();
 		filename = null;
 		boolean hasDBF = false;
 		boolean hasSHP = false;
@@ -146,6 +266,7 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 
 	public ESRIShapefile( String path, String fileprefix ) throws IOException {
 		super();
+		setupWgs84();
 		this.path = path;
 		this.filename = fileprefix;
 		if( !exists() )  {
@@ -640,13 +761,36 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 		InputStream in = url ?
 			(haxby.util.URLFactory.url(path+filename+".shp")).openStream()
 			: new FileInputStream(new File(path, filename+".shp"));
+		try {
+			File prjFile = new File(path + (path.endsWith("/")?"":"/") + filename + ".prj");
+			if(prjFile.exists()) {
+				Scanner s = new Scanner(new FileInputStream(prjFile));
+				String line = s.nextLine();
+				crs = CRS.parseWKT(line);
+				s.close();
+			}
+		}
+		catch(FactoryException fe) {
+			fe.printStackTrace();
+		}
 		readShapes( in );
+		
 		return shapes;
 	}
 	public void readShapes(InputStream in) throws IOException {
+		MathTransform coordTransform = null;
+		if(null != crs) {
+			try {
+				coordTransform = CRS.findMathTransform(crs, wgs84, true);
+			} catch (FactoryException e) {
+				e.printStackTrace();
+			}
+		}
 		DataInputStream shp = new DataInputStream(
 				new BufferedInputStream(in));
 		header = MainHeader.getHeader(shp);
+		cancelled = !userProceedDespiteBigFile();
+		if(cancelled) return;
 		int t = header.type%10;
 	//	if( header.type-t == 10 || header.type==31 )
 		if( header.type==31 )
@@ -655,6 +799,23 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 		width = header.xBounds[1]-x;
 		y = header.yBounds[0];
 		height = header.xBounds[1]-y;
+		if(null != coordTransform) {
+			double[] bounds = new double[] {header.xBounds[0], header.yBounds[0], header.xBounds[1], header.yBounds[1]};
+			double[] newBounds = new double[bounds.length];
+			try {
+				coordTransform.transform(bounds, 0, newBounds, 0, 2);
+				x = newBounds[0];
+				width = newBounds[2] - x;
+				y = newBounds[1];
+				height = newBounds[3] - y;
+				header.xBounds[0] = x;
+				header.xBounds[1] = newBounds[2];
+				header.yBounds[0] = y;
+				header.yBounds[1] = newBounds[3];
+			} catch (TransformException e) {
+				e.printStackTrace();
+			}
+		}
 		int offset = 100;
 		while( offset<2*header.length-1 ) {
 			int n = shp.readInt();
@@ -666,38 +827,116 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 			if( type==0 ) {
 				shapes.add( new ESRINull() );
 			} else if( type==1 ) {
-				shapes.add(new ESRIPoint(
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp)));
+				double[] arr = new double[] {LittleIO.readDouble(shp), LittleIO.readDouble(shp)};
+				double[] newArr = new double[arr.length];
+				if(null != coordTransform) {
+					try {
+						coordTransform.transform(arr,  0, newArr, 0, 1);
+						shapes.add(new ESRIPoint(newArr[0], newArr[1]));
+					}
+					catch(TransformException te) {
+						shapes.add(new ESRIPoint(arr[0], arr[1]));
+						te.printStackTrace();
+					}
+				}
+				else {
+					shapes.add(new ESRIPoint(arr[0], arr[1]));
+				}
 			} else if( type==21 ) {
-				shapes.add(new ESRIPointM(
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp)));
+				double[] arr = new double[] {LittleIO.readDouble(shp), LittleIO.readDouble(shp)};
+				double[] newArr = new double[arr.length];
+				double measure = LittleIO.readDouble(shp);
+				if(null != coordTransform) {
+					try {
+						coordTransform.transform(arr, 0, newArr, 0, 1);
+						shapes.add(new ESRIPointM(newArr[0], newArr[1], measure));
+					}
+					catch(TransformException te) {
+						shapes.add(new ESRIPointM(arr[0], arr[1], measure));
+						te.printStackTrace();
+					}
+				}
+				else {
+					shapes.add(new ESRIPointM(arr[0], arr[1], measure));
+				}
 			} else if( type==8 ) {
-				ESRIMultiPoint obj = new ESRIMultiPoint(
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readInt(shp));
+				double[] bbox = new double[] {LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp)};
+				double[] converted = new double[bbox.length];
+				int numPoints = LittleIO.readInt(shp);
+				ESRIMultiPoint obj = null;
+				if(null != coordTransform) {
+					try {
+						coordTransform.transform(bbox, 0, converted, 0, 2);
+						obj = new ESRIMultiPoint(converted[0], converted[1], converted[2], converted[3], numPoints);
+					}
+					catch(TransformException te) {
+						obj = new ESRIMultiPoint(bbox[0], bbox[1], bbox[2], bbox[3], numPoints);
+						te.printStackTrace();
+					}
+				}
+				else {
+					obj = new ESRIMultiPoint(bbox[0], bbox[1], bbox[2], bbox[3], numPoints);
+				}
 				for( int i=0 ; i<obj.length() ; i++) {
-					obj.addPoint( i,
-						LittleIO.readDouble(shp),
-						LittleIO.readDouble(shp));
+					double[] pt = new double[] {LittleIO.readDouble(shp), LittleIO.readDouble(shp)};
+					double[] convertedPt = new double[pt.length];
+					if(null != coordTransform) {
+						try {
+							coordTransform.transform(pt, 0, convertedPt, 0, 1);
+							obj.addPoint(i, convertedPt[0], convertedPt[1]);
+						}
+						catch(TransformException te) {
+							obj.addPoint(i, pt[0], pt[1]);
+							te.printStackTrace();
+						}
+					}
+					else {
+						obj.addPoint(i, convertedPt[0], convertedPt[1]);
+					}
 				}
 				shapes.add( obj );
 			} else if( type==28 ) {
-				ESRIMultiPointM obj = new ESRIMultiPointM(
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readInt(shp));
+				double[] bbox = new double[] {LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp)};
+				double[] convertedBbox = new double[bbox.length];
+				int measure = LittleIO.readInt(shp);
+				ESRIMultiPointM obj = null;
+				if(null != coordTransform) {
+					try {
+						coordTransform.transform(bbox,  0, convertedBbox, 0, 2);
+						obj = new ESRIMultiPointM(convertedBbox[0], convertedBbox[1], convertedBbox[2], convertedBbox[3], measure);
+					}
+					catch(TransformException te) {
+						obj = new ESRIMultiPointM(bbox[0], bbox[1], bbox[2], bbox[3], measure);
+						te.printStackTrace();
+					}
+				}
+				else {
+					obj = new ESRIMultiPointM(bbox[0], bbox[1], bbox[2], bbox[3], measure);
+				}
+				double[] points = new double[2*obj.length()];
 				for( int i=0 ; i<obj.length() ; i++) {
-					obj.addPoint( i,
-						LittleIO.readDouble(shp),
-						LittleIO.readDouble(shp));
+					points[2*i] = LittleIO.readDouble(shp);
+					points[2*i+1] = LittleIO.readDouble(shp);
+				}
+				if(null != coordTransform) {
+					double[] convertedPoints = new double[points.length];
+					try {
+						coordTransform.transform(points, 0, convertedPoints, 0, obj.length());
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, convertedPoints[2*i], convertedPoints[2*i+1]);
+						}
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, points[2*i], points[2*i+1]);
+						}
+					}
+				}
+				else {
+					for(int i = 0; i < obj.length(); i++) {
+						obj.addPoint(i, points[2*i], points[2*i+1]);
+					}
 				}
 				obj.setMRange(
 					LittleIO.readDouble(shp),
@@ -707,20 +946,54 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 				}
 				shapes.add( obj );
 			} else if( type==23 ) {
-				ESRIPolyLineM obj = new ESRIPolyLineM(
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readInt(shp),
-					LittleIO.readInt(shp));
+				double[] bbox = new double[] {LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp)};
+				int numParts = LittleIO.readInt(shp);
+				int numPoints = LittleIO.readInt(shp);
+				ESRIPolyLineM obj = null;
+				if(null != coordTransform) {
+					try {
+						double[] convertedBbox = new double[bbox.length];
+						coordTransform.transform(bbox, 0, convertedBbox, 0, numPoints);
+						obj = new ESRIPolyLineM(convertedBbox[0], convertedBbox[1], convertedBbox[2], convertedBbox[3], numParts, numPoints);
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						obj = new ESRIPolyLineM(bbox[0], bbox[1], bbox[2], bbox[3], numParts, numPoints);
+					}
+				}
+				else {
+					obj = new ESRIPolyLineM(bbox[0], bbox[1], bbox[2], bbox[3], numParts, numPoints);
+				}
 				for( int i=0 ; i<obj.nParts() ; i++) {
 					obj.parts[i] = LittleIO.readInt(shp);
 				}
+				double[] coordinates = new double[2*obj.length()];
 				for( int i=0 ; i<obj.length() ; i++) {
-					obj.addPoint( i,
-						LittleIO.readDouble(shp),
-						LittleIO.readDouble(shp));
+//					obj.addPoint( i,
+//						LittleIO.readDouble(shp),
+//						LittleIO.readDouble(shp));
+					coordinates[2*i] = LittleIO.readDouble(shp);
+					coordinates[2*i+1] = LittleIO.readDouble(shp);
+				}
+				if(null != coordTransform) {
+					double[] converted = new double[coordinates.length];
+					try {
+						coordTransform.transform(coordinates, 0, converted, 0, numPoints);
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, converted[2*i], converted[2*i+1]);
+						}
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, coordinates[2*i], coordinates[2*i+1]);
+						}
+					}
+				}
+				else {
+					for(int i = 0; i < obj.length(); i++) {
+						obj.addPoint(i, coordinates[2*i], coordinates[2*i+1]);
+					}
 				}
 				obj.setMRange(
 					LittleIO.readDouble(shp),
@@ -730,20 +1003,51 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 				}
 				shapes.add( obj );
 			} else if( type==13 ) {
-				ESRIPolyLineZ obj = new ESRIPolyLineZ(
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readInt(shp),
-					LittleIO.readInt(shp));
+				double[] bbox = new double[] {LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp)};
+				int numParts = LittleIO.readInt(shp);
+				int numPoints = LittleIO.readInt(shp);
+				ESRIPolyLineZ obj = null;
+				if(null != coordTransform) {
+					try {
+						double[] convertedBbox = new double[bbox.length];
+						coordTransform.transform(bbox, 0, convertedBbox, 0, numPoints);
+						obj = new ESRIPolyLineZ(convertedBbox[0], convertedBbox[1], convertedBbox[2], convertedBbox[3], numParts, numPoints);
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						obj = new ESRIPolyLineZ(bbox[0], bbox[1], bbox[2], bbox[3], numParts, numPoints);
+					}
+				}
+				else {
+					obj = new ESRIPolyLineZ(bbox[0], bbox[1], bbox[2], bbox[3], numParts, numPoints);
+				}
 				for( int i=0 ; i<obj.nParts() ; i++) {
 					obj.parts[i] = LittleIO.readInt(shp);
 				}
+				double[] coordinates = new double[obj.length()*2];
 				for( int i=0 ; i<obj.length() ; i++) {
-					obj.addPoint( i,
-						LittleIO.readDouble(shp),
-						LittleIO.readDouble(shp));
+					coordinates[2*i] = LittleIO.readDouble(shp);
+					coordinates[2*i+1] = LittleIO.readDouble(shp);
+				}
+				if(null != coordTransform) {
+					try {
+						double[] converted = new double[coordinates.length];
+						coordTransform.transform(coordinates, 0, converted, 0, numPoints);
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, converted[2*i], converted[2*i+1]);
+						}
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, coordinates[2*i], coordinates[2*i+1]);
+						}
+					}
+				}
+				else {
+					for(int i = 0; i < obj.length(); i++) {
+						obj.addPoint(i, coordinates[2*i], coordinates[2*i+1]);
+					}
 				}
 				obj.setZRange(
 					LittleIO.readDouble(shp),
@@ -759,56 +1063,149 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 				}
 				shapes.add( obj );
 			} else if( type==3 ) {
-				ESRIPolyLine obj = new ESRIPolyLine(
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readInt(shp),
-					LittleIO.readInt(shp));
+				double[] bbox = new double[] {LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp)};
+				int numParts = LittleIO.readInt(shp);
+				int numPoints = LittleIO.readInt(shp);
+				ESRIPolyLine obj = null;
+				if(null != coordTransform) {
+					try {
+						double[] convertedBbox = new double[bbox.length];
+						coordTransform.transform(bbox, 0, convertedBbox, 0, 2);
+						obj = new ESRIPolyLine(convertedBbox[0], convertedBbox[1], convertedBbox[2], convertedBbox[3], numParts, numPoints);
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						obj = new ESRIPolyLine(bbox[0], bbox[1], bbox[2], bbox[3], numParts, numPoints);
+					}
+				}
+				else {
+					obj = new ESRIPolyLine(bbox[0], bbox[1], bbox[2], bbox[3], numParts, numPoints);
+				}
 				for( int i=0 ; i<obj.nParts() ; i++) {
 					obj.parts[i] = LittleIO.readInt(shp);
 				}
+				double[] coordinates = new double[obj.length()*2];
 				for( int i=0 ; i<obj.length() ; i++) {
-					obj.addPoint( i,
-						LittleIO.readDouble(shp),
-						LittleIO.readDouble(shp));
+					coordinates[2*i] = LittleIO.readDouble(shp);
+					coordinates[2*i+1] = LittleIO.readDouble(shp);
+				}
+				if(null != coordTransform) {
+					try {
+						double[] converted = new double[coordinates.length];
+						coordTransform.transform(coordinates, 0, converted, 0, numPoints);
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, converted[2*i], converted[2*i+1]);
+						}
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, coordinates[2*i], coordinates[2*i+1]);
+						}
+					}
+				}
+				else {
+					for(int i = 0; i < obj.length(); i++) {
+						obj.addPoint(i, coordinates[2*i], coordinates[2*i+1]);
+					}
 				}
 				shapes.add( obj );
 			} else if( type==5 ) {
-				ESRIPolygon obj = new ESRIPolygon(
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readInt(shp),
-					LittleIO.readInt(shp));
+				double[] bbox = new double[] {LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp)};
+				int numParts = LittleIO.readInt(shp);
+				int numPoints = LittleIO.readInt(shp);
+				ESRIPolygon obj = null;
+				if(null != coordTransform) {
+					try {
+						double[] convertedBbox = new double[bbox.length];
+						coordTransform.transform(bbox, 0, convertedBbox, 0, 2);
+						obj = new ESRIPolygon(convertedBbox[0], convertedBbox[1], convertedBbox[2], convertedBbox[3], numParts, numPoints);
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						obj = new ESRIPolygon(bbox[0], bbox[1], bbox[2], bbox[3], numParts, numPoints);
+					}
+				}
+				else {
+					obj = new ESRIPolygon(bbox[0], bbox[1], bbox[2], bbox[3], numParts, numPoints);
+				}
 				for( int i=0 ; i<obj.nParts() ; i++) {
 					obj.parts[i] = LittleIO.readInt(shp);
 				}
+				double[] coordinates = new double[obj.length()*2];
 				for( int i=0 ; i<obj.length() ; i++) {
-					obj.addPoint( i,
-						LittleIO.readDouble(shp),
-						LittleIO.readDouble(shp));
+					coordinates[2*i] = LittleIO.readDouble(shp);
+					coordinates[2*i+1] = LittleIO.readDouble(shp);
+				}
+				if(null != coordTransform) {
+					try {
+						double[] converted = new double[coordinates.length];
+						coordTransform.transform(coordinates, 0, converted, 0, numPoints);
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, converted[2*i], converted[2*i+1]);
+						}
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, coordinates[2*i], coordinates[2*i+1]);
+						}
+					}
+				}
+				else {
+					for(int i = 0; i < obj.length(); i++) {
+						obj.addPoint(i, coordinates[2*i], coordinates[2*i+1]);
+					}
 				}
 				shapes.add( obj );
 			} else if( type==15 ) {
-				ESRIPolygonZ obj = new ESRIPolygonZ(
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readDouble(shp),
-					LittleIO.readInt(shp),
-					LittleIO.readInt(shp));
+				double[] bbox = new double[] {LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp), LittleIO.readDouble(shp)};
+				int numParts = LittleIO.readInt(shp);
+				int numPoints = LittleIO.readInt(shp);
+				ESRIPolygonZ obj = null;
+				if(null != coordTransform) {
+					try {
+						double[] convertedBbox = new double[bbox.length];
+						coordTransform.transform(bbox, 0, convertedBbox, 0, 2);
+						obj = new ESRIPolygonZ(convertedBbox[0], convertedBbox[1], convertedBbox[2], convertedBbox[3], numParts, numPoints);
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						obj = new ESRIPolygonZ(bbox[0], bbox[1], bbox[2], bbox[3], numParts, numPoints);
+					}
+				}
+				else {
+					obj = new ESRIPolygonZ(bbox[0], bbox[1], bbox[2], bbox[3], numParts, numPoints);
+				}
 				shapes.add( obj );
 				int ln = 44+obj.nParts()*4+16*obj.length()+16*(obj.length()+2);
 				for( int i=0 ; i<obj.nParts() ; i++) {
 					obj.parts[i] = LittleIO.readInt(shp);
 				}
+				double[] coordinates = new double[obj.length()*2];
 				for( int i=0 ; i<obj.length() ; i++) {
-					obj.addPoint( i,
-						LittleIO.readDouble(shp),
-						LittleIO.readDouble(shp));
+					coordinates[2*i] = LittleIO.readDouble(shp);
+					coordinates[2*i+1] = LittleIO.readDouble(shp);
+				}
+				if(null != coordTransform) {
+					try {
+						double[] converted = new double[coordinates.length];
+						coordTransform.transform(coordinates, 0, converted, 0, numPoints);
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, converted[2*i], converted[2*i+1]);
+						}
+					}
+					catch(TransformException te) {
+						te.printStackTrace();
+						for(int i = 0; i < obj.length(); i++) {
+							obj.addPoint(i, coordinates[2*i], coordinates[2*i+1]);
+						}
+					}
+				}
+				else {
+					for(int i = 0; i < obj.length(); i++) {
+						obj.addPoint(i, coordinates[2*i], coordinates[2*i+1]);
+					}
 				}
 				obj.setZRange(
 					LittleIO.readDouble(shp),

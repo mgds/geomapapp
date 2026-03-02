@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -1924,6 +1925,32 @@ public class MapApp implements ActionListener,
 		frame.setSize( width, height );
 		vPane.resetToPreferredSizes();
 	}
+	
+	private int whichCursor = Cursor.DEFAULT_CURSOR;
+	private boolean isWaiting = false;
+	
+	public synchronized void startWaiting() {
+		new Thread(new Runnable() {
+			public void run() {
+				if(!isWaiting) {
+					whichCursor = anchor.getCursor().getType();
+					frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					map.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					isWaiting = true;
+				}
+			}
+		}).start();
+	}
+	
+	public synchronized void stopWaiting() {
+		new Thread(new Runnable() {
+			public void run() {
+				frame.setCursor(Cursor.getPredefinedCursor(whichCursor));
+				map.setCursor(Cursor.getPredefinedCursor(whichCursor));
+				isWaiting = false;
+			}
+		}).start();
+	}
 
 	public void mapFocus() {
 		focusTime = -1;
@@ -3221,6 +3248,7 @@ public class MapApp implements ActionListener,
 			}
 		}
 
+		//stopWaiting();
 		if (db == null) {
 			return;
 		}

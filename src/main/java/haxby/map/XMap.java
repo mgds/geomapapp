@@ -1380,6 +1380,7 @@ public class XMap extends ScaledComponent implements Zoomable,
 	 */
 	public void paintComponent( Graphics g ) {
 		MapApp mApp = (MapApp) app;
+		mApp.startWaiting();
 		Graphics2D g2 = (Graphics2D)g;
 		Rectangle clip = g.getClipBounds();
 		Dimension dim = getPreferredSize();
@@ -1467,6 +1468,7 @@ public class XMap extends ScaledComponent implements Zoomable,
 		for( i=0 ; i<mapInsets.size() ; i++) {
 			((MapInset)mapInsets.get(i)).draw( g2, interior.width, interior.height );
 		}
+		mApp.stopWaiting();
 	}
 
 	/**

@@ -11,6 +11,7 @@
 --vendor "org.GeoMapApp.www" 
 --java-options "-Dapple.laf.useScreenMenuBar=false" 
 --java-options "-Dgeomapapp.paths_location=https://app.geomapapp.org/gma_paths/GMA_paths.xml" 
+--java-options "-Xmx2G"
 --icon "src/main/resources/org/geomapapp/resources/icons/GeoMapApp.icns"
 --verbose
 --resource-dir dmg_resources

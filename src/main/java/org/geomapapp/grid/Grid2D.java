@@ -8,14 +8,15 @@
  */
 package org.geomapapp.grid;
 
-import org.geomapapp.geom.*;
-import java.awt.geom.*;
-import java.awt.Rectangle;
-import java.awt.Point;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+
+import org.geomapapp.geom.IdentityProjection;
+import org.geomapapp.geom.MapProjection;
+import org.geomapapp.geom.RectangularProjection;
 
 /**
  * A container for an 2-dimensional grid of numerical values.
@@ -243,13 +244,19 @@ public abstract class Grid2D {
 			|| y>bounds.y+bounds.height-1 );
 	}
 	public abstract double valueAt( int x, int y);
-	
+
 	public double valueAt( double x, double y ) {
-		return valueAt(x, y, false);
+		return Interpolate2D.bicubic(this, x, y);
 	}
-	
-	public double valueAt( double x, double y, boolean isGMRT ) {
-		return Interpolate2D.bicubic(this, x, y, isGMRT);
+	public double valueAt( double x, double y, boolean andContains ) {
+		return Interpolate2D.bicubic(this, x, y, andContains);
+	}
+
+	public double valueAtNanAware( double x, double y ) {
+		return Interpolate2D.bicubicNanAware(this, x, y);
+	}
+	public double valueAtNanAware( double x, double y, boolean andContains ) {
+		return Interpolate2D.bicubicNanAware(this, x, y, andContains);
 	}
 	public int getIndex(int x, int y) {
 		return x-bounds.x + bounds.width*(y-bounds.y);
@@ -260,9 +267,9 @@ public abstract class Grid2D {
 	 * immediately.
 	 * @param x the x-index of the grid node
 	 * @param y the y-index of the grid node
-	 * @param val A double value to replace the current
-	 *      grid value at the specified node.
-	 */
+         * @param val A double value to replace the current
+         *      grid value at the specified node.
+         */
 	public abstract void setValue( int x, int y, double val );
 
 	public static class Double extends Grid2D {
@@ -519,15 +526,9 @@ public abstract class Grid2D {
 			if( scaled ) return offset + val/scale;
 			return (double)val;
 		}
-/*		public double valueAt( double x, double y ) {
-			return valueAt( (int)Math.floor(x), (int)Math.floor(y));
-		} */
 		public short shortValue(int x, int y) {
 			if( grid==null || !contains(x, y) ) return NaN;
 			return grid[getIndex(x, y)];
-		}
-		public short shortValue( double x, double y ) {
-			return shortValue( (int)Math.rint(x), (int)Math.rint(y));
 		}
 		
 		public void setValue( int x, int y, double val, boolean invertOffset ) {
@@ -554,7 +555,7 @@ public abstract class Grid2D {
 		}
 		public void setValue( int x, int y, short val ) {
 			if( !contains(x, y) ) return;
-			if( grid==null && val == NaN)return;
+			if( grid==null && val==NaN )return;
 			initGrid();			
 			grid[getIndex(x, y)] = val;
 		}

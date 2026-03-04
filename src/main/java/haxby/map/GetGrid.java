@@ -214,7 +214,7 @@ public class GetGrid {
 		    for (int x = gridBounds.x; x < gridBounds.x + gridBounds.width; x++) {
 				for (int y = gridBounds.y; y < gridBounds.y + gridBounds.height; y++) {
 				    // induces bicubic interpolation
-				    double new_z = fillGrid.valueAt(scaleFactor * x, scaleFactor * y, isGMRT);
+				    double new_z = fillGrid.valueAtNanAware(scaleFactor * x, scaleFactor * y, isGMRT);
 				    double old_z = finalGrid.valueAt(x, y);
 				    if (Double.isNaN(old_z)) {
 						finalGrid.setValue(x, y, new_z);
@@ -312,7 +312,7 @@ public class GetGrid {
 		    for (int x = gridBounds.x; x < gridBounds.x + gridBounds.width; x++) {
 				for (int y = gridBounds.y; y < gridBounds.y + gridBounds.height; y++) {
 				    // induces bicubic interpolation
-				    double new_z = fillGrid.valueAt(scaleFactor * x, scaleFactor * y, isGMRT);
+				    double new_z = fillGrid.valueAtNanAware(scaleFactor * x, scaleFactor * y, isGMRT);
 				    double old_z = finalGrid.valueAt(x, y);
 				    if (Double.isNaN(old_z)) {
 						finalGrid.setValue(x, y, new_z);

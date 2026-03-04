@@ -5,3 +5,4 @@ dmg_out*
 dmg_temp*
 bin
 **/.DS_Store
+*.dmg

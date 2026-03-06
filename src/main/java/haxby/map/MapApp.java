@@ -196,7 +196,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.6.3"; //March 2nd, 2026
+	public final static String VERSION = "3.7.6.4"; //March 4th, 2026
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -586,19 +586,18 @@ public class MapApp implements ActionListener,
 		checkVersion();
 		shouldShowMailingListPopup = shouldShowMailingListPopup && !showMailingListFile.exists();
 
-		shouldShowMailingListPopup = false; // temporary
-		if(shouldShowMailingListPopup) {
-			showMailingListPopup();
-		}
-		else {
-			if(!showMailingListFile.exists()) {
-				try {
-					showMailingListFile.createNewFile();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
+//		if(shouldShowMailingListPopup) {
+//			showMailingListPopup();
+//		}
+//		else {
+//			if(!showMailingListFile.exists()) {
+//				try {
+//					showMailingListFile.createNewFile();
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}
 
 		// User chooses
 		if (which == -1) {

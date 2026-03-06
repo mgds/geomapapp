@@ -329,6 +329,9 @@ public class MapApp implements ActionListener,
 	protected JButton gridsDirBtn;
 	protected JFileChooser gridsChooser;
 	protected static JCheckBox mbPortalCache = new JCheckBox("Multibeam Swath Bathymetry");
+	static {
+		mbPortalCache.setSelected(true);
+	}
 	protected JCheckBox pPortalCache;
 	protected JButton clearMCache,
 						clearPCache;

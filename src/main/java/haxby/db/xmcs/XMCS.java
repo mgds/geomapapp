@@ -275,7 +275,7 @@ public class XMCS implements ActionListener,
 	public JComponent getDataDisplay() {
 		return imagePane;
 	}
-	private void setLineListAndCruiseInfoBtnVisible(boolean visible) {
+	private void setCruiseDependentPartsVisible(boolean visible) {
 		if(null != lineList) {
 			lineList.setVisible(visible);
 		}
@@ -681,24 +681,24 @@ public class XMCS implements ActionListener,
 			try {
 				if(mcsDataSelect[1].isSelected()) {
 					setSelectedCruise((XMCruise) cruiseList.getSelectedItem(), USGS_MULTI_CHANNEL_PATH );
-					setLineListAndCruiseInfoBtnVisible(true);
+					setCruiseDependentPartsVisible(true);
 				} else if(mcsDataSelect[2].isSelected()) {
 					setSelectedCruise((XMCruise) cruiseList.getSelectedItem(), USGS_SINGLE_CHANNEL_PATH );
-					setLineListAndCruiseInfoBtnVisible(true);
+					setCruiseDependentPartsVisible(true);
 				}else if(mcsDataSelect[3].isSelected()){ 
 					//TODO
 					setSelectedCruise((XMCruise) cruiseList.getSelectedItem(), ANTARCTIC_SDLS_PATH);
-					setLineListAndCruiseInfoBtnVisible(true);
+					setCruiseDependentPartsVisible(true);
 				}else {
 					setSelectedCruise((XMCruise) cruiseList.getSelectedItem());
-					setLineListAndCruiseInfoBtnVisible(true);
+					setCruiseDependentPartsVisible(true);
 				}
 				if(!clickEvent && null != currentCruise) {
 					zoomToCruise();
 				}
 			} catch ( ClassCastException ex ) {
 				setSelectedCruise( null );
-				setLineListAndCruiseInfoBtnVisible(false);
+				setCruiseDependentPartsVisible(false);
 			} finally {
 				mouseE = false;
 			}
@@ -744,7 +744,7 @@ public class XMCS implements ActionListener,
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			setLineListAndCruiseInfoBtnVisible(false);
+			setCruiseDependentPartsVisible(false);
 		} else if(source==mcsDataSelect[1]) {
 			try {
 				initRadar( map, this,USGS_MULTI_CHANNEL_EXP_LIST);
@@ -757,7 +757,7 @@ public class XMCS implements ActionListener,
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			setLineListAndCruiseInfoBtnVisible(false);
+			setCruiseDependentPartsVisible(false);
 		} else if(source==mcsDataSelect[2]) {
 			try {
 				initRadar( map, this,USGS_SINGLE_CHANNEL_EXP_LIST);
@@ -770,7 +770,7 @@ public class XMCS implements ActionListener,
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			setLineListAndCruiseInfoBtnVisible(false);
+			setCruiseDependentPartsVisible(false);
 		} else if(source==mcsDataSelect[3]) {
 			try{
 				initRadar(map, this, ANTARCTIC_SDLS_EXP_LIST);//TODO
@@ -783,7 +783,7 @@ public class XMCS implements ActionListener,
 			} catch (IOException e1){
 				e1.printStackTrace();
 			}
-			setLineListAndCruiseInfoBtnVisible(false);
+			setCruiseDependentPartsVisible(false);
 		}
 	}
 

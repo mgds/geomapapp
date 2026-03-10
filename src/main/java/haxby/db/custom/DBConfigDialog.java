@@ -380,10 +380,10 @@ public class DBConfigDialog extends JDialog implements ActionListener, ItemListe
 		List<String> lonInName = latlonOptions.stream().filter(str -> str.toLowerCase().contains("lon")).collect(Collectors.toList());
 		List<Integer> latIndices = new ArrayList<>(latInName.size()), lonIndices = new ArrayList<>(lonInName.size());
 		for(int i = 0; i < latlonOptions.size(); i++) {
-			if(latlonOptions.get(i).contains("lat")) {
+			if(latlonOptions.get(i).toLowerCase().contains("lat")) {
 				latIndices.add(i);
 			}
-			if(latlonOptions.get(i).contains("lon")) {
+			if(latlonOptions.get(i).toLowerCase().contains("lon")) {
 				lonIndices.add(i);
 			}
 		}

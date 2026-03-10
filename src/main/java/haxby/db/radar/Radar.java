@@ -479,7 +479,7 @@ public class Radar implements ActionListener,
 			String str = "https://www.marine-geo.org/tools/search/Files.php?client=GMA&data_set_uid="+ selectedDataUID;
 			BrowseURL.browseURL(str);
 
-		}else if(cmd.equals("Cruise Info")) {
+		}else if(cmd.equals("Survey Info")) {
 			if(currentCruise == null)
 				return;
 			String name=null;

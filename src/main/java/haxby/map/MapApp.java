@@ -5232,11 +5232,13 @@ public class MapApp implements ActionListener,
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				dbLabel.setText( cDB.getDBName() );
+				cDB.getSelectionDialog().setPreferredSize(cDB.getSelectionDialog().getMaximumSize());
 				dialog.add( cDB.getSelectionDialog(), "Center");
 				Dimension minLayoutSize = dialog.getLayout().minimumLayoutSize(dialog);
 				Dimension dialogSize = new Dimension(dialog.getPreferredSize().width, minLayoutSize.height);
 				dialog.setPreferredSize(dialogSize);
-				dialog.setMaximumSize(dialog.getPreferredSize());
+				dialog.setMaximumSize(dialogSize);
+				cDB.getSelectionDialog().setPreferredSize(cDB.getSelectionDialog().getMinimumSize());
 				hPane.setRightComponent( dialogScroll );
 
 				if( cDB.getSelectionDialog() != null ) {

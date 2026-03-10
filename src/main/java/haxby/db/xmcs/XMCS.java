@@ -3,6 +3,8 @@ package haxby.db.xmcs;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics2D;
@@ -293,6 +295,11 @@ public class XMCS implements ActionListener,
 				}
 			}
 		}
+		if(visible && null != panel) {
+			panel.setMinimumSize(panel.getLayout().minimumLayoutSize(panel));
+			panel.setPreferredSize(panel.getLayout().minimumLayoutSize(panel));
+			panel.setMaximumSize(panel.getLayout().minimumLayoutSize(panel));
+		}
 	}
 	public JComponent getSelectionDialog() {
 		if( !initiallized )return null;
@@ -360,6 +367,7 @@ public class XMCS implements ActionListener,
 			mcsDataSelect[i].addActionListener(this);
 			mcsDataSelectPanel.add(mcsDataSelect[i]);
 		}
+		mcsDataSelectPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		mcsDataSelect[0].setSelected(true);
 		panel1.add(mcsDataSelectPanel);
 		for(int i = 0; i < mcsDataSelect.length; i++) {
@@ -373,12 +381,14 @@ public class XMCS implements ActionListener,
 		JPanel listPanel = new JPanel(new GridLayout(0, 1));
 		Box clPanel = Box.createVerticalBox();
 		label1 = new JLabel("Cruise");
+		label1.setAlignmentX(Component.CENTER_ALIGNMENT);
 		cruiseList = new JComboBox();
 		cruiseList.addItem("- Select -");
 		for(int i=0 ; i<cruises.length ; i++) {
 			cruiseList.addItem(cruises[i]);
 		}
 
+		panel1.add(new JLabel(" "));
 		clPanel.add( label1);
 		clPanel.add( cruiseList );
 		listPanel.add(clPanel);
@@ -391,54 +401,74 @@ public class XMCS implements ActionListener,
 		lineList.addItem("- Select Line -");
 		lineList.setVisible(false);
 		llPanel.add(lineList);
+		llPanel.setMaximumSize(llPanel.getLayout().minimumLayoutSize(llPanel));
 		listPanel.add(llPanel);
 		panel1.add(listPanel);
 		Dimension listsPrefSize = listPanel.getLayout().minimumLayoutSize(listPanel);
 		listPanel.setPreferredSize(listsPrefSize);
 		listPanel.setMaximumSize(listsPrefSize);
+		listPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		
+		Box btnsPanel = Box.createVerticalBox();
+		//btnsPanel.setBorder(new javax.swing.border.LineBorder(Color.RED));
 		
 		cruiseInfoBtn = new JButton("Cruise Info");
 		cruiseInfoBtn.setActionCommand("cruiseInfo");
 		cruiseInfoBtn.setVisible(false);
 		cruiseInfoBtn.addActionListener(this);
+		cruiseInfoBtn.setAlignmentX(-Component.CENTER_ALIGNMENT);
+		//cruiseInfoBtn.setMinimumSize(cruiseInfoBtn.getLayout().minimumLayoutSize(cruiseInfoBtn));
 		panel1.add(cruiseInfoBtn);
-
+		//btnsPanel.setAlignmentY(Component.LEFT_ALIGNMENT);
+		//btnsPanel.setBorder(new javax.swing.border.LineBorder(Color.RED));
+		
 		btn = new JButton("Load View 1");
 		btn.setActionCommand("view-1");
 		btn.addActionListener(this);
-		panel1.add(btn);
+		btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+		btnsPanel.add(btn);
 		btn = new JButton("Load View 2");
 		btn.setActionCommand("view-2");
 		btn.addActionListener(this);
-		panel1.add(btn);
+		btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+		btnsPanel.add(btn);
+		btnsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		ButtonGroup gp1 = new ButtonGroup();
 
 		// GMA 1.6.2: Changed the default split of the view area to make the view windows more visible
 		orientH = new JRadioButton( "Horizontal", true );
 		orientH.addActionListener(this);
 		gp1.add(orientH);
-		panel1.add( orientH );
+		btnsPanel.add( orientH );
 
 		// GMA 1.6.2: Changed the default split of the view area to make the view windows more visible
 		orientV = new JRadioButton( "Vertical", false );
 		orientV.addActionListener(this);
 		gp1.add(orientV);
-		panel1.add( orientV );
+		btnsPanel.add( orientV );
+		btnsPanel.setPreferredSize(new Dimension(170, btnsPanel.getLayout().minimumLayoutSize(btnsPanel).height+5));
+		btnsPanel.setMinimumSize(btnsPanel.getPreferredSize());
+		btnsPanel.setAlignmentY(Component.LEFT_ALIGNMENT);
 
 		//box.add(panel1);
 
 		cruiseList.addActionListener(this);
 		lineList.addActionListener(this);
 		lineList.setRenderer( new XMLineRenderer() );
+		panel1.add(btnsPanel);
 
 		panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel1.setPreferredSize(panel1.getLayout().minimumLayoutSize(panel1));
 		panel.add(panel1);
 		//panel.setPreferredSize(new Dimension(170, panel.getY())); //Set Size
+		lineList.setVisible(true);
+		cruiseInfoBtn.setVisible(true);
+		panel.setMinimumSize(panel.getLayout().minimumLayoutSize(panel));
 		panel.setPreferredSize(panel.getLayout().minimumLayoutSize(panel));
-		//TODO figure out why this panel is so big!
-		panel.setMaximumSize(panel.getPreferredSize());
+		panel.setMaximumSize(panel.getLayout().minimumLayoutSize(panel));
+		lineList.setVisible(false);
+		cruiseInfoBtn.setVisible(false);
 		return panel;
 	}
 

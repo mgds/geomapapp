@@ -145,10 +145,10 @@ public class CylindricalMapBorder extends MapBorder
 			if(Projection.RANGE_180W_to_180E == whichRange) {
 				if(deg<0) deg = -deg;
 				s = deg +"\u00B0";
+				if(min != 0) s += min +"\u00B4";
 				if(xDeg < 0 ) s += "W ";
 				else if(xDeg == 0) s = "W"+s+"E";
 				else s += "E";
-				if(min != 0) s += min +"\u00B4";
 			}
 			else {
 				if(deg < 0) {

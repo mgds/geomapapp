@@ -85,6 +85,8 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 	public static boolean doImport = false;
 	private ArrayList<Integer> missingLayers = new ArrayList<Integer>();
 	
+	private static final int MAX_NAME_LENGTH = 45;
+	
 	public LayerManager() {
 		this.setLayout( new BoxLayout(this, BoxLayout.Y_AXIS));	
 		this.setBorder(BorderFactory.createEmptyBorder(3,3,3,3));
@@ -418,11 +420,8 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			c.weightx = 5;
 			c.gridwidth = GridBagConstraints.FIRST_LINE_START;
 			c.gridy = 0;
-			// Set max character display limit to 40 characters
-			String displayName = layerName;
-			if (displayName.length() >= 40) {
-				displayName = displayName.substring(0, 40);
-			}
+			// Set max character display limit
+			String displayName = layerName.substring(0, Math.min(MAX_NAME_LENGTH, layerName.length()));
 
 			visible = new JCheckBox(displayName, layerVisible);
 			visible.setFont(new Font("Arial", Font.BOLD, 11));

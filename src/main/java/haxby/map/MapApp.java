@@ -196,7 +196,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.6.6"; //March 9th, 2026
+	public final static String VERSION = "3.7.6.7"; //March 12th, 2026
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -5196,7 +5196,9 @@ public class MapApp implements ActionListener,
 	public void disableCurrentDB() {
 		if( currentDB != null && currentDB.isEnabled()) {
 			currentDB.setEnabled(false);
-			dialog.remove( currentDB.getSelectionDialog() );
+			if(null != currentDB && null != currentDB.getSelectionDialog()) {
+				dialog.remove( currentDB.getSelectionDialog() );
+			}
 		}
 	}
 

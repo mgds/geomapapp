@@ -180,6 +180,7 @@ public class Radar implements ActionListener,
 		panel1.add( cruiseList );
 
 		lineList = new JComboBox();
+		lineList.setEnabled(false);
 		lineList.addItem("Line");
 		panel1.add(lineList);
 
@@ -341,6 +342,7 @@ public class Radar implements ActionListener,
 		String cmd = e.getActionCommand();
 		if( e.getSource() == cruiseList ) {
 			infoBtn.setEnabled(cruiseList.getSelectedItem() instanceof RCruise);
+			lineList.setEnabled(cruiseList.getSelectedItem() instanceof RCruise);
 			try {
 				String tmpCruise = (currentCruise==null) ? "null" : currentCruise.getID();
 				setSelectedCruise((RCruise) cruiseList.getSelectedItem());

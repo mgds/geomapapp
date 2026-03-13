@@ -23,6 +23,7 @@ import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.geometry.Envelope2D;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
+import org.geotools.styling.Style;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.Matrix;
@@ -185,5 +186,11 @@ public class GTConverter {
 		displayPopup(crs.getName().getCode());
 		System.err.println("Unknown projection: " + epsgPrjStr);
 		return null;
+	}
+	
+	//TODO find a way to get a better-looking, higher-resolution image when possible
+	public static Grid2DWrapper getImg(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal, int xDir, int yDir, ImportGrid ig) {
+		Grid2DWrapper grid = getGrid(geotoolsGrid, proj, hasNoData, noDataVal, xDir, yDir, ig);
+		return grid;
 	}
 }

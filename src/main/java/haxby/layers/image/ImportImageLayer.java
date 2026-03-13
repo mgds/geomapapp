@@ -44,12 +44,22 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.FilenameUtils;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.coverage.grid.io.imageio.geotiff.GeoTiffIIOMetadataDecoder;
+import org.geotools.data.DataSourceException;
+import org.geotools.gce.geotiff.GeoTiffReader;
+import org.geotools.geometry.GeneralEnvelope;
+import org.opengis.geometry.Envelope;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 public class ImportImageLayer {
+	
+	private static double[] wesn = null;
 
 	public static List<FileFilter> supportedImageSources = new LinkedList<FileFilter>();
 	static {
@@ -369,18 +379,40 @@ public class ImportImageLayer {
 		
 		return null;
 	}
+	
+	private double[] readWesnFromGeotiff(File geotiffFile) {
+		//TODO read the wesn, then set it and return it
+		try {
+			GeoTiffReader reader = new GeoTiffReader(geotiffFile);
+			GeoTiffIIOMetadataDecoder mdd = reader.getMetadata();
+			GridCoverage2D gridCoverage = reader.read(null);
+			GridGeometry2D geom = gridCoverage.getGridGeometry();
+			Envelope env = geom.getEnvelope();
+			double[] ws = env.getLowerCorner().getCoordinate();
+			double[] en = env.getUpperCorner().getCoordinate();
+			wesn = new double[] {ws[0], en[0], ws[1], en[1]};
+		} catch (IOException e) {
+			e.printStackTrace();
+			wesn = null;
+		}
+		return wesn;
+	}
 
 	protected void importImage(MapApp mapApp, File file) {
-		ImageWESNProj wesn = showWESNDialog(mapApp.getFrame());
-		if (wesn == null) return;
+		String extension = FilenameUtils.getExtension(file.getName());
+		if(extension.toLowerCase().equals("tif") || extension.toLowerCase().equals("tiff")) {
+			readWesnFromGeotiff(file);
+		}
+		ImageWESNProj wesnDialog = showWESNDialog(mapApp.getFrame());
+		if (wesnDialog == null) return;
 		
 		try {
 			BufferedImage image = ImageIO.read(file);
 			FocusOverlay overlay;
-			if (wesn.merc)
-				overlay = new MercatorImageOverlay(mapApp.getMap(), image, wesn.wesn);
+			if (wesnDialog.merc)
+				overlay = new MercatorImageOverlay(mapApp.getMap(), image, wesnDialog.wesn);
 			else
-				overlay = new GeographicImageOverlay(mapApp.getMap(), image, wesn.wesn);
+				overlay = new GeographicImageOverlay(mapApp.getMap(), image, wesnDialog.wesn);
 			
 			mapApp.addFocusOverlay(overlay, file.getName());
 		} catch (IOException e) {
@@ -393,6 +425,10 @@ public class ImportImageLayer {
 		final JDialog d = new JDialog(owner, "Image Location", true);
 		
 		final WESNPanel wesnP = new WESNPanel();
+		if(null != wesn) {
+			wesnP.setWESN(wesn[0], wesn[1], wesn[2], wesn[3]);
+			wesn = null; //so it doesn't use wrong values on subsequent image imports
+		}
 		TitledBorder border = BorderFactory.createTitledBorder("Image Location (Negatives for Western and Southern Hemisphere)");
 		wesnP.setBorder(border);
 		

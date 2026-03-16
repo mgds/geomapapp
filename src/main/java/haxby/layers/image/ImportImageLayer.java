@@ -5,6 +5,7 @@ import haxby.layers.image.ImageProvider.URLImageProvider;
 import haxby.layers.image.ImageProvider.ZipImageProvider;
 import haxby.map.FocusOverlay;
 import haxby.map.MapApp;
+import haxby.util.GTConverter;
 import haxby.util.WESNPanel;
 
 import java.awt.BorderLayout;
@@ -13,6 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -45,6 +47,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FilenameUtils;
+import org.geomapapp.geom.MapProjection;
+import org.geomapapp.geom.RectangularProjection;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.imageio.geotiff.GeoTiffIIOMetadataDecoder;
@@ -390,6 +394,17 @@ public class ImportImageLayer {
 			Envelope env = geom.getEnvelope();
 			double[] ws = env.getLowerCorner().getCoordinate();
 			double[] en = env.getUpperCorner().getCoordinate();
+			MapProjection proj = GTConverter.getGmaProj(geom);
+			if(!(proj instanceof RectangularProjection)) {
+				Point2D.Double lowCorner = new Point2D.Double(ws[0], ws[1]);
+				Point2D.Double highCorner = new Point2D.Double(en[0], en[1]);
+				Point2D lowLatLon = proj.getRefXY(lowCorner),
+						highLatLon = proj.getRefXY(highCorner);
+				ws[0] = lowLatLon.getX();
+				ws[1] = lowLatLon.getY();
+				en[0] = highLatLon.getX();
+				en[1] = highLatLon.getY();
+			}
 			wesn = new double[] {ws[0], en[0], ws[1], en[1]};
 		} catch (IOException e) {
 			e.printStackTrace();

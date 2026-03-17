@@ -406,7 +406,7 @@ public class ImportImageLayer {
 				en[1] = highLatLon.getY();
 			}
 			wesn = new double[] {ws[0], en[0], ws[1], en[1]};
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			wesn = null;
 		}

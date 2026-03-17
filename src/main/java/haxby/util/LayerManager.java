@@ -58,6 +58,7 @@ import org.geomapapp.util.XML_Menu;
 import haxby.db.Database;
 import haxby.db.custom.CustomDB;
 import haxby.db.custom.UnknownDataSet;
+import haxby.db.xmcs.XMCS;
 import haxby.map.FocusOverlay;
 import haxby.map.MapApp;
 import haxby.map.MapTools;
@@ -1035,6 +1036,9 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 		}
 		
 		else if ( layerPanel.layer instanceof Database ) {
+			if(app.getCurrentDB() instanceof XMCS) {
+				((XMCS)app.getCurrentDB()).linesLoaded = false;
+			}
 			app.closeDB( ((Database)layerPanel.layer) );
 			for ( int i = 0; i < overlays.size(); i++ ) {
 				if ( overlays.get(i) instanceof Database ) {

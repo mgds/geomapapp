@@ -196,7 +196,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.6.7"; //March 12th, 2026
+	public final static String VERSION = "3.7.6.8"; //March 17th, 2026
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -2838,6 +2838,9 @@ public class MapApp implements ActionListener,
 					}
 					else {
 						currentDB = db[i];
+						if(currentDB instanceof XMCS) {
+							((XMCS)currentDB).linesLoaded = false;
+						}
 						closeCurrentDB();
 						Vector<Overlay> overlays = map.overlays;
 						for ( int j = 0; j < map.overlays.size(); j++ ) {

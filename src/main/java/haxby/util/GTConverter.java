@@ -23,6 +23,7 @@ import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.geometry.Envelope2D;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
+import org.geotools.styling.Style;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.Matrix;
@@ -166,6 +167,14 @@ public class GTConverter {
 				UTM utm = new UTM(whichZone, 2, whichHemisphere);
 				return utm;
 			}
+			else if(crs.getName().getCode().contains("UTM")) {
+				String str = "UTM zone ";
+				String whichZone = crs.getName().getCode().substring(crs.getName().getCode().indexOf("UTM")+str.length());
+				int zoneNum = Integer.parseInt(whichZone.split("[NS]")[0]);
+				int whichHemisphere = whichZone.endsWith("N") ? MapProjection.NORTH : MapProjection.SOUTH;
+				UTM utm = new UTM(zoneNum, 2, whichHemisphere);
+				return utm;
+			}
 			//world mercator (probably EPSG:3395)
 			else if(crs.getName().getCode().toUpperCase().contains("WORLD MERCATOR")) {
 				displayPopup("World Mercator");
@@ -185,5 +194,11 @@ public class GTConverter {
 		displayPopup(crs.getName().getCode());
 		System.err.println("Unknown projection: " + epsgPrjStr);
 		return null;
+	}
+	
+	//TODO find a way to get a better-looking, higher-resolution image when possible
+	public static Grid2DWrapper getImg(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal, int xDir, int yDir, ImportGrid ig) {
+		Grid2DWrapper grid = getGrid(geotoolsGrid, proj, hasNoData, noDataVal, xDir, yDir, ig);
+		return grid;
 	}
 }

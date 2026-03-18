@@ -94,7 +94,7 @@ public class PreviewCruise
 			System.exit(1);
 		}
 		else {
-			String msgText = e instanceof FileNotFoundException ? ("Couldn't find the cruise at " + cruiseDir + ".\nIs the URL correct?") : ("Couldn't connect to " + cruiseDir + " (" + e.getMessage() + ").");
+			String msgText = e instanceof FileNotFoundException ? ("<html>Couldn't find the cruise at " + cruiseDir + ".<br><br>Is the URL correct? (The cruise directory may not exist.)<br><br></html>") : ("Couldn't connect to " + cruiseDir + " (" + e.getMessage() + ").");
 			msg = new JPanel(new GridLayout(0, 1));
 			JPanel thePanel = (JPanel)msg;
 			JPanel subPanel = new JPanel();

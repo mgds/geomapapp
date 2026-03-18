@@ -383,7 +383,7 @@ public class XMCS implements ActionListener,
 		label1 = new JLabel("Cruise");
 		label1.setAlignmentX(Component.CENTER_ALIGNMENT);
 		cruiseList = new JComboBox();
-		cruiseList.addItem("- Select -");
+		cruiseList.addItem("- Select Cruise -");
 		for(int i=0 ; i<cruises.length ; i++) {
 			cruiseList.addItem(cruises[i]);
 		}
@@ -766,7 +766,7 @@ public class XMCS implements ActionListener,
 			try {
 				initRadar( map, this, MULTI_CHANNEL_EXP_LIST);
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select -");
+				cruiseList.addItem("- Select Cruise -");
 				for(int i=0 ; i<cruises.length ; i++) {
 					cruiseList.addItem(cruises[i]);
 				}
@@ -779,7 +779,7 @@ public class XMCS implements ActionListener,
 			try {
 				initRadar( map, this,USGS_MULTI_CHANNEL_EXP_LIST);
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select -");
+				cruiseList.addItem("- Select Cruise -");
 				for(int i=0 ; i<cruises.length ; i++) {
 					cruiseList.addItem(cruises[i]);
 				}
@@ -792,7 +792,7 @@ public class XMCS implements ActionListener,
 			try {
 				initRadar( map, this,USGS_SINGLE_CHANNEL_EXP_LIST);
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select -");
+				cruiseList.addItem("- Select Cruise -");
 				for(int i=0 ; i<cruises.length ; i++) {
 					cruiseList.addItem(cruises[i]);
 				}
@@ -805,7 +805,7 @@ public class XMCS implements ActionListener,
 			try{
 				initRadar(map, this, ANTARCTIC_SDLS_EXP_LIST);//TODO
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select -");
+				cruiseList.addItem("- Select Cruise -");
 				for(int i=0;i<cruises.length; i++){
 					cruiseList.addItem(cruises[i]);
 				}
@@ -901,12 +901,12 @@ public class XMCS implements ActionListener,
 				map.repaint();
 			}
 			else {
-				cruiseList.setSelectedItem("- Select -");
+				cruiseList.setSelectedItem("- Select Cruise -");
 				lineList.setSelectedItem("- Select Line -");
 			}
 		}
 		else {
-			cruiseList.setSelectedItem("- Select -");
+			cruiseList.setSelectedItem("- Select Cruise -");
 			lineList.setSelectedItem("- Select Line -");
 		}
 

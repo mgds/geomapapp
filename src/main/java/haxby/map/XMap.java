@@ -1056,7 +1056,7 @@ public class XMap extends ScaledComponent implements Zoomable,
 				int lonRange = null == ((MapApp)app).getProjection() ? MapApp.DEFAULT_LONGITUDE_RANGE : ((MapApp)app).getMap().getProjection().getLongitudeRange();
 				String degMinStr = Projection.RANGE_180W_to_180E == lonRange ?
 						(fmtDegsMins.format( Math.floor(pt.getX()) ) + "\u00B0" + fmtMins.format( minLon ) + "\u0027" + ew) :
-						(fmtDegsMins.format( "W".equals(ew) ? (360 - pt.getX() - (30 < minLon ? 0 : 1)) : pt.getX() ) + "\u00B0" + fmtMins.format( "W" == ew ? ((60 - minLon) % 60) : minLon) + "\u0027");
+						(fmtDegsMins.format( Math.floor(("W".equals(ew) ? (360 - pt.getX()) : pt.getX() ))) + "\u00B0" + fmtMins.format( "W" == ew ? ((60 - minLon) % 60) : minLon) + "\u0027");
 				String decimalDegStr = Projection.RANGE_180W_to_180E == lonRange ? 
 						(fmt.format( pt.getX() ) + "\u00B0" + ew) :
 						(fmt.format("W".equals(ew) ? (360 - pt.getX()) : pt.getX()) + "\u00B0");

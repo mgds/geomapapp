@@ -26,10 +26,13 @@ import java.util.Vector;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.UIManager;
 
 import org.geomapapp.geom.MapProjection;
 import org.geomapapp.grid.Grid2D;
@@ -98,7 +101,14 @@ public class PreviewCruise
 			msg = new JPanel(new GridLayout(0, 1));
 			JPanel thePanel = (JPanel)msg;
 			JPanel subPanel = new JPanel();
-			JLabel label = new JLabel(msgText);
+			JTextPane label = new JTextPane();
+			label.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
+			label.setFont(UIManager.getDefaults().getFont("Label.font"));
+			label.setContentType("text/html");
+			label.setText(msgText);
+			label.setEditable(false);
+			label.setBackground(null);
+			label.setBorder(null);
 			thePanel.add(label);
 			JLabel otherLabel = new JLabel("Try again with another URL:");
 			newUrlField = new JTextField();

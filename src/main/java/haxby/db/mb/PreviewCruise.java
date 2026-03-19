@@ -58,6 +58,7 @@ import haxby.util.URLFactory;
 
 public class PreviewCruise
 {
+	private static MapApp mapApp;
   private static int MAP_PROJ;
   
   public static void main(String[] inputArgs)
@@ -143,8 +144,8 @@ public class PreviewCruise
     	PoleMapServer.base[1] = tilesPath + "/NP_320/";
       }
     
-    MapApp.setup();
-    MapApp mapApp = MapApp.createMapApp(new String[0]);
+    MapApp.main(new String[0]);
+    mapApp = MapApp.getApp();
     
 
     

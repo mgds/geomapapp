@@ -128,6 +128,7 @@ public class PreviewCruise
 		}
 		else {
 			cruiseDir = newUrlField.getText();
+			cruiseID = cruiseDir.substring(inputArgs[0].lastIndexOf("/") + 1);
 		}
 	} while(!validUrl);
     

@@ -383,7 +383,7 @@ public class XMCS implements ActionListener,
 		label1 = new JLabel("Cruise");
 		label1.setAlignmentX(Component.CENTER_ALIGNMENT);
 		cruiseList = new JComboBox();
-		cruiseList.addItem("- Select Cruise -");
+		cruiseList.addItem("-Select Cruise-");
 		for(int i=0 ; i<cruises.length ; i++) {
 			cruiseList.addItem(cruises[i]);
 		}
@@ -398,7 +398,7 @@ public class XMCS implements ActionListener,
 
 		JPanel llPanel = new JPanel();
 		lineList = new JComboBox();
-		lineList.addItem("- Select Line -");
+		lineList.addItem("-Select Line-");
 		lineList.setVisible(false);
 		llPanel.add(lineList);
 		llPanel.setMaximumSize(llPanel.getLayout().minimumLayoutSize(llPanel));
@@ -627,7 +627,7 @@ public class XMCS implements ActionListener,
 		if(cruise == currentCruise)return;
 		currentLine = null;
 		lineList.removeAllItems();
-		lineList.addItem("- Select Line -");
+		lineList.addItem("-Select Line-");
 		/*if (currentCruise != null)
 			currentCruise.clearLines();*/
 		currentCruise = cruise;
@@ -766,7 +766,7 @@ public class XMCS implements ActionListener,
 			try {
 				initRadar( map, this, MULTI_CHANNEL_EXP_LIST);
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select Cruise -");
+				cruiseList.addItem("-Select Cruise-");
 				for(int i=0 ; i<cruises.length ; i++) {
 					cruiseList.addItem(cruises[i]);
 				}
@@ -779,7 +779,7 @@ public class XMCS implements ActionListener,
 			try {
 				initRadar( map, this,USGS_MULTI_CHANNEL_EXP_LIST);
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select Cruise -");
+				cruiseList.addItem("-Select Cruise-");
 				for(int i=0 ; i<cruises.length ; i++) {
 					cruiseList.addItem(cruises[i]);
 				}
@@ -792,7 +792,7 @@ public class XMCS implements ActionListener,
 			try {
 				initRadar( map, this,USGS_SINGLE_CHANNEL_EXP_LIST);
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select Cruise -");
+				cruiseList.addItem("-Select Cruise-");
 				for(int i=0 ; i<cruises.length ; i++) {
 					cruiseList.addItem(cruises[i]);
 				}
@@ -805,7 +805,7 @@ public class XMCS implements ActionListener,
 			try{
 				initRadar(map, this, ANTARCTIC_SDLS_EXP_LIST);//TODO
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select Cruise -");
+				cruiseList.addItem("-Select Cruise-");
 				for(int i=0;i<cruises.length; i++){
 					cruiseList.addItem(cruises[i]);
 				}
@@ -896,18 +896,18 @@ public class XMCS implements ActionListener,
 				}
 				else if(null != currentLine) {
 					currentLine = null;
-					lineList.setSelectedItem("- Select Line -");
+					lineList.setSelectedItem("-Select Line-");
 				}
 				map.repaint();
 			}
 			else {
-				cruiseList.setSelectedItem("- Select Cruise -");
-				lineList.setSelectedItem("- Select Line -");
+				cruiseList.setSelectedItem("-Select Cruise-");
+				lineList.setSelectedItem("-Select Line-");
 			}
 		}
 		else {
-			cruiseList.setSelectedItem("- Select Cruise -");
-			lineList.setSelectedItem("- Select Line -");
+			cruiseList.setSelectedItem("-Select Cruise-");
+			lineList.setSelectedItem("-Select Line-");
 		}
 
 		/*if (currentCruise != null && currentCruise.contains(p.x, p.y, wrap)) {

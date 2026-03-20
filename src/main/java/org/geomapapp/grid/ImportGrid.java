@@ -349,7 +349,7 @@ public class ImportGrid implements Runnable {
 				appendNewText("\nConverting the grid… ");
 				//displayWaitingDots();
 				Date start = new Date();
-				GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, tmpProj, hasNoData, nanValue, signDx, flip?(-signDy):signDy, ImportGrid.this);
+				GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, tmpProj, hasNoData, nanValue, rounder, signDx, flip?(-signDy):signDy, ImportGrid.this);
 				Date end = new Date();
 				long durMillis = end.getTime() - start.getTime();
 				if(durMillis > 1000) {

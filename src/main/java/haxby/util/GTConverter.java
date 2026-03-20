@@ -2,6 +2,8 @@ package haxby.util;
 
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.time.Duration;
 import java.util.Date;
 import java.util.function.Function;
@@ -92,11 +94,12 @@ public class GTConverter {
 	 * @param proj the map projection of the data
 	 * @param hasNoData true iff this grid has a "No Data" value defined
 	 * @param noDataVal The "No Data" value; ignored if hasNoData is false
+	 * @param rounder the MathContext showing the required precision for comparison to the NoData value
 	 * @param xDir the sign of the x scale value
 	 * @param yDir the sign of the y scale value
 	 * @return information to plot the grid in GeoMapApp
 	 */
-	public static Grid2DWrapper getGrid(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal, int xDir, int yDir, ImportGrid ig) {
+	public static Grid2DWrapper getGrid(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal, MathContext rounder, int xDir, int yDir, ImportGrid ig) {
 		GridGeometry2D geom = geotoolsGrid.getGridGeometry();
 		GridEnvelope2D env = geom.getGridRange2D();
 		Matrix m = ((AffineTransform2D)geom.getGridToCRS2D()).getMatrix();
@@ -107,7 +110,7 @@ public class GTConverter {
 		Grid2D.Double grid = new Grid2D.Double(env, proj);
 		GridCoordinates2D low = env.getLow(), high = env.getHigh();
 		double lowest = Double.MAX_VALUE, highest = -Double.MAX_VALUE;
-		Function <Double, Boolean> isData = (hasNoData)?(x -> x != noDataVal):(x -> !Double.isNaN(x));
+		Function <Double, Boolean> isData = (hasNoData)?(x -> !new BigDecimal(x, rounder).equals(new BigDecimal(noDataVal, rounder))):(x -> !Double.isNaN(x));
 		long cellsPerRow = high.x - low.x + 1;
 		long numRows = high.y - low.y + 1;
 		long numCells = numRows * cellsPerRow;
@@ -194,11 +197,5 @@ public class GTConverter {
 		displayPopup(crs.getName().getCode());
 		System.err.println("Unknown projection: " + epsgPrjStr);
 		return null;
-	}
-	
-	//TODO find a way to get a better-looking, higher-resolution image when possible
-	public static Grid2DWrapper getImg(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal, int xDir, int yDir, ImportGrid ig) {
-		Grid2DWrapper grid = getGrid(geotoolsGrid, proj, hasNoData, noDataVal, xDir, yDir, ig);
-		return grid;
 	}
 }

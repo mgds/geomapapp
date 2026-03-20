@@ -10,6 +10,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -304,6 +306,7 @@ public class ImportGrid implements Runnable {
 				int numCells = (high.y-low.y+1)*(high.x-low.x+1);
 				int howManyHundred = numCells/100;
 				appendNewText("\nGetting Z range… ");
+				MathContext rounder = new MathContext(7);
 				for(int y = low.y; y < high.y; y++) {
 					for(int x = low.x; x < high.x; x++) {
 						int whichCell = (y*(high.x-low.x+1) + (x-low.x));
@@ -315,8 +318,11 @@ public class ImportGrid implements Runnable {
 							showPercent(100);
 						}
 						double[] vals = gridCoverage.evaluate(new GridCoordinates2D(x, y), (double[])null);
-						if(!Double.isNaN(vals[0]) && (Double.isNaN(nanValue) || Math.abs(vals[0] - nanValue) > 0.00001)) {
-							if(vals[0] < minZ) minZ = vals[0];
+						if(!Double.isNaN(vals[0]) && (Double.isNaN(nanValue) || !(new BigDecimal(vals[0], rounder).equals(new BigDecimal(nanValue, rounder))))) {
+							if(vals[0] < minZ) {
+								minZ = vals[0];
+								//System.out.println("min Z is now " + minZ + " at (" + x + ", " + y + ")");
+							}
 							if(vals[0] > maxZ) maxZ = vals[0];
 						}
 					}

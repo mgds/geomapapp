@@ -94,12 +94,12 @@ public class PreviewCruise
 		JTextField newUrlField = null;
 		System.out.println(e.getClass().getName());
 		if(e instanceof ConnectException || e.getMessage().contains("response code: 403")) {
-			msg = "Couldn't connect to " + cruiseDir + ".\nEnsure you are physically on campus or connected to the LDEO VPN, then try again.";
+			msg = "Could not connect to " + cruiseDir + ".\nEnsure you are physically on campus or connected to the LDEO VPN, then try again.";
 			JOptionPane.showMessageDialog(null, msg, e.getMessage(), JOptionPane.ERROR_MESSAGE);
 			System.exit(1);
 		}
 		else {
-			String msgText = e instanceof FileNotFoundException ? ("<html>Couldn't find the cruise at " + cruiseDir + ".<br><br>Is the URL correct? (The cruise directory may not exist.)<br><br></html>") : ("<html>Couldn't connect to " + cruiseDir + ".<br><br>" + e.getMessage() + "<br></html>.");
+			String msgText = e instanceof FileNotFoundException ? ("<html>Could not find the cruise at " + cruiseDir + ".<br><br>Is the URL correct? (The cruise directory may not exist.)<br><br></html>") : ("<html>Could not connect to " + cruiseDir + ".<br><br>" + e.getMessage() + "<br></html>.");
 			msg = new JPanel(new GridLayout(0, 1));
 			JPanel thePanel = (JPanel)msg;
 			JPanel subPanel = new JPanel();

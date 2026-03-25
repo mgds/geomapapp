@@ -95,6 +95,17 @@ public class WESNPanel extends JPanel{
 				return null;
 		return wesn;
 	}
+	
+	public void setWESN(double westIn, double eastIn, double southIn, double northIn) {
+		west.setText(String.valueOf(westIn));
+		west.setCaretPosition(0);
+		east.setText(String.valueOf(eastIn));
+		east.setCaretPosition(0);
+		south.setText(String.valueOf(southIn));
+		south.setCaretPosition(0);
+		north.setText(String.valueOf(northIn));
+		north.setCaretPosition(0);
+	}
 
 	public double processText(String text, boolean lat) {
 		boolean negate = false;

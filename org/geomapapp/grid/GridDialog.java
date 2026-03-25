@@ -262,14 +262,15 @@ public class GridDialog implements ItemListener, WindowListener {
 		}
 		if (!dialog.isVisible()) {
 			Point point = owner.getLocation();
+			point.x += owner.getWidth() - dialog.getWidth();
 			point.y = owner.getHeight() + point.y + 10;
 			Rectangle screenBounds = owner.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
 			if(point.y + dialog.getHeight() > screenBounds.y + screenBounds.height) {
 				point.y = screenBounds.y + screenBounds.height - dialog.getHeight();
 			}
 			dialog.setLocation(point);
+			dialog.setVisible(true);
 		}
-		dialog.setVisible(true);
 	}
 	
 	//Contributed Grids
@@ -290,8 +291,8 @@ public class GridDialog implements ItemListener, WindowListener {
 				point.y = screenBounds.y + screenBounds.height - dialog.getHeight();
 			}
 			dialog.setLocation(point); //sets frame location
+			dialog.setVisible(true);
 		}
-		dialog.setVisible(true);
 	}
 	
 	
@@ -939,7 +940,9 @@ public class GridDialog implements ItemListener, WindowListener {
 			dloc.y = screenBounds.y + screenBounds.height - dialog.getHeight();
 		}
 		dialog.setLocation(dloc);
-		dialog.toFront();
+		if((JFrame.ICONIFIED & dialog.getExtendedState()) == 0) {
+			dialog.toFront();
+		}
 		dialog.repaint();
 	}
 	public void addGrid( Grid2DOverlay grid ) {

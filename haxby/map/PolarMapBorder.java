@@ -440,11 +440,19 @@ public class PolarMapBorder extends MapBorder implements Overlay {
 				deg++;
 				min = 0;
 			}
-			if(deg < 0) deg = -deg;
-			if( longitude<0 ) anot = "W";
-			else if(longitude>0) anot = "E";
-			else anot = "";
-			anot += deg +"\u00B0";
+			int whichRange = null == MapApp.getApp() || null == MapApp.getApp().getMap() ? MapApp.DEFAULT_LONGITUDE_RANGE : MapApp.getApp().getMap().getProjection().getLongitudeRange();
+			if(Projection.RANGE_180W_to_180E == whichRange) {
+				if(deg < 0) deg = -deg;
+				if( longitude<0 ) anot = "W";
+				else if(longitude>0) anot = "E";
+				else anot = "";
+				anot += deg +"\u00B0";
+			}
+			else {
+				if(deg < 0) deg = 360 + deg;
+				if(longitude < 0) deg = 360 - deg;
+				anot = deg + "\u00B0";
+			}
 			if( Math.rint(longitude/90) * 90 == longitude) {
 				latitude = south?-latMax:latMax;
 			} else {

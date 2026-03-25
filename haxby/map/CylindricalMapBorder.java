@@ -140,12 +140,31 @@ public class CylindricalMapBorder extends MapBorder
 				else deg++;
 				min = 0;
 			}
-			if(deg<0) deg = -deg;
-			String s = deg +"\u00B0";
-			if(xDeg < 0 ) s += "W ";
-			else if(xDeg == 0) s = "W"+s+"E";
-			else s += "E";
-			if(min != 0) s += min +"\u00B4";
+			int whichRange = null == MapApp.getApp() || null == MapApp.getApp().getMap() ? MapApp.DEFAULT_LONGITUDE_RANGE : MapApp.getApp().getMap().getProjection().getLongitudeRange();
+			String s = "";
+			if(Projection.RANGE_180W_to_180E == whichRange) {
+				if(deg<0) deg = -deg;
+				s = deg +"\u00B0";
+				if(min != 0) s += min +"\u00B4";
+				if(xDeg < 0 ) s += "W ";
+				else if(xDeg == 0) s = "W"+s+"E";
+				else s += "E";
+			}
+			else {
+				if(deg < 0) {
+					deg = 360+deg;
+					if(min != 0) deg--;
+				}
+				s = deg + "\u00B0";
+				if(min != 0) {
+					if(xDeg < 0) {
+						s += (60-min) + "\u00B4";
+					}
+					else {
+						s += min + "\u00B4";
+					}
+				}
+			}
 
 //			GMA 1.4.8: Add seconds if sec is not equal to zero
 			if((sec != 0) && (zoom < 131072)) s += formatNum(sec) + "\u00B4" + "\u00B4";

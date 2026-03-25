@@ -1509,8 +1509,12 @@ public class GMAProfile implements Overlay, XYPoints {
 
 			public void actionPerformed(ActionEvent e) {
 				if(degreesOrMinutes.getSelectedIndex()==0){
-					if((Math.abs(Double.parseDouble(setStartLonT.getText()))> 180)){
+					if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_180W_to_180E && (Math.abs(Double.parseDouble(setStartLonT.getText()))> 180)){
 						JOptionPane.showMessageDialog(MapApp.anchor,"Longitude must be between -180 and 180", "Error", JOptionPane.ERROR_MESSAGE);
+						return;
+					}
+					else if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_0_to_360 && (Double.parseDouble(setStartLonT.getText())>360 || Double.parseDouble(setStartLonT.getText())<0)) {
+						JOptionPane.showMessageDialog(MapApp.anchor,"Longitude must be between 0 and 360", "Error", JOptionPane.ERROR_MESSAGE);
 						return;
 					}
 
@@ -1925,8 +1929,11 @@ public class GMAProfile implements Overlay, XYPoints {
 					data = (float[])xy.xyz.get(k);
 					float tempLon = data[2];
 
-					if(tempLon>=180){
+					if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_180W_to_180E && tempLon>=180){
 						tempLon=(float)((-1.0)*(360.0 - tempLon));
+					}
+					else if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_0_to_360 && tempLon < 0) {
+						tempLon += 360.;
 					}
 
 					boolean tf = profileTypes != null && straightLine.isSelected();
@@ -1998,8 +2005,11 @@ public class GMAProfile implements Overlay, XYPoints {
 				data = (float[])xy.xyz.get(k);
 				float tempLon = data[2];
 
-				if(tempLon>=180) {
+				if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_180W_to_180E && tempLon>=180) {
 					tempLon=(float)((-1.0)*(360.0 - tempLon));
+				}
+				else if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_0_to_360 && tempLon < 0) {
+					tempLon += 360.;
 				}
 
 				boolean tf = profileTypes != null && straightLine.isSelected();
@@ -2142,8 +2152,11 @@ public class GMAProfile implements Overlay, XYPoints {
 		String startRest = (""+pt.getX()).split("\\.")[1];
 
 		if(degreesOrMinutes.getSelectedIndex()==0){
-			if(pt.getX()>180){
+			if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_180W_to_180E && pt.getX()>180){
 				return fmt.format((-1)*(360.0 - pt.getX()));
+			}
+			else if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_0_to_360 && pt.getX() < 0) {
+				return fmt.format(pt.getX()+360.);
 			}
 			return fmt.format(pt.getX());
 		}
@@ -2158,12 +2171,14 @@ public class GMAProfile implements Overlay, XYPoints {
 
 		if(degStartX.substring(0, 1).equals("-")){
 			box.setSelectedIndex(1);
-			degStartX = degStartX.substring(1,degStartX.length());
+			if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_180W_to_180E)
+				degStartX = degStartX.substring(1,degStartX.length());
 		}
-		else if(Double.parseDouble(degStartX) > 180){
+		else if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_180W_to_180E && Double.parseDouble(degStartX) > 180){
 			degStartX = ""+(360 - Double.parseDouble(degStartX));
 			box.setSelectedIndex(1);
-		}else{
+		}
+		else{
 			box.setSelectedIndex(0);
 		}
 		return (degStartX + "\u00B0" + fmtMins.format(minStartX))+"\u2032";
@@ -2221,8 +2236,12 @@ public class GMAProfile implements Overlay, XYPoints {
 		if(ew.equalsIgnoreCase("W"))
 			number = (-1.0)*number;
 
-		if(number > 180){
+		if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_180W_to_180E && number > 180){
 			number = (-1.0)*(360.0-number);
+		}
+
+		else if(MapApp.getApp().getMap().getProjection().getLongitudeRange() == Projection.RANGE_0_to_360 && number < 0) {
+			number += 360.;
 		}
 
 		return number;

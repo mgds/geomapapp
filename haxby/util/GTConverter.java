@@ -2,11 +2,17 @@ package haxby.util;
 
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.time.Duration;
 import java.util.Date;
 import java.util.function.Function;
 
+import javax.swing.JOptionPane;
+
 import org.geomapapp.geom.MapProjection;
+import org.geomapapp.geom.Mercator;
+import org.geomapapp.geom.MercatorProjection;
 import org.geomapapp.geom.RectangularProjection;
 import org.geomapapp.geom.UTM;
 import org.geomapapp.geom.UTMProjection;
@@ -19,10 +25,13 @@ import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.geometry.Envelope2D;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
+import org.geotools.styling.Style;
 import org.opengis.geometry.DirectPosition;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.Matrix;
 import org.opengis.referencing.operation.Projection;
+
+import haxby.map.MapApp;
 
 /**
  * This class converts between GeoMapApp's internally defined Grid2D objects and GeoTools's GridCoverage2D objects.
@@ -85,11 +94,12 @@ public class GTConverter {
 	 * @param proj the map projection of the data
 	 * @param hasNoData true iff this grid has a "No Data" value defined
 	 * @param noDataVal The "No Data" value; ignored if hasNoData is false
+	 * @param rounder the MathContext showing the required precision for comparison to the NoData value
 	 * @param xDir the sign of the x scale value
 	 * @param yDir the sign of the y scale value
 	 * @return information to plot the grid in GeoMapApp
 	 */
-	public static Grid2DWrapper getGrid(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal, int xDir, int yDir, ImportGrid ig) {
+	public static Grid2DWrapper getGrid(GridCoverage2D geotoolsGrid, MapProjection proj, boolean hasNoData, double noDataVal, MathContext rounder, int xDir, int yDir, ImportGrid ig) {
 		GridGeometry2D geom = geotoolsGrid.getGridGeometry();
 		GridEnvelope2D env = geom.getGridRange2D();
 		Matrix m = ((AffineTransform2D)geom.getGridToCRS2D()).getMatrix();
@@ -100,7 +110,7 @@ public class GTConverter {
 		Grid2D.Double grid = new Grid2D.Double(env, proj);
 		GridCoordinates2D low = env.getLow(), high = env.getHigh();
 		double lowest = Double.MAX_VALUE, highest = -Double.MAX_VALUE;
-		Function <Double, Boolean> isData = (hasNoData)?(x -> x != noDataVal):(x -> !Double.isNaN(x));
+		Function <Double, Boolean> isData = (hasNoData)?(x -> !new BigDecimal(x, rounder).equals(new BigDecimal(noDataVal, rounder))):(x -> !Double.isNaN(x));
 		long cellsPerRow = high.x - low.x + 1;
 		long numRows = high.y - low.y + 1;
 		long numCells = numRows * cellsPerRow;
@@ -139,6 +149,15 @@ public class GTConverter {
 		return new Grid2DWrapper(grid, lowest, highest, xOffset, yOffset, dx, dy);
 	}
 	
+	private static void displayPopup(String projName) {
+		String htmlMsg = "<html><body>This GeoTIFF grid is in " + projName + " projection.";
+		htmlMsg += "<br><br>Currently, GeoMapApp can import GeoTIFF grids in Geographic (degrees) and UTM projections.";
+		htmlMsg += "<br><br>Please convert your grid to one of those projections to import it in GeoMapApp.";
+		htmlMsg += "<br><br>GIS tools and packages such as GDAL can be used for that conversion.";
+		htmlMsg += "</body></html>";
+		JOptionPane.showMessageDialog(MapApp.anchor, htmlMsg, "Incompatible Projection", JOptionPane.WARNING_MESSAGE);
+	}
+	
 	public static MapProjection getGmaProj(GridGeometry2D geom) {
 		CoordinateReferenceSystem crs = geom.getCoordinateReferenceSystem();
 		String epsgPrjStr = String.valueOf(crs.getIdentifiers().toArray()[0]);
@@ -151,6 +170,20 @@ public class GTConverter {
 				UTM utm = new UTM(whichZone, 2, whichHemisphere);
 				return utm;
 			}
+			else if(crs.getName().getCode().contains("UTM")) {
+				String str = "UTM zone ";
+				String whichZone = crs.getName().getCode().substring(crs.getName().getCode().indexOf("UTM")+str.length());
+				int zoneNum = Integer.parseInt(whichZone.split("[NS]")[0]);
+				int whichHemisphere = whichZone.endsWith("N") ? MapProjection.NORTH : MapProjection.SOUTH;
+				UTM utm = new UTM(zoneNum, 2, whichHemisphere);
+				return utm;
+			}
+			//world mercator (probably EPSG:3395)
+			else if(crs.getName().getCode().toUpperCase().contains("WORLD MERCATOR")) {
+				displayPopup("World Mercator");
+				System.err.println("Incompatible projection: " + epsgPrjStr);
+				return null;
+			}
 			//assume geographic projection
 			else {
 				Envelope2D coordRange = geom.getEnvelope2D();
@@ -161,6 +194,7 @@ public class GTConverter {
 				return rp;
 			}
 		}
+		displayPopup(crs.getName().getCode());
 		System.err.println("Unknown projection: " + epsgPrjStr);
 		return null;
 	}

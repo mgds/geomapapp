@@ -94,6 +94,7 @@ public class Radar implements ActionListener,
 	boolean enabled = false;
 	JSplitPane imagePane;
 	JRadioButton orientH, orientV;
+	private JButton infoBtn;
 	public Radar( XMap map ) {
 		this.map = map;
 		image = new RImage();
@@ -168,7 +169,7 @@ public class Radar implements ActionListener,
 				BorderFactory.createEtchedBorder(),
 				BorderFactory.createEmptyBorder(1,3,1,3));
 		cruiseList = new JComboBox();
-		cruiseList.addItem("Expedition");
+		cruiseList.addItem("Survey");
 		for(int i=0 ; i<cruises.length ; i++) cruiseList.addItem(cruises[i]);
 		JLabel label;
 		JButton btn;
@@ -179,6 +180,7 @@ public class Radar implements ActionListener,
 		panel1.add( cruiseList );
 
 		lineList = new JComboBox();
+		lineList.setEnabled(false);
 		lineList.addItem("Line");
 		panel1.add(lineList);
 
@@ -188,9 +190,10 @@ public class Radar implements ActionListener,
 		btn = new JButton("view-2");
 		btn.addActionListener(this);
 		panel1.add(btn);
-		btn = new JButton("Cruise Info");
-		btn.addActionListener(this);
-		panel1.add(btn);
+		infoBtn = new JButton("Survey Info");
+		infoBtn.setEnabled(false);
+		infoBtn.addActionListener(this);
+		panel1.add(infoBtn);
 //		btn = new JButton("Download Cruise Data");
 //		btn.addActionListener(this);
 //		panel1.add(btn);
@@ -338,6 +341,8 @@ public class Radar implements ActionListener,
 	public void actionPerformed( ActionEvent e ) {
 		String cmd = e.getActionCommand();
 		if( e.getSource() == cruiseList ) {
+			infoBtn.setEnabled(cruiseList.getSelectedItem() instanceof RCruise);
+			lineList.setEnabled(cruiseList.getSelectedItem() instanceof RCruise);
 			try {
 				String tmpCruise = (currentCruise==null) ? "null" : currentCruise.getID();
 				setSelectedCruise((RCruise) cruiseList.getSelectedItem());
@@ -479,7 +484,7 @@ public class Radar implements ActionListener,
 			String str = "https://www.marine-geo.org/tools/search/Files.php?client=GMA&data_set_uid="+ selectedDataUID;
 			BrowseURL.browseURL(str);
 
-		}else if(cmd.equals("Cruise Info")) {
+		}else if(cmd.equals("Survey Info")) {
 			if(currentCruise == null)
 				return;
 			String name=null;

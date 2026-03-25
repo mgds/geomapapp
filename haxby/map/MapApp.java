@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -100,6 +101,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
@@ -194,7 +196,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.6"; //September 15th, 2025
+	public final static String VERSION = "3.7.7"; //March 23rd, 2026
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -297,6 +299,7 @@ public class MapApp implements ActionListener,
 	protected File portalCacheDir = new File(menusCacheDir, "portals");
 	protected File portalSelectFile = new File(menusCacheDir, "default_portals.txt");
 	protected File portalSelectFileOld = new File(menusCacheDir, "default_portals.dat");
+	protected File showMailingListFile = new File(parentRoot, "hideMailingListDialog");
 	protected JPanel inputDevPasswordPanel;
 	protected JTextField inputDevPasswordText;
 	protected JLabel inputDevPasswordLabel;
@@ -326,6 +329,9 @@ public class MapApp implements ActionListener,
 	protected JButton gridsDirBtn;
 	protected JFileChooser gridsChooser;
 	protected static JCheckBox mbPortalCache = new JCheckBox("Multibeam Swath Bathymetry");
+	static {
+		mbPortalCache.setSelected(true);
+	}
 	protected JCheckBox pPortalCache;
 	protected JButton clearMCache,
 						clearPCache;
@@ -372,6 +378,8 @@ public class MapApp implements ActionListener,
 	public JFrame layerManagerDialog;
 	
 	private static MapApp theApp;
+	
+	public static boolean shouldShowMailingListPopup = true;
 	
 	// Menu Listener action bring to front
 	public MenuListener listener = new MenuListener() {
@@ -576,6 +584,20 @@ public class MapApp implements ActionListener,
 
 		VersionUtil.init(BASE_URL + "versions.json");
 		checkVersion();
+		shouldShowMailingListPopup = shouldShowMailingListPopup && !showMailingListFile.exists();
+
+//		if(shouldShowMailingListPopup) {
+//			showMailingListPopup();
+//		}
+//		else {
+//			if(!showMailingListFile.exists()) {
+//				try {
+//					showMailingListFile.createNewFile();
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}
 
 		// User chooses
 		if (which == -1) {
@@ -929,6 +951,65 @@ public class MapApp implements ActionListener,
 			ex.printStackTrace();
 			// System.exit(0);
 		}*/
+	}
+	
+	public void showMailingListPopup() {
+		JDialog dialog = new JDialog((Frame)null, "Join GeoMapApp Mailing List", true);
+		ActionListener listener = new ActionListener() {
+			boolean isShowingAgain = true;
+			private void createNewFileIfNotExists() {
+				try {
+					if(!showMailingListFile.exists()) {
+						showMailingListFile.createNewFile();
+					}
+				}
+				catch(IOException e) {
+					e.printStackTrace();
+				}
+			}
+			public void actionPerformed(ActionEvent event) {
+				String cmd = event.getActionCommand();
+				switch(cmd) {
+				case "mailingList":
+					String url = PathUtil.getPath("ANNOUNCE_PATH");;
+					BrowseURL.browseURL( url );
+					if(!isShowingAgain) {
+						createNewFileIfNotExists();
+					}
+					dialog.setVisible(false);
+					break;
+				case "nojoin":
+					dialog.setVisible(false);
+					if(!isShowingAgain) {
+						createNewFileIfNotExists();
+					}
+					break;
+				case "noshow":
+					if(event.getSource() instanceof JCheckBox) {
+						isShowingAgain = !((JCheckBox)event.getSource()).isSelected();
+					}
+					break;
+				}
+			}
+		};
+		JPanel panel = new JPanel();
+		dialog.add(panel);
+		JButton joinMailingListBtn = new JButton("Join Mailing List");
+		joinMailingListBtn.setActionCommand("mailingList");
+		joinMailingListBtn.addActionListener(listener);
+		panel.add(joinMailingListBtn);
+		JButton dontJoinBtn = new JButton("Don't Join Mailing List Right Now");
+		dontJoinBtn.setActionCommand("nojoin");
+		dontJoinBtn.addActionListener(listener);
+		panel.add(dontJoinBtn);
+		JCheckBox dontShowAgain = new JCheckBox("Don't Show This Window Again", false);
+		dontShowAgain.setActionCommand("noshow");
+		dontShowAgain.addActionListener(listener);
+		panel.add(dontShowAgain);
+		dialog.pack();
+		dialog.setLocationRelativeTo(anchor);
+		anchor = dialog;
+		dialog.setVisible(true);
 	}
 	
 	public static boolean isJar() {
@@ -1848,6 +1929,32 @@ public class MapApp implements ActionListener,
 		frame.setSize( width, height );
 		vPane.resetToPreferredSizes();
 	}
+	
+	private int whichCursor = Cursor.DEFAULT_CURSOR;
+	private boolean isWaiting = false;
+	
+	public synchronized void startWaiting() {
+		new Thread(new Runnable() {
+			public void run() {
+				if(!isWaiting) {
+					whichCursor = anchor.getCursor().getType();
+					frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					map.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					isWaiting = true;
+				}
+			}
+		}).start();
+	}
+	
+	public synchronized void stopWaiting() {
+		new Thread(new Runnable() {
+			public void run() {
+				frame.setCursor(Cursor.getPredefinedCursor(whichCursor));
+				map.setCursor(Cursor.getPredefinedCursor(whichCursor));
+				isWaiting = false;
+			}
+		}).start();
+	}
 
 	public void mapFocus() {
 		focusTime = -1;
@@ -2731,6 +2838,9 @@ public class MapApp implements ActionListener,
 					}
 					else {
 						currentDB = db[i];
+						if(currentDB instanceof XMCS) {
+							((XMCS)currentDB).linesLoaded = false;
+						}
 						closeCurrentDB();
 						Vector<Overlay> overlays = map.overlays;
 						for ( int j = 0; j < map.overlays.size(); j++ ) {
@@ -3145,6 +3255,7 @@ public class MapApp implements ActionListener,
 			}
 		}
 
+		//stopWaiting();
 		if (db == null) {
 			return;
 		}
@@ -3629,9 +3740,11 @@ public class MapApp implements ActionListener,
 		
 		if (range180Btn.isSelected()) {
 			map.getProjection().setLongitudeRange(Projection.RANGE_180W_to_180E);
+			map.repaint();
 		}
 		if (range360Btn.isSelected()) {
 			map.getProjection().setLongitudeRange(Projection.RANGE_0_to_360);
+			map.repaint();
 		}
 		
 		mapFocus();
@@ -3648,6 +3761,7 @@ public class MapApp implements ActionListener,
 				}
 				PrintStream ps = new PrintStream(menuFontFile);
 				ps.println(fontString);
+				ps.close();
 			}
 			catch(IOException e) {
 				e.printStackTrace();
@@ -5085,7 +5199,9 @@ public class MapApp implements ActionListener,
 	public void disableCurrentDB() {
 		if( currentDB != null && currentDB.isEnabled()) {
 			currentDB.setEnabled(false);
-			dialog.remove( currentDB.getSelectionDialog() );
+			if(null != currentDB && null != currentDB.getSelectionDialog()) {
+				dialog.remove( currentDB.getSelectionDialog() );
+			}
 		}
 	}
 
@@ -5121,7 +5237,13 @@ public class MapApp implements ActionListener,
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				dbLabel.setText( cDB.getDBName() );
+				cDB.getSelectionDialog().setPreferredSize(cDB.getSelectionDialog().getMaximumSize());
 				dialog.add( cDB.getSelectionDialog(), "Center");
+				Dimension minLayoutSize = dialog.getLayout().minimumLayoutSize(dialog);
+				Dimension dialogSize = new Dimension(dialog.getPreferredSize().width, minLayoutSize.height);
+				dialog.setPreferredSize(dialogSize);
+				dialog.setMaximumSize(dialogSize);
+				cDB.getSelectionDialog().setPreferredSize(cDB.getSelectionDialog().getMinimumSize());
 				hPane.setRightComponent( dialogScroll );
 
 				if( cDB.getSelectionDialog() != null ) {

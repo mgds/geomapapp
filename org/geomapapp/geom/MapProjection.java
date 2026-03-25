@@ -47,7 +47,7 @@ public abstract interface MapProjection extends GCTP_Constants {
 
 	/**
 		Gets the Map coordinates of a reference.
-		@param refXY the refence point to convert.
+		@param refXY the reference point to convert.
 		@return the map coordinates of a reference point
 	*/
 	public Point2D getMapXY(Point2D refXY);

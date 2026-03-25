@@ -192,6 +192,7 @@ public class GMADownload {
 	static void joinAnnounce() {
 		String url = PathUtil.getPath("ANNOUNCE_PATH");;
 		BrowseURL.browseURL( url );
+		MapApp.shouldShowMailingListPopup = false;
 	}
 	
 	// GMA 3.7.6: add function to automatically determine which OS/arch you are on and download the right version

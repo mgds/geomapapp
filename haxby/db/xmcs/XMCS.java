@@ -3,6 +3,8 @@ package haxby.db.xmcs;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics2D;
@@ -42,6 +44,7 @@ import haxby.db.Database;
 import haxby.dig.Digitizer;
 import haxby.map.MapApp;
 import haxby.map.XMap;
+import haxby.util.BrowseURL;
 import haxby.util.PathUtil;
 import haxby.util.URLFactory;
 
@@ -151,6 +154,8 @@ public class XMCS implements ActionListener,
 	protected JLabel label1;
 	protected JComboBox cruiseList = null;
 	protected JComboBox lineList = null;
+	protected JButton cruiseInfoBtn = null;
+	protected String cruiseInfoBaseUrl = "https://www.marine-geo.org/tools/search/entry.php?id=";
 	protected XMCruise currentCruise = null;
 	protected static XMLine currentLine = null;
 	protected boolean mouseE = false;
@@ -272,13 +277,39 @@ public class XMCS implements ActionListener,
 	public JComponent getDataDisplay() {
 		return imagePane;
 	}
+	private void setCruiseDependentPartsVisible(boolean visible) {
+		if(null != lineList) {
+			lineList.setVisible(visible);
+		}
+		if(null != cruiseInfoBtn) {
+			cruiseInfoBtn.setVisible(visible);
+			if(visible) {
+				try {
+					URL url = URLFactory.url(cruiseInfoBaseUrl + cruiseList.getSelectedItem());
+					HttpURLConnection con = (HttpURLConnection) url.openConnection();
+					con.setRequestMethod("HEAD");
+					cruiseInfoBtn.setEnabled(con.getResponseCode() == HttpURLConnection.HTTP_OK);
+				} catch (IOException e) {
+					cruiseInfoBtn.setEnabled(false);
+					e.printStackTrace();
+				}
+			}
+		}
+		if(visible && null != panel) {
+			panel.setMinimumSize(panel.getLayout().minimumLayoutSize(panel));
+			panel.setPreferredSize(panel.getLayout().minimumLayoutSize(panel));
+			panel.setMaximumSize(panel.getLayout().minimumLayoutSize(panel));
+		}
+	}
 	public JComponent getSelectionDialog() {
 		if( !initiallized )return null;
 		if(panel!=null) {
 			return panel;
 		}
 
-		JPanel panel1 = new JPanel(new GridLayout(0,1));
+		JPanel panel1 = new JPanel();
+		BoxLayout layout = new BoxLayout(panel1, BoxLayout.Y_AXIS);
+		panel1.setLayout(layout);
 
 		mcsDataSelect = new JRadioButton[4];
 		mcsDataSelect[0] = new JRadioButton("LDEO & UTIG MCS");
@@ -328,63 +359,116 @@ public class XMCS implements ActionListener,
 			mcsDataSelect[3].setEnabled(false);
 		}
 
+		JPanel mcsDataSelectPanel = new JPanel(new GridLayout(0, 1));
+		int dsPanelPrefHeight = 0;
+		int dsPanelPrefWidth = 0;
 		for (int i = 0; i < mcsDataSelect.length; i++) {
 			 bGroupMCS.add(mcsDataSelect[i]);
 			mcsDataSelect[i].addActionListener(this);
-			panel1.add(mcsDataSelect[i]);
+			mcsDataSelectPanel.add(mcsDataSelect[i]);
 		}
+		mcsDataSelectPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		mcsDataSelect[0].setSelected(true);
+		panel1.add(mcsDataSelectPanel);
+		for(int i = 0; i < mcsDataSelect.length; i++) {
+			dsPanelPrefHeight += mcsDataSelect[i].getPreferredSize().height;
+			dsPanelPrefWidth = Math.max(dsPanelPrefWidth, mcsDataSelect[i].getPreferredSize().width);
+		}
+		Dimension dsPanelPrefSize = new Dimension(dsPanelPrefWidth, dsPanelPrefHeight);
+		mcsDataSelectPanel.setPreferredSize(dsPanelPrefSize);
+		mcsDataSelectPanel.setMaximumSize(dsPanelPrefSize);
 
+		JPanel listPanel = new JPanel(new GridLayout(0, 1));
+		Box clPanel = Box.createVerticalBox();
 		label1 = new JLabel("Cruise");
+		label1.setAlignmentX(Component.CENTER_ALIGNMENT);
 		cruiseList = new JComboBox();
-		cruiseList.addItem("- Select -");
+		cruiseList.addItem("-Select Cruise-");
 		for(int i=0 ; i<cruises.length ; i++) {
 			cruiseList.addItem(cruises[i]);
 		}
 
+		panel1.add(new JLabel(" "));
+		clPanel.add( label1);
+		clPanel.add( cruiseList );
+		listPanel.add(clPanel);
+		clPanel.setPreferredSize(clPanel.getLayout().minimumLayoutSize(clPanel));
+
 		JButton btn;
-		Box box = Box.createVerticalBox();
 
-		panel1.add( label1);
-		panel1.add( cruiseList );
-
+		JPanel llPanel = new JPanel();
 		lineList = new JComboBox();
-		lineList.addItem("- Select Line -");
+		lineList.addItem("-Select Line-");
 		lineList.setVisible(false);
-		panel1.add(lineList);
-
+		llPanel.add(lineList);
+		llPanel.setMaximumSize(llPanel.getLayout().minimumLayoutSize(llPanel));
+		listPanel.add(llPanel);
+		panel1.add(listPanel);
+		Dimension listsPrefSize = listPanel.getLayout().minimumLayoutSize(listPanel);
+		listPanel.setPreferredSize(listsPrefSize);
+		listPanel.setMaximumSize(listsPrefSize);
+		listPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		
+		Box btnsPanel = Box.createVerticalBox();
+		//btnsPanel.setBorder(new javax.swing.border.LineBorder(Color.RED));
+		
+		cruiseInfoBtn = new JButton("Cruise Info");
+		cruiseInfoBtn.setActionCommand("cruiseInfo");
+		cruiseInfoBtn.setVisible(false);
+		cruiseInfoBtn.addActionListener(this);
+		cruiseInfoBtn.setAlignmentX(-Component.CENTER_ALIGNMENT);
+		//cruiseInfoBtn.setMinimumSize(cruiseInfoBtn.getLayout().minimumLayoutSize(cruiseInfoBtn));
+		panel1.add(cruiseInfoBtn);
+		//btnsPanel.setAlignmentY(Component.LEFT_ALIGNMENT);
+		//btnsPanel.setBorder(new javax.swing.border.LineBorder(Color.RED));
+		
 		btn = new JButton("Load View 1");
 		btn.setActionCommand("view-1");
 		btn.addActionListener(this);
-		panel1.add(btn);
+		btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+		btnsPanel.add(btn);
 		btn = new JButton("Load View 2");
 		btn.setActionCommand("view-2");
 		btn.addActionListener(this);
-		panel1.add(btn);
+		btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+		btnsPanel.add(btn);
+		btnsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		ButtonGroup gp1 = new ButtonGroup();
 
 		// GMA 1.6.2: Changed the default split of the view area to make the view windows more visible
 		orientH = new JRadioButton( "Horizontal", true );
 		orientH.addActionListener(this);
 		gp1.add(orientH);
-		panel1.add( orientH );
+		btnsPanel.add( orientH );
 
 		// GMA 1.6.2: Changed the default split of the view area to make the view windows more visible
 		orientV = new JRadioButton( "Vertical", false );
 		orientV.addActionListener(this);
 		gp1.add(orientV);
-		panel1.add( orientV );
+		btnsPanel.add( orientV );
+		btnsPanel.setPreferredSize(new Dimension(170, btnsPanel.getLayout().minimumLayoutSize(btnsPanel).height+5));
+		btnsPanel.setMinimumSize(btnsPanel.getPreferredSize());
+		btnsPanel.setAlignmentY(Component.LEFT_ALIGNMENT);
 
-		box.add(panel1);
+		//box.add(panel1);
 
 		cruiseList.addActionListener(this);
 		lineList.addActionListener(this);
 		lineList.setRenderer( new XMLineRenderer() );
+		panel1.add(btnsPanel);
 
 		panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-		panel.add(box);
-		panel.setPreferredSize(new Dimension(170, panel.getY())); //Set Size
+		panel1.setPreferredSize(panel1.getLayout().minimumLayoutSize(panel1));
+		panel.add(panel1);
+		//panel.setPreferredSize(new Dimension(170, panel.getY())); //Set Size
+		lineList.setVisible(true);
+		cruiseInfoBtn.setVisible(true);
+		panel.setMinimumSize(panel.getLayout().minimumLayoutSize(panel));
+		panel.setPreferredSize(panel.getLayout().minimumLayoutSize(panel));
+		panel.setMaximumSize(panel.getLayout().minimumLayoutSize(panel));
+		lineList.setVisible(false);
+		cruiseInfoBtn.setVisible(false);
 		return panel;
 	}
 
@@ -543,7 +627,7 @@ public class XMCS implements ActionListener,
 		if(cruise == currentCruise)return;
 		currentLine = null;
 		lineList.removeAllItems();
-		lineList.addItem("- Select Line -");
+		lineList.addItem("-Select Line-");
 		/*if (currentCruise != null)
 			currentCruise.clearLines();*/
 		currentCruise = cruise;
@@ -618,28 +702,33 @@ public class XMCS implements ActionListener,
 			return;
 			
 		}
+		
+		if(cmd.equals("cruiseInfo")) {
+			BrowseURL.browseURL(cruiseInfoBaseUrl + cruiseList.getSelectedItem());
+		}
 
 		if( e.getSource() == cruiseList ) {
 			try {
 				if(mcsDataSelect[1].isSelected()) {
 					setSelectedCruise((XMCruise) cruiseList.getSelectedItem(), USGS_MULTI_CHANNEL_PATH );
-					lineList.setVisible(true);
+					setCruiseDependentPartsVisible(true);
 				} else if(mcsDataSelect[2].isSelected()) {
 					setSelectedCruise((XMCruise) cruiseList.getSelectedItem(), USGS_SINGLE_CHANNEL_PATH );
-					lineList.setVisible(true);
+					setCruiseDependentPartsVisible(true);
 				}else if(mcsDataSelect[3].isSelected()){ 
 					//TODO
 					setSelectedCruise((XMCruise) cruiseList.getSelectedItem(), ANTARCTIC_SDLS_PATH);
-					lineList.setVisible(true);
+					setCruiseDependentPartsVisible(true);
 				}else {
 					setSelectedCruise((XMCruise) cruiseList.getSelectedItem());
-					lineList.setVisible(true);
+					setCruiseDependentPartsVisible(true);
 				}
 				if(!clickEvent && null != currentCruise) {
 					zoomToCruise();
 				}
 			} catch ( ClassCastException ex ) {
 				setSelectedCruise( null );
+				setCruiseDependentPartsVisible(false);
 			} finally {
 				mouseE = false;
 			}
@@ -677,7 +766,7 @@ public class XMCS implements ActionListener,
 			try {
 				initRadar( map, this, MULTI_CHANNEL_EXP_LIST);
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select -");
+				cruiseList.addItem("-Select Cruise-");
 				for(int i=0 ; i<cruises.length ; i++) {
 					cruiseList.addItem(cruises[i]);
 				}
@@ -685,12 +774,12 @@ public class XMCS implements ActionListener,
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			lineList.setVisible(false);
+			setCruiseDependentPartsVisible(false);
 		} else if(source==mcsDataSelect[1]) {
 			try {
 				initRadar( map, this,USGS_MULTI_CHANNEL_EXP_LIST);
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select -");
+				cruiseList.addItem("-Select Cruise-");
 				for(int i=0 ; i<cruises.length ; i++) {
 					cruiseList.addItem(cruises[i]);
 				}
@@ -698,12 +787,12 @@ public class XMCS implements ActionListener,
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			lineList.setVisible(false);
+			setCruiseDependentPartsVisible(false);
 		} else if(source==mcsDataSelect[2]) {
 			try {
 				initRadar( map, this,USGS_SINGLE_CHANNEL_EXP_LIST);
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select -");
+				cruiseList.addItem("-Select Cruise-");
 				for(int i=0 ; i<cruises.length ; i++) {
 					cruiseList.addItem(cruises[i]);
 				}
@@ -711,12 +800,12 @@ public class XMCS implements ActionListener,
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			lineList.setVisible(false);
+			setCruiseDependentPartsVisible(false);
 		} else if(source==mcsDataSelect[3]) {
 			try{
 				initRadar(map, this, ANTARCTIC_SDLS_EXP_LIST);//TODO
 				cruiseList.removeAllItems();
-				cruiseList.addItem("- Select -");
+				cruiseList.addItem("-Select Cruise-");
 				for(int i=0;i<cruises.length; i++){
 					cruiseList.addItem(cruises[i]);
 				}
@@ -724,7 +813,7 @@ public class XMCS implements ActionListener,
 			} catch (IOException e1){
 				e1.printStackTrace();
 			}
-			lineList.setVisible(false);
+			setCruiseDependentPartsVisible(false);
 		}
 	}
 
@@ -807,18 +896,18 @@ public class XMCS implements ActionListener,
 				}
 				else if(null != currentLine) {
 					currentLine = null;
-					lineList.setSelectedItem("- Select Line -");
+					lineList.setSelectedItem("-Select Line-");
 				}
 				map.repaint();
 			}
 			else {
-				cruiseList.setSelectedItem("- Select -");
-				lineList.setSelectedItem("- Select Line -");
+				cruiseList.setSelectedItem("-Select Cruise-");
+				lineList.setSelectedItem("-Select Line-");
 			}
 		}
 		else {
-			cruiseList.setSelectedItem("- Select -");
-			lineList.setSelectedItem("- Select Line -");
+			cruiseList.setSelectedItem("-Select Cruise-");
+			lineList.setSelectedItem("-Select Line-");
 		}
 
 		/*if (currentCruise != null && currentCruise.contains(p.x, p.y, wrap)) {

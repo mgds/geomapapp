@@ -171,11 +171,11 @@ public class ProjectionDialog implements ItemListener, ChangeListener {
 		panelUTM.setVisible(false);
 		panel1.add(panelUTM);
 		
-		flipGrid = new JCheckBox("Tick to flip grid along horizontal axis", false);
+		flipGrid = new JCheckBox("Flip grid along horizontal axis", false);
 		flipGrid.setVisible(false);
 		panel1.add(flipGrid);
 		
-		switchToGridAlignment = new JCheckBox("Tick to force grid node registration (default: pixel registration)");
+		switchToGridAlignment = new JCheckBox("Force grid node registration (default: pixel registration)");
 		switchToGridAlignment.setVisible(false);
 		panel1.add(switchToGridAlignment);
 		

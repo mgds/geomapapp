@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -46,6 +47,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextArea;
@@ -63,9 +65,10 @@ import haxby.proj.Projection;
 import haxby.util.BrowseURL;
 import haxby.util.FilesUtil;
 import haxby.util.PathUtil;
+import haxby.util.RectSupplier;
 import haxby.util.URLFactory;
 
-public class MBTracks implements Database, Overlay, MouseListener {
+public class MBTracks implements Database, Overlay, MouseListener, RectSupplier {
 	protected XMap map;
 //	MBTrack[] tracks;
 	protected Vector cruises;
@@ -583,7 +586,7 @@ public class MBTracks implements Database, Overlay, MouseListener {
 			if(evt.isControlDown())return;
 			if(evt.isShiftDown())return;
 			double zoom = map.getZoom();
-			Nearest nearest = new Nearest(null, 0, 0, Math.pow(2./zoom, 2) );
+			Nearest nearest = new Nearest(null, 0, 0, 4*Math.pow(2./zoom, 2) );
 			Insets insets = map.getMapBorder().getBorderInsets(map);
 			double x = (evt.getX()-insets.left)/zoom;
 			double y = (evt.getY()-insets.top)/zoom;
@@ -711,5 +714,22 @@ public class MBTracks implements Database, Overlay, MouseListener {
 		//	text += ", time = "+(t/1000);
 		}
 		display.setText( text);
+	}
+	
+	public Rectangle2D getRect() {
+		Rectangle2D ret = ((MBTrack)((MBCruise)cruises.get(0)).tracks.get(0)).getBounds();
+		for(int i = 0; i < cruises.size(); i++) {
+			MBCruise curCruise = (MBCruise)cruises.get(i);
+			for(int j = 0; j < curCruise.tracks.size(); j++) {
+				MBTrack curTrack = (MBTrack)curCruise.tracks.get(j);
+				Rectangle2D curBounds = curTrack.getBounds();
+				double newX = Math.min(ret.getX(), curBounds.getX());
+				double newY = Math.min(ret.getY(), curBounds.getY());
+				double newXRight = Math.max(ret.getX() + ret.getWidth(), curBounds.getX() + curBounds.getWidth());
+				double newYTop = Math.max(ret.getY() + ret.getHeight(), curBounds.getY() + curBounds.getHeight());
+				ret = new Rectangle2D.Double(newX, newY, newXRight-newX, newYTop-newY);
+			}
+		}
+		return ret;
 	}
 }

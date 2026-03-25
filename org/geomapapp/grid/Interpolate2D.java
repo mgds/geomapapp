@@ -1,6 +1,7 @@
 package org.geomapapp.grid;
 
 public class Interpolate2D {
+	static boolean bicubic_fallback = false;
 	public static double bicubic_wrap(float[] z, 
 				int width, 
 				int height, 
@@ -75,6 +76,93 @@ public class Interpolate2D {
 			double x, 
 			double y ) {
 		return bicubic(grid, x, y, false);
+	}
+	public static double bicubicNanAware(Grid2D grid, 
+			double x, 
+			double y ) {
+	return bicubicNanAware(grid,x,y,true);
+	}
+	
+	public static double bicubicNanAware(Grid2D grid, 
+				double x, 
+				double y,
+				boolean andcontains ) {
+		if( andcontains && !grid.contains( x, y ) ) return Double.NaN;
+		java.awt.Rectangle bounds = grid.getBounds();
+		int width = bounds.width;
+		int height = bounds.height;
+		x -= bounds.x;
+		y -= bounds.y;
+		double x0 = Math.floor(x);
+		if(x0<1)x0=1;
+		if(x0>width-3)x0=width-3;
+		double y0 = Math.floor(y);
+		if(y0<1)y0=1;
+		if(y0>height-3)y0=height-3;
+		double[] z = new double[4];
+		double[] z1 = new double[4];
+		for(int i=0 ; i<4 ; i++) {
+			for( int k=0 ; k<4 ; k++ ) {
+				z[k] = grid.valueAt( bounds.x + (int)(x0-1+k), 
+						(int)(bounds.y + y0-1+i) );
+			}
+			z1[i] = cubicNanAware(z, 0, x-x0);
+		}
+		return cubicNanAware(z1, 0, y-y0);
+	}
+
+	public static double cubicNanAware(double[] z, int offset, double x) {
+		// Count valid samples
+		boolean[] ok = new boolean[4];
+		int n = 0;
+		for (int i = 0; i < 4; i++) {
+			ok[i] = !Double.isNaN(z[offset + i]);
+			if (ok[i]) n++;
+		}
+
+		// No data
+		if (n == 0) return Double.NaN;
+
+		// Only one value → nearest
+		if (n == 1) {
+			for (int i = 0; i < 4; i++) {
+				double dist = Math.abs(x - ((double) i - 1.0));
+				if (ok[i] && dist <= 0.5)
+					return z[offset + i];
+			}
+			return Double.NaN;
+		}
+
+		// Two adjacent values → linear interpolation
+		if (n == 2) {
+			for (int i = 0; i < 3; i++) {
+				double dist1 = Math.abs(x - ((double) i - 1.0));
+				double dist2 = Math.abs(x - ((double) i));
+				boolean between = (x >= ((double) i - 1.0)) && (x <=((double) i));
+				if (ok[i] && ok[i + 1] && (between || dist1<=0.5 || dist2>=0.5)) {
+					double t = x - (i - 1);
+					return z[offset + i] * (1 - t)
+						+ z[offset + i + 1] * t;
+				}
+			}
+		}
+
+		// Three or four values → cubic using only valid samples
+		// Fill missing samples by copying nearest valid neighbor
+		double[] zz = new double[4];
+		for (int i = 0; i < 4; i++) {
+			if (ok[i]) {
+				zz[i] = z[offset + i];
+			} else {
+				// nearest valid neighbor
+				for (int d = 1; d < 4; d++) {
+					if (i - d >= 0 && ok[i - d]) { zz[i] = z[offset + i - d]; break; }
+					if (i + d < 4 && ok[i + d]) { zz[i] = z[offset + i + d]; break; }
+				}
+			}
+		}
+
+		return cubic(zz, offset, x);
 	}
 	
 	public static double bicubic(Grid2D grid, 

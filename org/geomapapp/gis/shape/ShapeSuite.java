@@ -53,6 +53,8 @@ public class ShapeSuite extends AbstractTableModel {
 	public JRadioButton gridB;
 	public LayerModel layers;
 	public JTree layerTree;
+	
+	private boolean importCancelled = false;
 
 	// GMA 1.4.8: To be used and accessed through this class by other classes.
 	public ViewShapes viewShapes;
@@ -64,6 +66,10 @@ public class ShapeSuite extends AbstractTableModel {
 	public Vector<ESRIShapefile> getShapes() {
 		return shapeFiles;
 	}
+	
+	public boolean isImportCancelled() {
+		return importCancelled;
+	}
 
 	public boolean addShapeFile( ESRIShapefile shape ) {
 		for (ESRIShapefile shp2 : shapeFiles)
@@ -71,6 +77,12 @@ public class ShapeSuite extends AbstractTableModel {
 				if (shp2.path.equals(shape.path) && shp2.filename.equals(shape.filename))
 					return false;
 
+		if(shape.isCancelled()) {
+			importCancelled = true;
+			MapApp.getApp().stopWaiting();
+			return false;
+		}
+		importCancelled = false;
 		if((map!=null) && (shape.getMap()==null)) {
 			shape.setMap(map);
 		}
@@ -101,6 +113,12 @@ public class ShapeSuite extends AbstractTableModel {
 	public boolean addShapeFile( File file ) throws IOException {
 		if( file.getName().endsWith(".zip") ) {
 			ESRIShapefile shape = new ESRIShapefile( new java.util.zip.ZipInputStream( new FileInputStream(file) ));
+			if(shape.isCancelled()) {
+				MapApp.getApp().stopWaiting();
+				importCancelled = true;
+				return false;
+			}
+			importCancelled = false;
 			if( map!=null ) shape.setMap(map);
 			shapeFiles.add( shape );
 			map.addOverlay(shape.filename, shape);
@@ -111,6 +129,12 @@ public class ShapeSuite extends AbstractTableModel {
 		String name  = file.getName();
 		name = name.substring( 0, name.lastIndexOf(".") );
 		ESRIShapefile shape = new ESRIShapefile( path, name);
+		if(shape.isCancelled()) {
+			MapApp.getApp().stopWaiting();
+			importCancelled = true;
+			return false;
+		}
+		importCancelled = false;
 
 		if (containsShape(shape))
 			return false;
@@ -322,8 +346,10 @@ public class ShapeSuite extends AbstractTableModel {
 		boolean multi = chooser.isMultiSelectionEnabled();
 		chooser.setMultiSelectionEnabled(true);
 		chooser.addChoosableFileFilter(shapeF);
+		chooser.setFileFilter(shapeF);
 		int ok = chooser.showOpenDialog(parent);
 		if( ok==chooser.CANCEL_OPTION ) {
+			chooser.setFileFilter(chooser.getAcceptAllFileFilter());
 			chooser.setMultiSelectionEnabled(multi);
 			chooser.removeChoosableFileFilter(shapeF);
 
@@ -331,8 +357,12 @@ public class ShapeSuite extends AbstractTableModel {
 			return false;
 		}
 		File[] sel = chooser.getSelectedFiles();
+		MapApp.getApp().startWaiting();
 		for( int k=0 ; k<sel.length ; k++) {
 			addShapeFile(sel[k]);
+			if(importCancelled) {
+				return false;
+			}
 			MapApp.sendLogMessage("Shape_File_Imported&name="+sel[k].getName());
 		}
 		chooser.setMultiSelectionEnabled(multi);

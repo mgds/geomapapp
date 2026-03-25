@@ -251,6 +251,14 @@ public abstract class Grid2D {
 	public double valueAt( double x, double y, boolean isGMRT ) {
 		return Interpolate2D.bicubic(this, x, y, isGMRT);
 	}
+
+	public double valueAtNanAware( double x, double y ) {
+		return Interpolate2D.bicubicNanAware(this, x, y);
+	}
+	public double valueAtNanAware( double x, double y, boolean andContains ) {
+		return Interpolate2D.bicubicNanAware(this, x, y, andContains);
+	}
+	
 	public int getIndex(int x, int y) {
 		return x-bounds.x + bounds.width*(y-bounds.y);
 	}

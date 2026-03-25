@@ -58,6 +58,7 @@ import org.geomapapp.util.XML_Menu;
 import haxby.db.Database;
 import haxby.db.custom.CustomDB;
 import haxby.db.custom.UnknownDataSet;
+import haxby.db.xmcs.XMCS;
 import haxby.map.FocusOverlay;
 import haxby.map.MapApp;
 import haxby.map.MapTools;
@@ -84,6 +85,8 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 	private JFrame lmFrame; 
 	public static boolean doImport = false;
 	private ArrayList<Integer> missingLayers = new ArrayList<Integer>();
+	
+	private static final int MAX_NAME_LENGTH = 45;
 	
 	public LayerManager() {
 		this.setLayout( new BoxLayout(this, BoxLayout.Y_AXIS));	
@@ -418,11 +421,8 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			c.weightx = 5;
 			c.gridwidth = GridBagConstraints.FIRST_LINE_START;
 			c.gridy = 0;
-			// Set max character display limit to 40 characters
-			String displayName = layerName;
-			if (displayName.length() >= 40) {
-				displayName = displayName.substring(0, 40);
-			}
+			// Set max character display limit
+			String displayName = layerName.substring(0, Math.min(MAX_NAME_LENGTH, layerName.length()));
 
 			visible = new JCheckBox(displayName, layerVisible);
 			visible.setFont(new Font("Arial", Font.BOLD, 11));
@@ -560,21 +560,47 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 
 			//Gets WESN location and Zoom Icon Button
 			double[] wesn = null;
-			if (layer instanceof WESNSupplier)
+			Rectangle2D bounds = null;
+			if (layer instanceof WESNSupplier) {
 				wesn = ((WESNSupplier) layer).getWESN();
-			if (wesn != null) {
+			}
+			else if(layer instanceof RectSupplier) {
+				bounds = ((RectSupplier) layer).getRect();
+				if(bounds.getWidth() > 980. || bounds.getHeight() > 4000.) {
+					//it's global, so no need for a zoom button
+					bounds = null;
+				}
+			}
+			if(null != wesn || null != bounds) {
 				JButton zoomB = createButton(Icons.ZOOM_IN);
 				zoomB.setToolTipText("Zoom To");
-				zoomB.addActionListener( new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						map.setZoomHistoryPast(map);
-						map.zoomToWESN(((WESNSupplier) LayerPanel.this.layer).getWESN());
-						map.setZoomHistoryNext(map);
-					}
-				});
+				if(null == bounds) {
+					zoomB.addActionListener( new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							map.setZoomHistoryPast(map);
+							map.zoomToWESN(((WESNSupplier) LayerPanel.this.layer).getWESN());
+							map.setZoomHistoryNext(map);
+						}
+					});
+				}
+				else {
+					zoomB.addActionListener( new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							map.setZoomHistoryPast(map);
+							map.zoomToRect(((RectSupplier) LayerPanel.this.layer).getRect());
+							map.setZoomHistoryNext(map);
+						}
+					});
+				}
 				box.add(zoomB);
-				MapApp.sendLogMessage("Loaded_Content&name="+inputLayerName.trim()+"&WESN="+wesn[0]+","+wesn[1]+","+wesn[2]+","+wesn[3]);
-			} else {
+				if(null == bounds) {
+					MapApp.sendLogMessage("Loaded_Content&name="+inputLayerName.trim()+"&WESN="+wesn[0]+","+wesn[1]+","+wesn[2]+","+wesn[3]);
+				}
+				else {
+					MapApp.sendLogMessage("Loaded_Content&name="+inputLayerName.trim()+"&bounds="+bounds);
+				}
+			}
+			else {
 				MapApp.sendLogMessage("Loaded_Content&name="+inputLayerName.trim());
 			}
 
@@ -1010,6 +1036,9 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 		}
 		
 		else if ( layerPanel.layer instanceof Database ) {
+			if(app.getCurrentDB() instanceof XMCS) {
+				((XMCS)app.getCurrentDB()).linesLoaded = false;
+			}
 			app.closeDB( ((Database)layerPanel.layer) );
 			for ( int i = 0; i < overlays.size(); i++ ) {
 				if ( overlays.get(i) instanceof Database ) {
@@ -1065,6 +1094,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 				addLayerBack(layerPanel.layer);
 				app.getMapTools().getGridDialog().startGridLoad();
 				app.getMapTools().getGridDialog().showDialog();
+				app.stopWaiting();
 				return;
 			}
 		}else if ( layerPanel.layer instanceof ESRIShapefile ) {

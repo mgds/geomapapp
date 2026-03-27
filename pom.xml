@@ -4,7 +4,7 @@
 
   <groupId>org.geomapapp</groupId>
   <artifactId>geomapapp_maven</artifactId>
-  <version>3.7.5.21</version>
+  <version>3.7.7.1</version>
   <packaging>jar</packaging>
 
   <name>geomapapp_maven</name>
@@ -32,6 +32,7 @@
   		<plugin>
   			<groupId>org.apache.maven.plugins</groupId>
   			<artifactId>maven-jar-plugin</artifactId>
+  			<version>3.5.0</version>
   			<configuration>
 				<archive>
 					<manifest>
@@ -85,35 +86,23 @@
   </build>
 
   <dependencies>
-    <!-- Java OpenGL -->
-	<dependency>
-	    <groupId>org.jogamp.jogl</groupId>
-	    <artifactId>jogl-all</artifactId>
-	    <version>${jogl.version}</version>
-	</dependency>
-	<!-- GlueGen -->
-	<dependency>
-	    <groupId>org.jogamp.gluegen</groupId>
-	    <artifactId>gluegen-rt-main</artifactId>
-	    <version>${jogl.version}</version>
-	</dependency>
 	<!-- https://mvnrepository.com/artifact/javax.activation/javax.activation-api -->
 	<dependency>
 	    <groupId>javax.activation</groupId>
 	    <artifactId>javax.activation-api</artifactId>
 	    <version>1.2.0</version>
 	</dependency>
-	<!-- NASA WorldWind - might remove this as the code requiring it is no longer used -->
-	<dependency>
-	    <groupId>gov.nasa</groupId>
-	    <artifactId>worldwind</artifactId>
-	    <version>2.0.0-986</version>
-	</dependency>
 	<!-- NetCDF -->
 	<dependency>
 		<groupId>edu.ucar</groupId>
 		<artifactId>netcdf</artifactId>
 		<version>4.3.22</version>
+		<exclusions>
+			<exclusion>
+				<groupId>com.sun.jna</groupId>
+				<artifactId>jna</artifactId>
+			</exclusion>
+		</exclusions>
 	</dependency>
 	<!-- POI -->
 	<dependency>

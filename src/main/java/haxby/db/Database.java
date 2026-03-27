@@ -1,6 +1,12 @@
 package haxby.db;
 
+import haxby.map.MapApp;
 import haxby.map.Overlay;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Map;
+
 import javax.swing.JComponent;
 
 /**
@@ -84,5 +90,25 @@ public abstract interface Database extends Overlay {
 	 */
 	public default boolean isLoadCancelled() {
 		return false;
+	}
+	
+	public default Map<String, String> getCacheMap() {
+		return null;
+	}
+	
+	public default String getCacheFile(String remoteDir) {
+		Map<String, String> cacheMap = getCacheMap();
+		if(null != getCacheMap() && cacheMap.containsKey(remoteDir)) {
+			return cacheMap.get(remoteDir);
+		}
+		return remoteDir.replace(MapApp.BASE_URL + "data/portals", getCacheBaseDir());
+	}
+	
+	public static String getCacheBaseDir() {
+		return MapApp.getGMARoot().getAbsolutePath() + String.join(File.separator, "", "menus_cache", "portals");
+	}
+	
+	public default String getPortalCacheBaseDir() {
+		return getCacheBaseDir() + File.separator + getCommand();
 	}
 }

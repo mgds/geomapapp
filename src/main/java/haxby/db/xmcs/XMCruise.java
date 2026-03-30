@@ -9,12 +9,15 @@ import java.awt.geom.Rectangle2D;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Comparator;
@@ -43,6 +46,9 @@ public class XMCruise implements Overlay {
 	// file is found in each cruise
 	static String CHANNEL_CONTROL = "/nav/mcs_control";
 	static String CHANNEL_BOUNDS = "/nav/bounds";
+	private String cacheOut;
+	private DataOutputStream cacheOut1 = null;
+	private PrintStream cacheOut2 = null;
 	public XMCruise(XMCS mcs, XMap map, String id) {
 		this.map = map;
 		this.id = id.trim();
@@ -129,6 +135,9 @@ public class XMCruise implements Overlay {
 			while (bounds.x < 0)
 				bounds.x += map.getWrap();
 	}
+	public void setCacheOutBase(String path) {
+		cacheOut = path;
+	}
 	public String getID() {
 		return new String(id);
 	}
@@ -172,6 +181,20 @@ public class XMCruise implements Overlay {
 	public XMLine[] loadLines(String path) throws IOException {
 		URL url = URLFactory.url( path + id + CHANNEL_CONTROL);
 		URL url2 = URLFactory.url( path + id + CHANNEL_BOUNDS);
+		if(null != cacheOut && !path.equals(cacheOut)) {
+			File cache = new File(cacheOut + File.separator + id + CHANNEL_CONTROL);
+			File cache2 = new File(cacheOut + File.separator + id + CHANNEL_BOUNDS);
+			if(!cache.exists()) {
+				cache.getParentFile().mkdirs();
+				cache.createNewFile();
+				cacheOut1 = new DataOutputStream(new FileOutputStream(cache));
+			}
+			if(!cache2.exists()) {
+				cache2.getParentFile().mkdirs();
+				cache2.createNewFile();
+				cacheOut2 = new PrintStream(cache2);
+			}
+		}
 		try {
 			DataInputStream in = new DataInputStream(url.openStream());
 			DataInputStream in2 = new DataInputStream(url2.openStream());
@@ -187,6 +210,9 @@ public class XMCruise implements Overlay {
 		while( true ) {
 			try {
 				s = in.readUTF();
+				if(null != cacheOut1) {
+					cacheOut1.writeUTF(s);
+				}
 			} catch (EOFException ex) {
 				break;
 			}
@@ -196,12 +222,21 @@ public class XMCruise implements Overlay {
 
 			int nseg = in.readInt();
 			int npt = in.readInt();
+			if(null != cacheOut1) {
+				cacheOut1.writeInt(nseg);
+				cacheOut1.writeInt(npt);
+			}
 			CDP[] cdp = new CDP[npt];
 			for( int k=0 ; k<npt ; k++ ) {
 				int[] entry = new int[] {
 					in.readInt(),
 					in.readInt(),
 					in.readInt() };
+				if(null != cacheOut1) {
+					for(int i = 0; i < entry.length; i++) {
+						cacheOut1.writeInt(entry[i]);
+					}
+				}
 				cdp[k] = new CDP( entry[2],
 					(double)(entry[0]*1.e-6),
 					(double)(entry[1]*1.e-6),
@@ -214,6 +249,9 @@ public class XMCruise implements Overlay {
 			addLine( line );
 		}
 		in.close();
+		if(null != cacheOut1) {
+			cacheOut1.close();
+		}
 
 		// Load bounds from MCS/cruiseID/nav/bounds
 		BufferedReader reader = new BufferedReader(
@@ -226,6 +264,9 @@ public class XMCruise implements Overlay {
 			int index = -1;
 			if (! cruiseId.equals(id))
 				continue;
+			if(null != cacheOut2) {
+				cacheOut2.println(s);
+			}
 
 			index = -1;
 			String lineId = st.nextToken();

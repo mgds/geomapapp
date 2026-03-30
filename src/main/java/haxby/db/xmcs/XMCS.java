@@ -16,12 +16,19 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
+import java.util.function.Function;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -199,6 +206,20 @@ public class XMCS implements ActionListener,
 
 	static String ANTARCTIC_SDLS_EXP_LIST = PathUtil.getPath("PORTALS/ANTARCTIC_SDLS_EXP_LIST",
 			MapApp.BASE_URL+"/data/portals/mcs/sdls/expedition_list");
+	
+	static Map<String, String> cacheMap = new HashMap<>();
+	static {
+		cacheMap.put(MULTI_CHANNEL_PATH, Database.getCacheBaseDir() + String.join(File.separator, "", "mcs_cmd", "mcs"));
+		cacheMap.put(MULTI_CHANNEL_EXP_LIST, cacheMap.get(MULTI_CHANNEL_PATH) + File.separator + "expedition_list");
+		cacheMap.put(USGS_MULTI_CHANNEL_PATH, Database.getCacheBaseDir() + String.join(File.separator, "", "mcs_cmd", "usgs_mcs"));
+		cacheMap.put(USGS_MULTI_CHANNEL_EXP_LIST, cacheMap.get(USGS_MULTI_CHANNEL_PATH) + File.separator + "expedition_list");
+		cacheMap.put(USGS_SINGLE_CHANNEL_PATH, Database.getCacheBaseDir() + String.join(File.separator, "", "mcs_cmd", "usgs_scs"));
+		cacheMap.put(USGS_SINGLE_CHANNEL_EXP_LIST, cacheMap.get(USGS_SINGLE_CHANNEL_PATH) + File.separator + "expedition_list");
+		cacheMap.put(ANTARCTIC_SDLS_PATH, Database.getCacheBaseDir() + String.join(File.separator, "", "mcs_cmd", "sdls"));
+		cacheMap.put(ANTARCTIC_SDLS_EXP_LIST, cacheMap.get(ANTARCTIC_SDLS_PATH) + File.separator + "expedition_list");
+	}
+	
+	protected static Function<String, String> cacheFileGetter = null;
 
 	Digitizer dig1, dig2;
 
@@ -215,6 +236,14 @@ public class XMCS implements ActionListener,
 
 		imagePane.setOneTouchExpandable( true );
 		imagePane.setDividerLocation(imagePane.getMaximumDividerLocation() + 150);
+		cacheFileGetter = new Function<String, String>() {
+
+			@Override
+			public String apply(String t) {
+				return getCacheFile(t);
+			}
+			
+		};
 	}
 
 	protected XMImage createXMImage(Digitizer dig) {
@@ -276,6 +305,9 @@ public class XMCS implements ActionListener,
 	}
 	public JComponent getDataDisplay() {
 		return imagePane;
+	}
+	public Map<String, String> getCacheMap() {
+		return cacheMap;
 	}
 	private void setCruiseDependentPartsVisible(boolean visible) {
 		if(null != lineList) {
@@ -1018,14 +1050,28 @@ public class XMCS implements ActionListener,
 			listPath = ANTARCTIC_SDLS_EXP_LIST;
 			path = ANTARCTIC_SDLS_PATH;
 		}
+		String listCachePath = cacheFileGetter.apply(listPath);
 		URL url = URLFactory.url( listPath);
-		BufferedReader in = new BufferedReader( new InputStreamReader(url.openStream()));
+		File listCacheFile = new File(listCachePath);
+		boolean needsNewCache = !listCacheFile.exists() || listCacheFile.lastModified() < url.openConnection().getLastModified();
+		BufferedReader in = new BufferedReader( new InputStreamReader(needsNewCache ? url.openStream() : new FileInputStream(listCacheFile)));
 
+		PrintStream cacheOut = null;
+		//if the cache does not exist, write it
+		if(needsNewCache) {
+			listCacheFile.getParentFile().mkdirs();
+			listCacheFile.createNewFile();
+			cacheOut = new PrintStream(listCacheFile);
+		}
+		
 		Vector<XMCruise> tmp = new Vector<XMCruise>(); // XMCruise
 		String inStr;
 		while ((inStr = in.readLine()) != null) {
 			String[] split = inStr.split("\t");
 			if (split.length != 6) continue; // improper entry
+			if(needsNewCache) {
+				cacheOut.println(inStr);
+			}
 
 			int mapType = MapApp.MERCATOR_MAP;
 			if (map.getApp() instanceof MapApp)
@@ -1069,7 +1115,21 @@ public class XMCS implements ActionListener,
 			boolean polarProblems = (((MapApp) map.getApp()).getMapType()==MapApp.SOUTH_POLAR_MAP) || (((MapApp) map.getApp()).getMapType()==MapApp.NORTH_POLAR_MAP); 
 			if(dateLineCheck || check2){
 				try {
-					cruises[i].loadLines(path);
+					String cachePath = cacheFileGetter.apply(path);
+					String urlStr1 = cachePath + File.separator + cruises[i].getID() + XMCruise.CHANNEL_CONTROL,
+							urlStr2 = cachePath + File.separator + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS;
+					File cacheFile1 = new File(urlStr1), cacheFile2 = new File(urlStr2);
+					needsNewCache = !(cacheFile1.exists()  && cacheFile2.exists()) ||
+							cacheFile1.lastModified() < URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_CONTROL).openConnection().getLastModified() ||
+							cacheFile2.lastModified() < URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS).openConnection().getLastModified();
+					String pathToReadFrom = needsNewCache ? path : cachePath;
+					if(!pathToReadFrom.endsWith(File.separator)) {
+						pathToReadFrom += File.separator;
+					}
+					if(needsNewCache) {
+						cruises[i].setCacheOutBase(cachePath);
+					}
+					cruises[i].loadLines(pathToReadFrom);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

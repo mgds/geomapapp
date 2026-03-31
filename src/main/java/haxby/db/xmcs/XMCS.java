@@ -571,7 +571,7 @@ public class XMCS implements ActionListener,
 		dialogProgress = new JDialog((Frame)null, "Loading Cruises");
 		progressPanel = new JPanel(new BorderLayout());
 		progressPanel.setBorder(BorderFactory.createEmptyBorder(5, 1, 5, 1));
-		dialogProgress.setLocationRelativeTo(map);
+		dialogProgress.setLocationRelativeTo(MapApp.anchor);
 		pb = new JProgressBar(1,cruises.length);
 		progressLabel = new JLabel("Loading lines for " + cruises.length + " cruises");
 		progressPanel.add(progressLabel, BorderLayout.NORTH);

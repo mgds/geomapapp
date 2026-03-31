@@ -6,7 +6,7 @@
 --type dmg 
 --mac-sign 
 --app-version 3.7.7
---copyright "GeoMapApp 3.7.7, Copyright © 2026 www.geomapapp.org"
+--copyright "GeoMapApp 3.7.7.3, Copyright © 2026 www.geomapapp.org"
 --name GeoMapApp 
 --vendor "org.GeoMapApp.www" 
 --java-options "-Dapple.laf.useScreenMenuBar=false" 

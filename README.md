@@ -23,6 +23,7 @@ The code is implemented in Java.
     *	Known Application Bugs
 
 # Release History
+* 03/25/2026 v3.7.7 Public release of v3.7.7 of GeoMapApp.
 * 09/15/2025 v3.7.6 Public release of v3.7.6 of GeoMapApp.
 * 04/22/2025 v3.7.5 Public release of v3.7.5 of GeoMapApp.
 * 08/05/2024 v3.7.4 Public release of v3.7.4 of GeoMapApp.

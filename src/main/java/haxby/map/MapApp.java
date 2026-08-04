@@ -196,7 +196,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.7.3"; //March 31st, 2026
+	public final static String VERSION = "3.7.7.4"; //August 4th, 2026
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -5319,6 +5319,13 @@ public class MapApp implements ActionListener,
 				setCurrentDB(((haxby.db.Database)overlays.get(i)));
 				enableCurrentDB();
 				addDBToDisplay(((haxby.db.Database)overlays.get(i)));
+				break;
+			}
+			else if(overlays.get(i) instanceof haxby.db.custom.UnknownDataSet) {
+				Database d = ((haxby.db.custom.UnknownDataSet)overlays.get(i)).db;
+				setCurrentDB(d);
+				enableCurrentDB();
+				addDBToDisplay(d);
 				break;
 			}
 		}

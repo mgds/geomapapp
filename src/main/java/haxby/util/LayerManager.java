@@ -765,7 +765,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 
 			int minWidth = getMinimumSize().width;
 			int minHeight = 83;//getMinimumSize().height;
-			int maxWidth = getMaximumSize().width;
+			int maxWidth = Math.max(getMaximumSize().width, getSize().width);
 
 			setPreferredSize(new Dimension(minWidth, minHeight));
 			setMaximumSize(new Dimension(maxWidth, minHeight));
@@ -989,8 +989,9 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 		size.height = Math.min(size.height, maxSize.height);
 		size.width = Math.min(size.width, maxSize.width);
 
-		lmFrame.setMinimumSize(size);
-		lmFrame.setSize(size);
+		lmFrame.setMinimumSize(new Dimension(Math.min(size.width, this.getMinimumSize().width), size.height));
+		lmFrame.setPreferredSize(new Dimension(Math.max(size.width, lmFrame.getWidth()), size.height));
+		lmFrame.setSize(lmFrame.getPreferredSize());
 		lmFrame.pack();
 		this.revalidate();
 		this.repaint();
@@ -1477,7 +1478,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 				this.revalidate();
 				this.repaint();
 
-				Dimension size = new Dimension(
+				Dimension newMinSize = new Dimension(
 						getMaximumSize().width+20,
 						getMaximumSize().height+ 40);
 //				Dimension maxSize = lmFrame.getMaximumSize();
@@ -1485,8 +1486,8 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 //				size.height = Math.min(size.height, maxSize.height);
 //				size.width = Math.min(size.width, maxSize.width);
 
-				lmFrame.setMinimumSize(size);
-				lmFrame.setSize(size);
+				lmFrame.setMinimumSize(new Dimension(Math.min(newMinSize.width, this.getMinimumSize().width), newMinSize.height));
+				lmFrame.setSize(new Dimension(Math.max(newMinSize.width, lmFrame.getWidth()), newMinSize.height));
 
 				if ( !evt.getPropertyName().equals(haxby.map.MapApp.baseFocusName) ) {
 					if ( XML_Menu.commandToMenuItemHash != null && XML_Menu.commandToMenuItemHash.contains("layer_manager_cmd") ) {
@@ -1586,13 +1587,12 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 					}
 				} //End My Session look up
 
-				//this.setMaximumSize(getPreferredSize());
 				this.setSize(getPreferredSize());
 				this.revalidate();
 				this.repaint();
 
-				lmFrame.setMinimumSize(new Dimension(getMinimumSize().width+20,getMinimumSize().height+55));
-				lmFrame.setSize(getMaximumSize().width+20,getMaximumSize().height+55);
+				lmFrame.setMinimumSize(new Dimension(Math.min(getMinimumSize().width+20, lmFrame.getMinimumSize().width),getMinimumSize().height+55));
+				lmFrame.setSize(Math.max(getMaximumSize().width+20, lmFrame.getWidth()),getMaximumSize().height+55);
 				this.revalidate();
 				this.repaint();
 

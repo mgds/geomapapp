@@ -23,6 +23,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
@@ -196,7 +198,7 @@ public class MapApp implements ActionListener,
 		SUPPORTED_MAPS.add(new Integer(NORTH_POLAR_MAP));
 	}
 
-	public final static String VERSION = "3.7.7.3"; //March 31st, 2026
+	public final static String VERSION = "3.7.7.5"; //August 4th, 2026
 	public final static String GEOMAPAPP_NAME = "GeoMapApp " + VERSION;
 	private static boolean DEV_MODE = false; 
 	static boolean isNewVersion = false;
@@ -3890,7 +3892,21 @@ public class MapApp implements ActionListener,
 //		d.getContentPane().add(sp);
 		d.pack();
 		d.setSize(new Dimension(lm.getPreferredSize().width+20,lm.getPreferredSize().height+55));
-		d.setMaximumSize(new Dimension(400,300));
+		//d.setMaximumSize(new Dimension(400,300));
+		d.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				for(LayerPanel lp : lm.getLayerPanels()) {
+					int width = d.getWidth();
+					//if(width < 500) width = 500;
+					//used point-slope form to get these numbers:
+					//when the name was 45 characters long, the window was 420px wide
+					//when the name was 106 characters long, the window was 1037px wide
+					int newLimit = 617 * (width-420) / 61 + 45;
+					lp.resizeDisplayName(newLimit);
+				}
+			}
+		});
 
 		d.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
 		d.setLocationRelativeTo(frame);

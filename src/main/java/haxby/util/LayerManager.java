@@ -90,7 +90,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 	
 	public LayerManager() {
 		this.setLayout( new BoxLayout(this, BoxLayout.Y_AXIS));	
-		this.setBorder(BorderFactory.createEmptyBorder(3,3,3,3));
+		this.setBorder(BorderFactory.createLineBorder(Color.WHITE));
 
 		// Capture button
 		captureB.setPressedIcon( Icons.getIcon(Icons.CAPTURE, true) );
@@ -423,6 +423,9 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			c.gridy = 0;
 			// Set max character display limit
 			String displayName = layerName.substring(0, Math.min(MAX_NAME_LENGTH, layerName.length()));
+			if(displayName.length() < layerName.length()) {
+				displayName = displayName.substring(0, MAX_NAME_LENGTH-1) + "…";
+			}
 
 			visible = new JCheckBox(displayName, layerVisible);
 			visible.setFont(new Font("Arial", Font.BOLD, 11));
@@ -843,6 +846,15 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 //			slider.setValue((int)(layer.getOpacity() * 100));
 			visible.setSelected(layerVisible);
 			setColor();
+		}
+		
+		public void resizeDisplayName(int numCharacters) {
+			if(numCharacters < 2) return;
+			String displayName = layerName.substring(0, Math.min(numCharacters, layerName.length()));
+			if(displayName.length() < layerName.length()) {
+				displayName = displayName.substring(0, numCharacters-1) + "…";
+			}
+			visible.setText(displayName);
 		}
 	}
 
@@ -1291,7 +1303,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			}
 		}
 
-		this.setMaximumSize(getPreferredSize());
+		//this.setMaximumSize(getPreferredSize());
 		this.revalidate();
 		this.repaint();
 	}
@@ -1563,7 +1575,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 					}
 				} //End My Session look up
 
-				this.setMaximumSize(getPreferredSize());
+				//this.setMaximumSize(getPreferredSize());
 				this.setSize(getPreferredSize());
 				this.revalidate();
 				this.repaint();

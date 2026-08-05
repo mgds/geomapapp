@@ -1320,6 +1320,15 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 		return new Dimension( Math.max(width, 83),
 							 height * getComponentCount());
 	}
+	
+	public Dimension getMaxUnabridgedSize() {
+		int width = 0, height = 0;
+		for(LayerPanel lp : layerPanels) {
+			width = Math.max(getMinWindowWidthForLabelSize(lp.layerName.length()), width);
+			height = Math.max(lp.getPreferredSize().height, height);
+		}
+		return new Dimension(Math.max(width, 83), height * getComponentCount() + 55);
+	}
 
 	public void setDialog(JFrame inputDialog) {
 		lmFrame = inputDialog;
@@ -1572,6 +1581,8 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 							this.layerPanels.add(0,p);
 							this.overlays.add(0,layer);
 						}
+						
+						this.lmFrame.setMaximumSize(getMaxUnabridgedSize());
 					}
 				} //End My Session look up
 
@@ -1723,5 +1734,17 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 	 
 	 public void resetMissingLayers() {
 		 missingLayers.clear();
+	 }
+	
+	 //Used experimentation, logging, and point-slope form to get these formulae
+	 //45-character label : 420px-wide window
+	 //106-character label : 835px-wide window
+	 //nChars - 45 = (106-45)/(835-420) * (windowWidth - 420)
+	 public static int getMaxLabelSizeForWidth(int windowWidth) {
+ 		 return 61 * (windowWidth - 420) / 415 + 45;
+	 }
+	 //windowWidth - 420 = (835-420)/(106-45) * (nChars - 45)
+	 public static int getMinWindowWidthForLabelSize(int nChars) {
+		 return 415 * (nChars - 45) / 61 + 420;
 	 }
 }

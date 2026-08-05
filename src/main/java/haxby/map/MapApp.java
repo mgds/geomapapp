@@ -3892,17 +3892,14 @@ public class MapApp implements ActionListener,
 //		d.getContentPane().add(sp);
 		d.pack();
 		d.setSize(new Dimension(lm.getPreferredSize().width+20,lm.getPreferredSize().height+55));
-		//d.setMaximumSize(new Dimension(400,300));
+		d.setMaximumSize(new Dimension(420,300));
 		d.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				for(LayerPanel lp : lm.getLayerPanels()) {
 					int width = d.getWidth();
-					//if(width < 500) width = 500;
-					//used point-slope form to get these numbers:
-					//when the name was 45 characters long, the window was 420px wide
-					//when the name was 106 characters long, the window was 1037px wide
-					int newLimit = 617 * (width-420) / 61 + 45;
+					if(width < 420) width = 420;
+					int newLimit = LayerManager.getMaxLabelSizeForWidth(width);
 					lp.resizeDisplayName(newLimit);
 				}
 			}

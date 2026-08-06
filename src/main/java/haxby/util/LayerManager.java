@@ -616,7 +616,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			add(box);
 
 			//Add Opacity Label
-			JLabel l = new JLabel(" Opacity:");
+			JLabel l = new JLabel(" Opacity:", SwingConstants.RIGHT);
 			l.setFont(new Font("Arial", Font.PLAIN, 11));
 			c = new GridBagConstraints();
 			c.gridy = 1;

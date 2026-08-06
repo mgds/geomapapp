@@ -985,12 +985,20 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 				lmMaxSize.width+20,
 				lmMaxSize.height+40);
 		Dimension maxSize = lmFrame.getMaximumSize();
+		
+		Dimension unabridged = getMaxUnabridgedSize();
+		unabridged.width += 20;
+		unabridged.height += 40;
+		
+		int howFarRight = Math.max(0, lmFrame.getWidth() - unabridged.width);
+		lmFrame.setLocation(lmFrame.getX()+howFarRight, lmFrame.getY());
 
 		size.height = Math.min(size.height, maxSize.height);
 		size.width = Math.min(size.width, maxSize.width);
 
 		lmFrame.setMinimumSize(new Dimension(Math.min(size.width, this.getMinimumSize().width), size.height));
-		lmFrame.setPreferredSize(new Dimension(Math.max(size.width, lmFrame.getWidth()), size.height));
+		lmFrame.setMaximumSize(unabridged);
+		lmFrame.setPreferredSize(new Dimension(Math.min(unabridged.width, lmFrame.getWidth()), size.height));
 		lmFrame.setSize(lmFrame.getPreferredSize());
 		lmFrame.pack();
 		this.revalidate();
@@ -1323,7 +1331,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 	}
 	
 	public Dimension getMaxUnabridgedSize() {
-		int width = 0, height = 0;
+		int width = 400, height = 0;
 		for(LayerPanel lp : layerPanels) {
 			width = Math.max(getMinWindowWidthForLabelSize(lp.layerName.length()), width);
 			height = Math.max(lp.getPreferredSize().height, height);

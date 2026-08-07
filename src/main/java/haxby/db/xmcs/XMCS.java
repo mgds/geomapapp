@@ -24,7 +24,11 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -199,6 +203,9 @@ public class XMCS implements ActionListener,
 								"https://cmgds.marine.usgs.gov/gma/USGS_SCS/");
 	static String USGS_SINGLE_CHANNEL_EXP_LIST = PathUtil.getPath("PORTALS/USGS_SINGLE_CHANNEL_EXP_LIST",
 								"https://cmgds.marine.usgs.gov/gma/USGS_SCS/expedition_list_USGS_SCS");
+	
+	//Last update date
+	static String UPDATE_DATE_FILE = PathUtil.getPath("PORTALS/MULTI_CHANNEL_PATH/UPDATE_DATE_FILE", MapApp.BASE_URL + "/data/portals/mcs/lastEditDate.txt");
 
 	//TODO
 	static String ANTARCTIC_SDLS_PATH = PathUtil.getPath("PORTALS/ANTARCTIC_SDLS",
@@ -1052,8 +1059,19 @@ public class XMCS implements ActionListener,
 		}
 		String listCachePath = cacheFileGetter.apply(listPath);
 		URL url = URLFactory.url( listPath);
+		URL updateDateFileUrl = URLFactory.url(UPDATE_DATE_FILE);
 		File listCacheFile = new File(listCachePath);
-		boolean needsNewCache = !listCacheFile.exists() || listCacheFile.lastModified() < url.openConnection().getLastModified();
+		BufferedReader dateGetter = new BufferedReader(new InputStreamReader(updateDateFileUrl.openStream()));
+		String updateDateStr = dateGetter.readLine();
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		Date updateDate = null;
+		try {
+			updateDate = dateFormat.parse(updateDateStr);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		boolean needsNewCache = !listCacheFile.exists() || listCacheFile.lastModified() < url.openConnection().getLastModified() || (null != updateDate && dateFormat.format(new Date(listCacheFile.lastModified())).compareTo(updateDateStr) < 0);
 		BufferedReader in = new BufferedReader( new InputStreamReader(needsNewCache ? url.openStream() : new FileInputStream(listCacheFile)));
 
 		PrintStream cacheOut = null;
@@ -1113,15 +1131,16 @@ public class XMCS implements ActionListener,
 			boolean dateLineCheck = cruises[i].cruiseIDL;
 			boolean check2 = cruises[i].bounds.contains(map.getWrap()/2,cruises[i].getBounds().getY()) || cruises[i].bounds.contains(0,cruises[i].getBounds().getY());
 			boolean polarProblems = (((MapApp) map.getApp()).getMapType()==MapApp.SOUTH_POLAR_MAP) || (((MapApp) map.getApp()).getMapType()==MapApp.NORTH_POLAR_MAP); 
-			if(dateLineCheck || check2){
+			//if(dateLineCheck || check2){
+				//System.out.println(cruises[i].id);
 				try {
 					String cachePath = cacheFileGetter.apply(path);
 					String urlStr1 = cachePath + File.separator + cruises[i].getID() + XMCruise.CHANNEL_CONTROL,
 							urlStr2 = cachePath + File.separator + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS;
-					File cacheFile1 = new File(urlStr1), cacheFile2 = new File(urlStr2);
-					needsNewCache = !(cacheFile1.exists()  && cacheFile2.exists()) ||
-							cacheFile1.lastModified() < URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_CONTROL).openConnection().getLastModified() ||
-							cacheFile2.lastModified() < URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS).openConnection().getLastModified();
+//					File cacheFile1 = new File(urlStr1), cacheFile2 = new File(urlStr2);
+//					needsNewCache = !(cacheFile1.exists()  && cacheFile2.exists()) ||
+//							cacheFile1.lastModified() < URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_CONTROL).openConnection().getLastModified() ||
+//							cacheFile2.lastModified() < URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS).openConnection().getLastModified();
 					String pathToReadFrom = needsNewCache ? path : cachePath;
 					if(!pathToReadFrom.endsWith(File.separator)) {
 						pathToReadFrom += File.separator;
@@ -1133,7 +1152,7 @@ public class XMCS implements ActionListener,
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-			}
+			//}
 			if(polarProblems){
 				
 				final int j = i;

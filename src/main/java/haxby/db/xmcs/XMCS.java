@@ -671,10 +671,13 @@ public class XMCS implements ActionListener,
 			e.printStackTrace();
 		}
 		if(needsNewCache) {
-			System.out.println("XMCS needs a new cache");
 			//delete the old cache
-			for(File f : new File(cacheFileGetter.apply(MULTI_CHANNEL_PATH)).listFiles()) {
-				f.delete();
+			String cachedPath = cacheFileGetter.apply(MULTI_CHANNEL_PATH);
+			File cachedDir = new File(cachedPath);
+			if(null != cachedDir) {
+				for(File f : cachedDir.listFiles()) {
+					f.delete();
+				}
 			}
 		}
 		String pathToReadFrom = needsNewCache ? path : cacheFileGetter.apply(path);

@@ -1140,20 +1140,14 @@ public class XMCS implements ActionListener,
 				updateDate = dateFormat.parse(updateDateStr);
 			} catch (ParseException e) {
 				e.printStackTrace();
-				return !cacheFolder.isDirectory();
+				return true;
 			}
 			Date clu = getCacheLastUpdated();
 			return (null != updateDate && dateFormat.format(clu).compareTo(updateDateStr) < 0);
 		}
 		catch(FileNotFoundException e) {
 			e.printStackTrace();
-			//print today's date to the file so this doesn't happen repeatedly
-//				File f = new File(UPDATE_DATE_FILE);
-//				f.createNewFile();
-//				PrintStream ps = new PrintStream(f);
-//				ps.println(dateFormat.format(new Date()));
-//				ps.close();
-			return !cacheFolder.isDirectory();
+			return true;
 		}
 	}
 	
@@ -1180,12 +1174,6 @@ public class XMCS implements ActionListener,
 			}
 			catch(FileNotFoundException e) {
 				e.printStackTrace();
-				//print today's date to the file so this doesn't happen repeatedly
-//				File f = new File(UPDATE_DATE_FILE);
-//				f.createNewFile();
-//				PrintStream ps = new PrintStream(f);
-//				ps.println(dateFormat.format(new Date()));
-//				ps.close();
 				return true;
 			}
 		}

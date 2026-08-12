@@ -23,6 +23,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -72,6 +73,10 @@ public class KMLExport {
 	private static final String LABEL_MIN_PIXELS = "1500";
 
 	public static void exportToKML(UnknownDataSet ds, DataSelector select) {
+		exportToKML(ds, select, true);
+	}
+	
+	public static void exportToKML(UnknownDataSet ds, DataSelector select, boolean zipped) {
 		KMLExportConfigDialog fc = null;
 		HeaderConfig hc = null;
 
@@ -95,7 +100,7 @@ public class KMLExport {
 		// Get the save file
 		JFileChooser jfc = new JFileChooser(System.getProperty("user.home"));
 		
-		String defaultName = ds.desc.name.replace(":", "").replace(",", "") + ".kmz";
+		String defaultName = ds.desc.name.replace(":", "").replace(",", "") + (zipped?".kmz":".kml");
 		defaultName = defaultName.replace("Data Table ", "").replace(" ", "_");
 		File f=new File(defaultName);
 		jfc.setSelectedFile(f);
@@ -115,11 +120,12 @@ public class KMLExport {
 		n *= select.getRowCount();
 
 		JDialog dialog = new JDialog((JFrame) ds.map.getTopLevelAncestor());
-		dialog.setTitle("Exporting to KMZ");
+		dialog.setTitle("Exporting to KM" + (zipped?"Z":"L"));
 		dialog.setModal(true);
 		JProgressBar pb = new JProgressBar(0,n);
 		JPanel p = new JPanel();
 		p.add(new JLabel("Saving " + f.getName()));
+		System.out.println(f.getAbsolutePath());
 		p.add(pb);
 
 		dialog.getContentPane().setLayout(new FlowLayout());
@@ -131,12 +137,22 @@ public class KMLExport {
 
 		new Task(new Object[] {ds,select,f,fc,hc,pb,dialog}) {
 			public void run() {
-				exportToKML((UnknownDataSet)args[0],
+				if(zipped) {
+					exportToKML((UnknownDataSet)args[0],
 						(DataSelector)args[1],
 						(File)args[2],
 						(KMLExportConfigDialog)args[3],
 						(HeaderConfig)args[4],
 						(JProgressBar)args[5]);
+				}
+				else {
+					exportToKML_unzipped((UnknownDataSet)args[0],
+							(DataSelector)args[1],
+							(File)args[2],
+							(KMLExportConfigDialog)args[3],
+							(HeaderConfig)args[4],
+							(JProgressBar)args[5]);
+				}
 				((JDialog) args[6]).dispose();
 			}
 		}.start();
@@ -162,6 +178,398 @@ public class KMLExport {
 				return i;
 		}
 		return -1;
+	}
+	
+	private static void exportToKML_unzipped(UnknownDataSet ds, DataSelector select, File f, KMLExportConfigDialog fc, HeaderConfig hc, JProgressBar pb) {
+		int n = 0;
+		try {
+			Document doc2 = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+			Element kml = doc2.createElement("kml");
+			kml.setAttribute("xmlns",  "http://earth.google.com/kml/2.1");
+			doc2.appendChild(kml);
+			Element topFolder = doc2.createElement("Document");
+			kml.appendChild(topFolder);
+			Element leaf = doc2.createElement("name");
+			leaf.appendChild(doc2.createTextNode(processString(ds.desc.name)));
+			topFolder.appendChild(leaf);
+			
+			List<Element> styles = createStyleDefinitions(doc2);
+			for(Element e : styles) {
+				topFolder.appendChild(e);
+			}
+			
+			Element dataFolder = doc2.createElement("Folder");
+			topFolder.appendChild(dataFolder);
+			
+			leaf = doc2.createElement("styleUrl");
+			leaf.appendChild(doc2.createTextNode("#radioFolderStyle"));
+			dataFolder.appendChild(leaf);
+
+			leaf = doc2.createElement("name");
+			leaf.appendChild(doc2.createTextNode("Data"));
+			dataFolder.appendChild(leaf);
+			
+			// For each scaled item
+			boolean scale = false;
+			scaleIndex: for (int scaleIndex = -1; scaleIndex < fc.getScales().size(); scaleIndex++) {
+				System.gc();
+				Transformer t = TransformerFactory.newInstance().newTransformer();
+				t.setOutputProperty(OutputKeys.INDENT, "yes");
+				t.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+				KMLExportConfigDialog.ScalePanel scalePanel = null;
+				if (scaleIndex != -1) {
+					scalePanel = (KMLExportConfigDialog.ScalePanel) fc.getScales().get(scaleIndex);
+					if (!scalePanel.colorCB.isSelected() && !scalePanel.sizeCB.isSelected())
+						continue;
+				}
+
+				Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+				kml = doc.createElement("kml");
+				kml.setAttribute("xmlns", "http://earth.google.com/kml/2.1");
+				doc.appendChild(kml);
+
+				topFolder = doc.createElement("Document");
+				kml.appendChild(topFolder);
+				styles = createStyleDefinitions(doc);
+				for (Element element : styles)
+					topFolder.appendChild(element);
+
+				Element scaleFolder = topFolder;
+				Element screenOverlay = null;
+				if (scaleIndex == -1) {
+					// set to check hide children folder behavior
+					leaf = doc.createElement("styleUrl");
+					leaf.appendChild(doc.createTextNode("#hiddenChildrenFolder"));
+					scaleFolder.appendChild(leaf);
+
+					leaf = doc.createElement("name");
+					leaf.appendChild(doc.createTextNode("Unscaled Data"));
+					scaleFolder.appendChild(leaf);
+				}
+				else {
+					scale = true;
+					Element midFolder = topFolder; //doc.createElement("Folder");
+//								topFolder.appendChild(midFolder);
+
+					leaf = doc.createElement("name");
+					leaf.appendChild(doc.createTextNode(processString(scalePanel.getScaleName())));
+					midFolder.appendChild(leaf);
+
+					// Build the Scale Overlay
+					screenOverlay = doc.createElement("ScreenOverlay");
+
+					leaf = doc.createElement("name");
+					leaf.appendChild(doc.createTextNode("Scale Overlay"));
+					screenOverlay.appendChild(leaf);
+
+					leaf = doc.createElement("overlayXY");
+					leaf.setAttribute("x", "0");
+					leaf.setAttribute("y", "1");
+					leaf.setAttribute("xunits", "fraction");
+					leaf.setAttribute("yunits", "fraction");
+					screenOverlay.appendChild(leaf);
+
+					leaf = doc.createElement("screenXY");
+					leaf.setAttribute("x", "0");
+					leaf.setAttribute("y", "1");
+					leaf.setAttribute("xunits", "fraction");
+					leaf.setAttribute("yunits", "fraction");
+					screenOverlay.appendChild(leaf);
+
+					leaf = doc.createElement("size");
+					leaf.setAttribute("x", "-1");
+					leaf.setAttribute("y", "-1");
+					leaf.setAttribute("xunits", "pixels");
+					leaf.setAttribute("yunits", "pixels");
+					screenOverlay.appendChild(leaf);
+
+					Element icon = doc.createElement("Icon");
+					screenOverlay.appendChild(icon);
+
+					leaf = doc.createElement("href");
+					leaf.appendChild(doc.createTextNode(scaleIndex+".jpg"));
+					icon.appendChild(leaf);
+
+					scaleFolder = doc.createElement("Folder");
+					midFolder.appendChild(scaleFolder); 
+
+					// set to check hide children folder behavior
+					leaf = doc.createElement("styleUrl");
+					leaf.appendChild(doc.createTextNode("#hiddenChildrenFolder"));
+					scaleFolder.appendChild(leaf);
+
+					leaf = doc.createElement("name");
+					leaf.appendChild(doc.createTextNode("Data"));
+					scaleFolder.appendChild(leaf);
+				}
+
+				double colorMin = Double.MAX_VALUE;
+				double colorMax = -Double.MAX_VALUE;
+				double sizeMin = Double.MAX_VALUE;
+				double sizeMax = -Double.MAX_VALUE;
+				int colorHeaderIndex = -1;
+				int sizeHeaderIndex = -1;
+				if (scale) {
+					if (scalePanel.colorCB.isSelected()) {
+						colorHeaderIndex = ds.header.indexOf(scalePanel.color.getSelectedItem());
+						for (int i = 0; i < select.getRowCount(); i++) {
+							try {
+								double x = Double.parseDouble(select.getValueAt(i, colorHeaderIndex).toString());
+								if (Double.isNaN(x)) continue;
+								if (x < colorMin) colorMin = x;
+								if (x > colorMax) colorMax = x;
+							} catch (NumberFormatException ex){
+								continue;
+							}
+						}
+
+						if (colorMin == Double.MAX_VALUE && colorMax == -Double.MAX_VALUE) {
+							continue scaleIndex;
+						}
+
+						if (colorMin != colorMax) {
+							// Add the Scale Overlay
+							if (scalePanel.colorCB.isSelected()) topFolder.appendChild(screenOverlay);
+							BufferedImage img = 
+								drawScale(colorMin, colorMax, 
+										scalePanel.color.getSelectedItem().toString(), 
+										fc.units[scalePanel.color.getSelectedIndex()].getSelectedItem().toString());
+						}
+					}
+					if (scalePanel.sizeCB.isSelected()) {
+						sizeHeaderIndex = ds.header.indexOf(scalePanel.size.getSelectedItem());
+						for (int i = 0; i < select.getRowCount(); i++) {
+							try {
+								double x = Double.parseDouble(select.getValueAt(i, sizeHeaderIndex).toString());
+								if (Double.isNaN(x)) continue;
+								if (x < sizeMin) sizeMin = x;
+								if (x > sizeMax) sizeMax = x;
+							} catch (NumberFormatException ex){
+								continue;
+							}
+						}
+
+						if (sizeMin == Double.MAX_VALUE && sizeMax == -Double.MAX_VALUE) {
+							continue scaleIndex;
+						}
+					}
+					// Draw our color scale
+				}
+
+				Element[][][] regions = new Element[360 / LON_PARTITION_N][180 / LAT_PARTITION_N][2];
+				for (int i = 0; i < select.getRowCount(); i++) {
+					n++;
+					pb.setValue(n);
+					pb.repaint();
+
+					Element place = doc.createElement("Placemark");
+
+					Element style = doc.createElement("Style");
+					place.appendChild(style);
+
+					// BalloonStyle
+					Element bStyle = doc.createElement("BalloonStyle");
+					style.appendChild(bStyle);
+					{
+						leaf = doc.createElement("text");
+						leaf.appendChild(doc.createCDATASection(getBallonStyle()));
+						bStyle.appendChild(leaf);
+					}
+
+					// Icon Style
+					Element iStyle = doc.createElement("IconStyle");
+					style.appendChild(iStyle);
+
+					if (colorHeaderIndex != -1) {
+						leaf = doc.createElement("color");
+						iStyle.appendChild(leaf);
+						String color = getColor(select.getValueAt(i,colorHeaderIndex), colorMin, colorMax);
+						if (color == null) continue;
+						leaf.appendChild(doc.createTextNode(color));
+					}
+					if (sizeHeaderIndex != -1) {
+						leaf = doc.createElement("scale");
+						iStyle.appendChild(leaf);
+						String size = getScale(select.getValueAt(i,sizeHeaderIndex), sizeMin, sizeMax);
+						if (size == null) continue;
+						leaf.appendChild(doc.createTextNode(size));
+					}
+
+//								 Placemark name
+					leaf = doc.createElement("name");
+					place.appendChild(leaf);
+					if (!scale) {
+						int nameIndex = fc.getNameIndex();
+						if (nameIndex!=-1)
+							for (int k = 0; k < ds.header.size(); k++)
+								if (ds.header.get(k) == hc.visibleV.get(nameIndex)) {
+									leaf.appendChild(doc.createTextNode(processString(select.getValueAt(i, k).toString())));
+									break;
+								}
+					} else {
+						int nameIndex = ds.header.indexOf(scalePanel.name.getSelectedItem());
+
+						if (nameIndex == colorHeaderIndex || nameIndex == sizeHeaderIndex) {
+							double min = nameIndex == colorHeaderIndex ? colorMin : sizeMin;
+							double max = nameIndex == colorHeaderIndex ? colorMax : sizeMax;
+							double d = Double.parseDouble(select.getValueAt(i, nameIndex).toString());
+							String out;
+							// TODO sig figs
+							int resolution = (int) getResolution(min, max);
+							int changeDigit = (int) log10(resolution);
+							NumberFormat nf = new DecimalFormat();
+							if (changeDigit < 1) { 
+								if (changeDigit < -3) {
+									nf = new DecimalFormat("#.#E0");
+								} else {
+									nf.setMaximumFractionDigits(-changeDigit + 2);
+									nf.setMinimumFractionDigits(1);
+								}
+								out = nf.format(d);
+							} else if (changeDigit == 1) {
+								nf.setMaximumFractionDigits(1);
+								out = nf.format(d);
+							} else if (changeDigit > 6) {
+								nf = new DecimalFormat("#.#E0");
+								out = nf.format(d);
+							} else {
+								int value = (int) d;
+								if (resolution > 1000) {
+									value /= (resolution / 1000);
+									value *= (resolution / 1000);
+									out = value + "";
+								} else {
+									out = nf.format(value);
+								}
+							}
+							leaf.appendChild(doc.createTextNode(out));
+						} else
+							leaf.appendChild(doc.createTextNode(processString(select.getValueAt(i, nameIndex).toString())));
+					}
+
+					Element icon = doc.createElement("Icon");
+					iStyle.appendChild(icon);
+
+					leaf = doc.createElement("href");
+					leaf.appendChild(doc.createTextNode(ICON_NAME));
+					icon.appendChild(leaf);
+
+					leaf = doc.createElement("hotSpot");
+					leaf.setAttribute("x", "0");
+					leaf.setAttribute("y", "0");
+					iStyle.appendChild(leaf);
+
+					leaf = doc.createElement("description");
+					place.appendChild(leaf);
+					StringBuffer sb = new StringBuffer();
+					sb.append("<table>");
+
+					headers: for (int j = 0; j < hc.visibleV.size(); j++) {
+						for (int k = 0; k < ds.header.size(); k++) {
+							if (ds.header.get(k) != hc.visibleV.get(j)) 
+								continue;
+
+							String str = select.getValueAt(i, k).toString();
+							String fieldData = processString(str);
+
+							if (fieldData.length() == 0)  
+								continue headers; // Dont add Blank Fields
+
+							// Column 1
+							sb.append("<tr>");
+							sb.append("<td>");
+								sb.append("<b>");
+								sb.append("<font size='+1'>");
+								sb.append(processString(fc.names[j].getText()));
+								sb.append("</font>");
+								sb.append(":</b>");
+							sb.append("</td>");
+
+							// Column 2
+							sb.append("<td>");
+							if (fc.image[j].isSelected()) { // If this is selected as an image
+								sb.append("<a href='");
+								sb.append(str);
+								sb.append("'>");
+								sb.append("<img src='");
+								sb.append(str);
+								sb.append("' width='150'/>");
+								sb.append("</a>");
+							} else {
+								sb.append(fieldData);
+								sb.append(" "+processString(fc.units[j].getSelectedItem().toString()));
+							}
+
+							sb.append("</td>");
+							sb.append("</tr>");
+							continue headers;
+						}
+					}
+					sb.append("</table>");
+
+					CDATASection cdata = doc.createCDATASection(sb.toString());
+					leaf.appendChild(cdata);
+
+					Element point = doc.createElement("Point");
+					place.appendChild(point);
+
+					leaf = doc.createElement("coordinates");
+					point.appendChild(leaf);
+					float lat, lon;
+					try {
+						lat = Float.parseFloat(select.getValueAt(i, ds.latIndex).toString());
+						lon = Float.parseFloat(select.getValueAt(i, ds.lonIndex).toString());
+						if (lon > 180) lon -= 360;
+						leaf.appendChild(doc.createTextNode(lon+","+lat+",0"));
+
+					} catch (NumberFormatException ex) {
+						// Can't parse the lat lon, drop it
+						continue; 
+					}
+
+					// Add our balloon style url
+//								leaf = doc.createElement("styleUrl");
+//								leaf.appendChild( doc.createTextNode("#balloonStyle") );
+//								place.appendChild(leaf);
+
+					// Clone our placemark and apply label styles
+					Element[] regionFolder = getRegion(regions, lat, lon, scaleFolder, doc);
+					Element visiblePlace = (Element) place.cloneNode(true);
+					regionFolder[0].appendChild(place);
+					regionFolder[1].appendChild(visiblePlace);
+
+					leaf = doc.createElement("styleUrl");
+					leaf.appendChild(doc.createTextNode("#hiddenStyleMap"));
+					place.appendChild(leaf);
+
+					leaf = doc.createElement("styleUrl");
+					leaf.appendChild(doc.createTextNode("#normalStyleMap"));
+					visiblePlace.appendChild(leaf);
+				} // End rowCount for
+				doc.setDocumentURI(f.getAbsolutePath());
+				DOMSource source = new DOMSource(doc);
+				FileWriter writer = new FileWriter(f);
+				StreamResult result = new StreamResult(writer);
+				t.transform(source, result);
+			} // End scaleIndex for
+		}
+		catch (ParserConfigurationException e) {
+			JOptionPane.showMessageDialog(MapApp.anchor, e.getMessage(), "KML Parser Configure Error", JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		} catch (TransformerConfigurationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (TransformerFactoryConfigurationError e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (TransformerException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 
 	private static void exportToKML(UnknownDataSet ds, DataSelector select, File f, KMLExportConfigDialog fc, HeaderConfig hc, JProgressBar pb) {

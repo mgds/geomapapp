@@ -886,14 +886,15 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			map.setOverlayAlpha(layer, alpha);
 		}
 
-		if ( layer instanceof Database ) {
+		if ( layer instanceof Database || layer instanceof UnknownDataSet) {
 			for ( int i = 0; i < overlays.size(); i++ ) {
-				if ( overlays.get(i) instanceof Database ) {
-					if ( !((MapApp)map.getApp()).getCurrentDB().equals(((Database)overlays.get(i))) ) {
+				if ( overlays.get(i) instanceof Database || overlays.get(i) instanceof UnknownDataSet) {
+					Database d = overlays.get(i) instanceof Database ? (Database)overlays.get(i) : ((UnknownDataSet)overlays.get(i)).db;
+					if ( !((MapApp)map.getApp()).getCurrentDB().equals(d) ) {
 						((MapApp)map.getApp()).disableCurrentDB();
-						((MapApp)map.getApp()).setCurrentDB(((Database)overlays.get(i)));
+						((MapApp)map.getApp()).setCurrentDB(d);
 						((MapApp)map.getApp()).enableCurrentDB();
-						((MapApp)map.getApp()).addDBToDisplay(((Database)overlays.get(i)));
+						((MapApp)map.getApp()).addDBToDisplay(d);
 					}
 					break;
 				}
@@ -944,14 +945,15 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			map.setOverlayAlpha(layer, alpha);
 		}
 
-		if ( layer instanceof Database ) {
+		if ( layer instanceof Database || layer instanceof UnknownDataSet) {
 			for ( int i = 0; i < overlays.size(); i++ ) {
-				if ( overlays.get(i) instanceof Database ) {
-					if ( !((MapApp)map.getApp()).getCurrentDB().equals(overlays.get(i)) ) {
+				if ( overlays.get(i) instanceof Database || overlays.get(i) instanceof UnknownDataSet) {
+					Database d = overlays.get(i) instanceof Database ? (Database)overlays.get(i) : ((UnknownDataSet)overlays.get(i)).db;
+					if ( !((MapApp)map.getApp()).getCurrentDB().equals(d) ) {
 						((MapApp)map.getApp()).disableCurrentDB();
-						((MapApp)map.getApp()).setCurrentDB(((Database)overlays.get(i)));
+						((MapApp)map.getApp()).setCurrentDB(d);
 						((MapApp)map.getApp()).enableCurrentDB();
-						((MapApp)map.getApp()).addDBToDisplay(((Database)overlays.get(i)));
+						((MapApp)map.getApp()).addDBToDisplay(d);
 					}
 					break;
 				}
@@ -1066,6 +1068,13 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 					app.setCurrentDB(((Database)overlays.get(i)));
 					app.enableCurrentDB();
 					app.addDBToDisplay(((Database)overlays.get(i)));
+					break;
+				}
+				else if(overlays.get(i) instanceof haxby.db.custom.UnknownDataSet) {
+					Database d = ((haxby.db.custom.UnknownDataSet)overlays.get(i)).db;
+					app.setCurrentDB(d);
+					app.enableCurrentDB();
+					app.addDBToDisplay(d);
 					break;
 				}
 			}

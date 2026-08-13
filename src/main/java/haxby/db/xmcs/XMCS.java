@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -547,6 +549,28 @@ public class XMCS implements ActionListener,
 		return false;
 	}
 	
+	private static String getFunctionalPath(String path) {
+		String cachePath = cacheFileGetter.apply(path);
+		File cacheFile = new File(cachePath);
+		if(!cacheFile.exists()) {
+			return path;
+		}
+		try {
+			URL url = URLFactory.url(path);
+			if(cacheFile.lastModified() < url.openConnection().getLastModified()) {
+				return path;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return path;
+		}
+		if(path.endsWith(File.separator) && !cachePath.endsWith(File.separator)) {
+			cachePath += File.separator;
+		}
+		return cachePath;
+	}
+	
 	public void draw(Graphics2D g) {
 		if(map==null || cruises.length==0)return;
 		int k, k0;
@@ -591,7 +615,7 @@ public class XMCS implements ActionListener,
 				dialogProgress.setVisible(true);
 				//System.out.println("Loading lines for cruise #" + (k+1) + " of " + cruises.length);
 				try {
-					cruises[k].loadLines(path);
+					cruises[k].loadLines(getFunctionalPath(path));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -1052,8 +1076,16 @@ public class XMCS implements ActionListener,
 		}
 		String listCachePath = cacheFileGetter.apply(listPath);
 		URL url = URLFactory.url( listPath);
+		URLConnection urlc = null;
+		boolean canAccessRemote = true;
+		try {
+			urlc = url.openConnection();
+		}
+		catch(IOException ioe) {
+			canAccessRemote = false;
+		}
 		File listCacheFile = new File(listCachePath);
-		boolean needsNewCache = !listCacheFile.exists() || listCacheFile.lastModified() < url.openConnection().getLastModified();
+		boolean needsNewCache = !listCacheFile.exists() || (canAccessRemote && listCacheFile.lastModified() < urlc.getLastModified());
 		BufferedReader in = new BufferedReader( new InputStreamReader(needsNewCache ? url.openStream() : new FileInputStream(listCacheFile)));
 
 		PrintStream cacheOut = null;
@@ -1109,26 +1141,37 @@ public class XMCS implements ActionListener,
 		cruises = new XMCruise[tmp.size()];
 		for( int i=0 ; i<cruises.length ; i++){
 			cruises[i] = (XMCruise) tmp.get(i);
+			String cachePath = cacheFileGetter.apply(path);
+			String urlStr1 = cachePath + File.separator + cruises[i].getID() + XMCruise.CHANNEL_CONTROL,
+					urlStr2 = cachePath + File.separator + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS;
+			File cacheFile1 = new File(urlStr1), cacheFile2 = new File(urlStr2);
+			URL url1 = URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_CONTROL),
+					url2 = URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS);
+			canAccessRemote = true;
+			URLConnection urlc1 = null, urlc2 = null;
+			try {
+				urlc1 = url1.openConnection();
+				urlc2 = url2.openConnection();
+			}
+			catch(IOException e) {
+				canAccessRemote = false;
+			}
+			needsNewCache = !(cacheFile1.exists()  && cacheFile2.exists()) ||
+					(canAccessRemote && (cacheFile1.lastModified() < urlc1.getLastModified() ||
+					cacheFile2.lastModified() < urlc2.getLastModified()));
+			String pathToReadFrom = needsNewCache ? path : cachePath;
+			if(!pathToReadFrom.endsWith(File.separator)) {
+				pathToReadFrom += File.separator;
+			}
+			if(needsNewCache) {
+				cruises[i].setCacheOutBase(cachePath);
+			}
 			
 			boolean dateLineCheck = cruises[i].cruiseIDL;
 			boolean check2 = cruises[i].bounds.contains(map.getWrap()/2,cruises[i].getBounds().getY()) || cruises[i].bounds.contains(0,cruises[i].getBounds().getY());
 			boolean polarProblems = (((MapApp) map.getApp()).getMapType()==MapApp.SOUTH_POLAR_MAP) || (((MapApp) map.getApp()).getMapType()==MapApp.NORTH_POLAR_MAP); 
 			if(dateLineCheck || check2){
 				try {
-					String cachePath = cacheFileGetter.apply(path);
-					String urlStr1 = cachePath + File.separator + cruises[i].getID() + XMCruise.CHANNEL_CONTROL,
-							urlStr2 = cachePath + File.separator + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS;
-					File cacheFile1 = new File(urlStr1), cacheFile2 = new File(urlStr2);
-					needsNewCache = !(cacheFile1.exists()  && cacheFile2.exists()) ||
-							cacheFile1.lastModified() < URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_CONTROL).openConnection().getLastModified() ||
-							cacheFile2.lastModified() < URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS).openConnection().getLastModified();
-					String pathToReadFrom = needsNewCache ? path : cachePath;
-					if(!pathToReadFrom.endsWith(File.separator)) {
-						pathToReadFrom += File.separator;
-					}
-					if(needsNewCache) {
-						cruises[i].setCacheOutBase(cachePath);
-					}
 					cruises[i].loadLines(pathToReadFrom);
 				} catch (IOException e) {
 					e.printStackTrace();

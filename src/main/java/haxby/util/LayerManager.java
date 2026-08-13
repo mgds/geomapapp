@@ -90,7 +90,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 	
 	public LayerManager() {
 		this.setLayout( new BoxLayout(this, BoxLayout.Y_AXIS));	
-		this.setBorder(BorderFactory.createEmptyBorder(3,3,3,3));
+		this.setBorder(BorderFactory.createLineBorder(Color.WHITE));
 
 		// Capture button
 		captureB.setPressedIcon( Icons.getIcon(Icons.CAPTURE, true) );
@@ -423,6 +423,9 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			c.gridy = 0;
 			// Set max character display limit
 			String displayName = layerName.substring(0, Math.min(MAX_NAME_LENGTH, layerName.length()));
+			if(displayName.length() < layerName.length()) {
+				displayName = displayName.substring(0, MAX_NAME_LENGTH-1) + "…";
+			}
 
 			visible = new JCheckBox(displayName, layerVisible);
 			visible.setFont(new Font("Arial", Font.BOLD, 11));
@@ -613,7 +616,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			add(box);
 
 			//Add Opacity Label
-			JLabel l = new JLabel(" Opacity:");
+			JLabel l = new JLabel(" Opacity:", SwingConstants.RIGHT);
 			l.setFont(new Font("Arial", Font.PLAIN, 11));
 			c = new GridBagConstraints();
 			c.gridy = 1;
@@ -762,7 +765,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 
 			int minWidth = getMinimumSize().width;
 			int minHeight = 83;//getMinimumSize().height;
-			int maxWidth = getMaximumSize().width;
+			int maxWidth = Math.max(getMaximumSize().width, getSize().width);
 
 			setPreferredSize(new Dimension(minWidth, minHeight));
 			setMaximumSize(new Dimension(maxWidth, minHeight));
@@ -843,6 +846,15 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 //			slider.setValue((int)(layer.getOpacity() * 100));
 			visible.setSelected(layerVisible);
 			setColor();
+		}
+		
+		public void resizeDisplayName(int numCharacters) {
+			if(numCharacters < 2) return;
+			String displayName = layerName.substring(0, Math.min(numCharacters, layerName.length()));
+			if(displayName.length() < layerName.length()) {
+				displayName = displayName.substring(0, numCharacters-1) + "…";
+			}
+			visible.setText(displayName);
 		}
 	}
 
@@ -975,12 +987,21 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 				lmMaxSize.width+20,
 				lmMaxSize.height+40);
 		Dimension maxSize = lmFrame.getMaximumSize();
+		
+		Dimension unabridged = getMaxUnabridgedSize();
+		unabridged.width += 20;
+		unabridged.height += 40;
+		
+		int howFarRight = Math.max(0, lmFrame.getWidth() - unabridged.width);
+		lmFrame.setLocation(lmFrame.getX()+howFarRight, lmFrame.getY());
 
 		size.height = Math.min(size.height, maxSize.height);
 		size.width = Math.min(size.width, maxSize.width);
 
-		lmFrame.setMinimumSize(size);
-		lmFrame.setSize(size);
+		lmFrame.setMinimumSize(new Dimension(Math.min(size.width, this.getMinimumSize().width), size.height));
+		lmFrame.setMaximumSize(unabridged);
+		lmFrame.setPreferredSize(new Dimension(Math.min(unabridged.width, lmFrame.getWidth()), size.height));
+		lmFrame.setSize(lmFrame.getPreferredSize());
 		lmFrame.pack();
 		this.revalidate();
 		this.repaint();
@@ -1300,7 +1321,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 			}
 		}
 
-		this.setMaximumSize(getPreferredSize());
+		//this.setMaximumSize(getPreferredSize());
 		this.revalidate();
 		this.repaint();
 	}
@@ -1316,6 +1337,15 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 		
 		return new Dimension( Math.max(width, 83),
 							 height * getComponentCount());
+	}
+	
+	public Dimension getMaxUnabridgedSize() {
+		int width = 400, height = 0;
+		for(LayerPanel lp : layerPanels) {
+			width = Math.max(getMinWindowWidthForLabelSize(lp.layerName.length()), width);
+			height = Math.max(lp.getPreferredSize().height, height);
+		}
+		return new Dimension(Math.max(width, 83), height * getComponentCount() + 55);
 	}
 
 	public void setDialog(JFrame inputDialog) {
@@ -1465,7 +1495,7 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 				this.revalidate();
 				this.repaint();
 
-				Dimension size = new Dimension(
+				Dimension newMinSize = new Dimension(
 						getMaximumSize().width+20,
 						getMaximumSize().height+ 40);
 //				Dimension maxSize = lmFrame.getMaximumSize();
@@ -1473,8 +1503,8 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 //				size.height = Math.min(size.height, maxSize.height);
 //				size.width = Math.min(size.width, maxSize.width);
 
-				lmFrame.setMinimumSize(size);
-				lmFrame.setSize(size);
+				lmFrame.setMinimumSize(new Dimension(Math.min(newMinSize.width, this.getMinimumSize().width), newMinSize.height));
+				lmFrame.setSize(new Dimension(Math.max(newMinSize.width, lmFrame.getWidth()), newMinSize.height));
 
 				if ( !evt.getPropertyName().equals(haxby.map.MapApp.baseFocusName) ) {
 					if ( XML_Menu.commandToMenuItemHash != null && XML_Menu.commandToMenuItemHash.contains("layer_manager_cmd") ) {
@@ -1569,16 +1599,17 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 							this.layerPanels.add(0,p);
 							this.overlays.add(0,layer);
 						}
+						
+						this.lmFrame.setMaximumSize(getMaxUnabridgedSize());
 					}
 				} //End My Session look up
 
-				this.setMaximumSize(getPreferredSize());
 				this.setSize(getPreferredSize());
 				this.revalidate();
 				this.repaint();
 
-				lmFrame.setMinimumSize(new Dimension(getMinimumSize().width+20,getMinimumSize().height+55));
-				lmFrame.setSize(getMaximumSize().width+20,getMaximumSize().height+55);
+				lmFrame.setMinimumSize(new Dimension(Math.min(getMinimumSize().width+20, lmFrame.getMinimumSize().width),getMinimumSize().height+55));
+				lmFrame.setSize(Math.max(getMaximumSize().width+20, lmFrame.getWidth()),getMaximumSize().height+55);
 				this.revalidate();
 				this.repaint();
 
@@ -1720,5 +1751,17 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 	 
 	 public void resetMissingLayers() {
 		 missingLayers.clear();
+	 }
+	
+	 //Used experimentation, logging, and point-slope form to get these formulae
+	 //45-character label : 420px-wide window
+	 //106-character label : 835px-wide window
+	 //nChars - 45 = (106-45)/(835-420) * (windowWidth - 420)
+	 public static int getMaxLabelSizeForWidth(int windowWidth) {
+ 		 return 61 * (windowWidth - 420) / 415 + 45;
+	 }
+	 //windowWidth - 420 = (835-420)/(106-45) * (nChars - 45)
+	 public static int getMinWindowWidthForLabelSize(int nChars) {
+		 return 415 * (nChars - 45) / 61 + 420;
 	 }
 }

@@ -1371,31 +1371,6 @@ public class XMCS implements ActionListener,
 		cruises = new XMCruise[tmp.size()];
 		for( int i=0 ; i<cruises.length ; i++){
 			cruises[i] = (XMCruise) tmp.get(i);
-			String cachePath = cacheFileGetter.apply(path);
-			String urlStr1 = cachePath + File.separator + cruises[i].getID() + XMCruise.CHANNEL_CONTROL,
-					urlStr2 = cachePath + File.separator + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS;
-			File cacheFile1 = new File(urlStr1), cacheFile2 = new File(urlStr2);
-			URL url1 = URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_CONTROL),
-					url2 = URLFactory.url(path + cruises[i].getID() + XMCruise.CHANNEL_BOUNDS);
-			canAccessRemote = true;
-			URLConnection urlc1 = null, urlc2 = null;
-			try {
-				urlc1 = url1.openConnection();
-				urlc2 = url2.openConnection();
-			}
-			catch(IOException e) {
-				canAccessRemote = false;
-			}
-			needsNewCache = !(cacheFile1.exists()  && cacheFile2.exists()) ||
-					(canAccessRemote && (cacheFile1.lastModified() < urlc1.getLastModified() ||
-					cacheFile2.lastModified() < urlc2.getLastModified()));
-			String pathToReadFrom = needsNewCache ? path : cachePath;
-			if(!pathToReadFrom.endsWith(File.separator)) {
-				pathToReadFrom += File.separator;
-			}
-			if(needsNewCache) {
-				cruises[i].setCacheOutBase(cachePath);
-			}
 			
 			boolean dateLineCheck = cruises[i].cruiseIDL;
 			boolean check2 = cruises[i].bounds.contains(map.getWrap()/2,cruises[i].getBounds().getY()) || cruises[i].bounds.contains(0,cruises[i].getBounds().getY());

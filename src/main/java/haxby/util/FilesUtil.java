@@ -439,6 +439,27 @@ public class FilesUtil{
 		}
 		return false;
 	}
+	
+	//Recursively searches all files in a given directory to find the last time any of them was edited 
+	public static long getLastEditTime(File dir) {
+		if(null == dir) return -1;
+		if(dir.isDirectory()) {
+			long latest = dir.lastModified();
+			for(File f : dir.listFiles()) {
+				long last = f.lastModified();
+				if(last > latest) {
+					latest = last;
+				}
+			}
+			return latest;
+		}
+		else if(dir.exists()) {
+			return dir.lastModified();
+		}
+		else {
+			return 0;
+		}
+	}
 
 	public static void main(String[]args) {
 		//FilesUtil.removeLineinFile("My Places.loc", "A Place Two	128.8125	50.01903486901741	2.0");

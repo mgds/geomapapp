@@ -2078,8 +2078,12 @@ public class UnknownDataSet implements MouseListener,
 		});
 
 	}
-
+	
 	public void exportKML(String saveOption) {
+		exportKML(saveOption, true);
+	}
+
+	public void exportKML(String saveOption, boolean zipped) {
 		//run standard checks before exporting
 		if (!exportChecks(saveOption)) return;
 		
@@ -2101,7 +2105,7 @@ public class UnknownDataSet implements MouseListener,
 			public int getRowCount() {
 				return ind.length;
 			}
-		});
+		}, zipped);
 		MapApp.sendLogMessage("Saving_or_Downloading&table="+desc.name.replace("Data Table: ", "")+"&saveOption="+saveOption+"&fmt=kml");
 	}
 

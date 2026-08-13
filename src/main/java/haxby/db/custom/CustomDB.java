@@ -106,14 +106,17 @@ public class CustomDB implements Database,
 		saveOptions.add(" -Table Data to Excel File (.xls)");
 		saveOptions.add(" -Table Data to Excel File (.xlsx)");
 		saveOptions.add(" -Table Data to Google Earth (KMZ)");
+		saveOptions.add(" -Table Data to Google Earth (KML)");
 		saveOptions.add(" -Plotted Data to ASCII File");
 		saveOptions.add(" -Plotted Data to Excel File (.xls)");
 		saveOptions.add(" -Plotted Data to Excel File (.xlsx)");
 		saveOptions.add(" -Plotted Data to Google Earth (KMZ)");
+		saveOptions.add(" -Plotted Data to Google Earth (KML)");
 		saveOptions.add(" -Selection to ASCII File");
 		saveOptions.add(" -Selection to Excel File (.xls)");
 		saveOptions.add(" -Selection to Excel File (.xlsx)");
 		saveOptions.add(" -Selection to Google Earth (KMZ)");
+		saveOptions.add(" -Selection to Google Earth (KML)");
 
 //		***** GMA 1.6.2: Retrieve zoom buttons from main toolbar so that when they are 
 //		selected we make sure the lasso button is deselected
@@ -773,6 +776,12 @@ public class CustomDB implements Database,
 			exportKML("plottable");	
 		}else if (save.getSelectedItem() == " -Selection to Google Earth (KMZ)") {
 			exportKML("selection");
+		}else if (save.getSelectedItem() == " -Table Data to Google Earth (KML)") {
+			exportKML("all", false);		
+		}else if (save.getSelectedItem() == " -Plotted Data to Google Earth (KML)") {
+			exportKML("plottable", false);	
+		}else if (save.getSelectedItem() == " -Selection to Google Earth (KML)") {
+			exportKML("selection", false);
 		}
 		save.setSelectedIndex(0); // JOC: This will now return the save combo selection back to "Save"
 	}
@@ -840,6 +849,10 @@ public class CustomDB implements Database,
 
 	public void exportKML(String plotOption) {
 		((UnknownDataSet) box.getSelectedItem()).exportKML(plotOption);
+	}
+	
+	public void exportKML(String plotOption, boolean zipped) {
+		((UnknownDataSet)box.getSelectedItem()).exportKML(plotOption, zipped);
 	}
 
 	//	Returns the current database that is being displayed and is active

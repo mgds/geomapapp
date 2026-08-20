@@ -1257,64 +1257,70 @@ public class XMCS implements ActionListener,
 				URL url_i = URLFactory.url(listPath_i);
 				final String otherPaths_i = otherPaths[i];
 				final String cachePath = cacheFileGetter.apply(otherPaths[i]);
-				BufferedReader in_i = new BufferedReader(new InputStreamReader(url_i.openStream()));
-				final PrintStream listCacheOut_i = new PrintStream(listCacheFile_i);
-				Runnable r = new Runnable() {
-					public void run() {
-						Vector<XMCruise> tmp = new Vector<XMCruise>();
-						String inStr;
-						try {
-							while(null != (inStr = in_i.readLine())) {
-								String[] split = inStr.split("\t");
-								if(split.length == 6) {
-									listCacheOut_i.println(inStr);
-								}
-								int mapType = MapApp.MERCATOR_MAP;
-								if (map.getApp() instanceof MapApp)
-									mapType =((MapApp) map.getApp()).getMapType();
-
-								try {
-									int cruiseType = Integer.parseInt(split[1]);
-									switch (mapType) {
-									case MapApp.MERCATOR_MAP:
-										if ((cruiseType & XMCS.MERCATOR_MAP) == 0) continue;
-										break;
-									case MapApp.SOUTH_POLAR_MAP:
-										if ((cruiseType & XMCS.SOUTH_POLAR_MAP) == 0) continue;
-										break;
-									case MapApp.NORTH_POLAR_MAP:
-										if ((cruiseType & XMCS.NORTH_POLAR_MAP) == 0) continue;
-										break;
-									default:
-										break;
+				try {
+					BufferedReader in_i = new BufferedReader(new InputStreamReader(url_i.openStream()));
+					final PrintStream listCacheOut_i = new PrintStream(listCacheFile_i);
+					Runnable r = new Runnable() {
+						public void run() {
+							Vector<XMCruise> tmp = new Vector<XMCruise>();
+							String inStr;
+							try {
+								while(null != (inStr = in_i.readLine())) {
+									String[] split = inStr.split("\t");
+									if(split.length == 6) {
+										listCacheOut_i.println(inStr);
 									}
-
-									Point2D.Double wn = new Point2D.Double(Double.parseDouble(split[2]),
-															Double.parseDouble(split[5]));
-									Point2D.Double es = new Point2D.Double(Double.parseDouble(split[3]),
-															Double.parseDouble(split[4]));
-
-									XMCruise cruise = new XMCruise(mcs, map, split[0]);
-									cruise.setBounds(wn, es);
-									tmp.add(cruise);
-								} catch (NumberFormatException ex) {
-									continue;
+									int mapType = MapApp.MERCATOR_MAP;
+									if (map.getApp() instanceof MapApp)
+										mapType =((MapApp) map.getApp()).getMapType();
+	
+									try {
+										int cruiseType = Integer.parseInt(split[1]);
+										switch (mapType) {
+										case MapApp.MERCATOR_MAP:
+											if ((cruiseType & XMCS.MERCATOR_MAP) == 0) continue;
+											break;
+										case MapApp.SOUTH_POLAR_MAP:
+											if ((cruiseType & XMCS.SOUTH_POLAR_MAP) == 0) continue;
+											break;
+										case MapApp.NORTH_POLAR_MAP:
+											if ((cruiseType & XMCS.NORTH_POLAR_MAP) == 0) continue;
+											break;
+										default:
+											break;
+										}
+	
+										Point2D.Double wn = new Point2D.Double(Double.parseDouble(split[2]),
+																Double.parseDouble(split[5]));
+										Point2D.Double es = new Point2D.Double(Double.parseDouble(split[3]),
+																Double.parseDouble(split[4]));
+	
+										XMCruise cruise = new XMCruise(mcs, map, split[0]);
+										cruise.setBounds(wn, es);
+										tmp.add(cruise);
+									} catch (NumberFormatException ex) {
+										continue;
+									}
+								}
+								listCacheOut_i.close();
+								XMCruise[] _cruises = new XMCruise[tmp.size()];
+								for(int i = 0; i < _cruises.length; i++) {
+									_cruises[i] = tmp.get(i);
+									_cruises[i].setCacheOutBase(cachePath);
+									_cruises[i].loadLines(otherPaths_i);
 								}
 							}
-							listCacheOut_i.close();
-							XMCruise[] _cruises = new XMCruise[tmp.size()];
-							for(int i = 0; i < _cruises.length; i++) {
-								_cruises[i] = tmp.get(i);
-								_cruises[i].setCacheOutBase(cachePath);
-								_cruises[i].loadLines(otherPaths_i);
+							catch(IOException e) {
+								e.printStackTrace();
 							}
 						}
-						catch(IOException e) {
-							e.printStackTrace();
-						}
-					}
-				};
-				new Thread(r).start();
+					};
+					new Thread(r).start();
+				}
+				catch(IOException e) {
+					canAccessRemote = false;
+					e.printStackTrace();
+				}
 			}
 		}
 

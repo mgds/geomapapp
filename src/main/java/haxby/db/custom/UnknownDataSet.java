@@ -44,9 +44,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.StringReader;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -94,6 +97,25 @@ import jxl.Workbook;
 import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WritableWorkbook;
+
+import org.geotools.data.shapefile.ShapefileDataStoreFactory;
+import org.geotools.data.shapefile.ShapefileDumper;
+import org.geotools.feature.NameImpl;
+import org.geotools.feature.SchemaException;
+import org.geotools.filter.identity.FeatureIdImpl;
+import org.geotools.util.SimpleInternationalString;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.feature.simple.SimpleFeatureTypeImpl;
+import org.opengis.feature.type.AttributeDescriptor;
+import org.opengis.filter.Filter;
+import org.opengis.filter.identity.FeatureId;
+import org.geotools.data.FileDataStoreFactorySpi;
+import org.geotools.data.DataStore;
+import org.geotools.data.DataUtilities;
+import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.feature.simple.SimpleFeatureImpl;
+import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.feature.DefaultFeatureCollection;
 
 
 public class UnknownDataSet implements MouseListener,
@@ -183,6 +205,8 @@ public class UnknownDataSet implements MouseListener,
 	private ArrayList<Boolean> oldPlottableStatus = null;
 	
 	private boolean hasLoaded = false;
+	
+	private DataStore gtDataStore;
 	
 	public UnknownDataSet(DBDescription desc, String input, String delim, CustomDB db){
 		this(desc,input,delim,db,false);
@@ -491,6 +515,55 @@ public class UnknownDataSet implements MouseListener,
 					scene.addEntry(new UnknownDataSceneEntry(index));
 			}
 			index++;
+		}
+	}
+	
+	private void setupDataStore(String filename) {
+		if(null == gtDataStore) {
+			FileDataStoreFactorySpi factory = new ShapefileDataStoreFactory();
+			Map<String, Object> params = new HashMap<>();
+			try {
+				params.put("new",  new File(filename).toURI().toURL());
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				gtDataStore = factory.createNewDataStore(params);
+				SimpleFeatureType featureType = DataUtilities.createType(filename, "geom:Point");
+				gtDataStore.createSchema(featureType);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SchemaException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void writeToShapefile(String filename, File dir, String whichData) {
+		String title = ((null == desc.name)? String.valueOf(this) : desc.name).replace("Data Table:", "").trim(); 
+		ShapefileDumper dumper = new ShapefileDumper(dir);
+		List<AttributeDescriptor> attributes = new ArrayList<>();
+		List<Filter> restrictions = new ArrayList<>();
+		SimpleFeatureType featureType = new SimpleFeatureTypeImpl(new NameImpl(title), attributes, null, false, restrictions, null, new SimpleInternationalString(title));
+		FeatureId fid = new FeatureIdImpl(desc.name);
+		TableModel tm = dataT.getModel();
+		Object[][] data = new Object[tm.getRowCount()][tm.getColumnCount()];
+		for(int i = 0; i < data.length; i++) {
+			System.out.println(tm.getValueAt(i, 0).getClass().getName() + ": " +  data[i][0]);
+			for(int j = 0; j < data[i].length; j++) {
+				data[i][j] = tm.getValueAt(i, j);
+			}
+		}
+		SimpleFeature feature = new SimpleFeatureImpl(data, featureType, fid, true);
+		DefaultFeatureCollection features = new DefaultFeatureCollection(desc.name);
+		features.add(feature);
+		try {
+			dumper.dump(filename, features);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	

@@ -18,12 +18,16 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -746,18 +750,33 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 			}
 		}
 	}
-	public boolean writeShapes() throws IOException {
-		if(path.startsWith("http")) {
-			return false;
+	public void writeProperties(OutputStream out) {
+		PrintStream ps = new PrintStream(out);
+		if(null != properties) {
+			for(int i = 0; i < properties.size(); i++) {
+				Object[] props = (Object[])properties.get(i);
+				String sectionName = String.valueOf(props[0]);
+				ps.println("<" + sectionName + ">");
+				for(int j = 1; j < props.length; j++) {
+					Object[] pair = (Object[])props[j];
+					String propName = String.valueOf(pair[0]);
+					String propVal = String.valueOf(pair[1]);
+					ps.println("\t<" + propName + ">" + propVal + "</" + propName + ">");
+				}
+				ps.println("</" + sectionName + ">");
+			}
 		}
-		String thePath = path.startsWith("file://") ? path.replace("file://", "") : path;
-		File f = new File(thePath, filename);
-		if(!exists()) {
-			f.getParentFile().mkdirs();
-			f.createNewFile();
+		ps.close();
+	}
+	public void writeProjection(OutputStream os) {
+		//use the class variable wgs84 as the coordinate reference system
+		if(null == wgs84) {
+			setupWgs84();
 		}
-		//TODO write the data to the file
-		return true;
+		String wkt = wgs84.toWKT();
+		PrintStream ps = new PrintStream(os);
+		ps.println(wkt);
+		ps.close();
 	}
 	public Vector readShapes() throws IOException {
 		if( !exists() ) throw new FileNotFoundException();

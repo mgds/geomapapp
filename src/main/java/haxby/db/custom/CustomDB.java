@@ -21,6 +21,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -50,6 +51,8 @@ import haxby.map.MapApp;
 import haxby.map.XMap;
 import haxby.util.WESNSupplier;
 import haxby.util.XBTable;
+
+import org.geotools.swing.data.JFileDataStoreChooser;
 
 public class CustomDB implements Database,
 								ActionListener,
@@ -107,16 +110,19 @@ public class CustomDB implements Database,
 		saveOptions.add(" -Table Data to Excel File (.xlsx)");
 		saveOptions.add(" -Table Data to Google Earth (KMZ)");
 		saveOptions.add(" -Table Data to Google Earth (KML)");
+		saveOptions.add(" -Table Data to Shapefile (.shp)");
 		saveOptions.add(" -Plotted Data to ASCII File");
 		saveOptions.add(" -Plotted Data to Excel File (.xls)");
 		saveOptions.add(" -Plotted Data to Excel File (.xlsx)");
 		saveOptions.add(" -Plotted Data to Google Earth (KMZ)");
 		saveOptions.add(" -Plotted Data to Google Earth (KML)");
+		saveOptions.add(" -Table Data to Shapefile (.shp)");
 		saveOptions.add(" -Selection to ASCII File");
 		saveOptions.add(" -Selection to Excel File (.xls)");
 		saveOptions.add(" -Selection to Excel File (.xlsx)");
 		saveOptions.add(" -Selection to Google Earth (KMZ)");
 		saveOptions.add(" -Selection to Google Earth (KML)");
+		saveOptions.add(" -Selection to Shapefile (.shp)");
 
 //		***** GMA 1.6.2: Retrieve zoom buttons from main toolbar so that when they are 
 //		selected we make sure the lasso button is deselected
@@ -782,6 +788,19 @@ public class CustomDB implements Database,
 			exportKML("plottable", false);	
 		}else if (save.getSelectedItem() == " -Selection to Google Earth (KML)") {
 			exportKML("selection", false);
+		}
+		else if(null != currentData && String.valueOf(save.getSelectedItem()).toLowerCase().contains("to shapefile")) {
+			String whatToExport = String.valueOf(save.getSelectedItem()).replace(" -", "- ").split(" ")[1];
+			String title = String.valueOf(currentData).replace("Data Table:", "").trim();
+			String defaultFilename = title + ".shp";
+			JFileDataStoreChooser chooser = new JFileDataStoreChooser("shp");
+			chooser.setDialogTitle("Saving to shapefile: " + title);
+			chooser.setSelectedFile(new File(defaultFilename));
+			int returnVal = chooser.showSaveDialog(MapApp.anchor);
+			if(JFileDataStoreChooser.APPROVE_OPTION == returnVal) {
+				File newFile = chooser.getSelectedFile();
+				currentData.writeToShapefile(newFile, whatToExport);
+			}
 		}
 		save.setSelectedIndex(0); // JOC: This will now return the save combo selection back to "Save"
 	}

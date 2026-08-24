@@ -89,12 +89,17 @@ import org.geomapapp.util.SymbolScaleTool;
 import org.geomapapp.util.XML_Menu;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
+import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.feature.type.GeometryDescriptorImpl;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.AttributeDescriptor;
+import org.opengis.feature.type.GeometryDescriptor;
+import org.opengis.feature.type.GeometryType;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.geotools.data.Transaction;
@@ -573,9 +578,17 @@ public class UnknownDataSet implements MouseListener,
 		}
 		//lat column first, lon column second
 		Map.Entry<Integer,Integer> latLonCols = getLatLonCols(columnNames);
-		builder.add("Location", Point.class);
+
+		AttributeTypeBuilder atb = new AttributeTypeBuilder();
+		atb.setName("geometryType");
+		atb.setBinding(org.locationtech.jts.geom.Point.class);
+		atb.setNillable(false);
+		GeometryType gt = atb.buildGeometryType();
+		GeometryDescriptor gd = atb.buildDescriptor("geometry", gt);
+		builder.add(gd);
+		builder.setDefaultGeometry("geometry");
 		for(int i = 1; i < tm.getColumnCount(); i++) {
-			if(i != latLonCols.getKey() && i != latLonCols.getValue()) {
+			if(i-1 != latLonCols.getKey() && i-1 != latLonCols.getValue()) {
 				builder.add(tm.getColumnName(i), tm.getColumnClass(i));
 			}
 		}
@@ -592,7 +605,7 @@ public class UnknownDataSet implements MouseListener,
 				Coordinate coords = new Coordinate(Double.valueOf(String.valueOf(tm.getValueAt(i, latLonCols.getValue()+1))), Double.valueOf(String.valueOf(tm.getValueAt(i,  latLonCols.getKey()+1))));
 				featureBuilder.add(geomFactory.createPoint(coords));
 				for(int j = 1; j < tm.getColumnCount(); j++) {
-					if(j != latLonCols.getKey() && j != latLonCols.getValue()) {
+					if(j-1 != latLonCols.getKey() && j-1 != latLonCols.getValue()) {
 						featureBuilder.add(tm.getValueAt(i, j));
 					}
 				}
@@ -611,13 +624,6 @@ public class UnknownDataSet implements MouseListener,
 			e.printStackTrace();
 		}
 		params.put("create spatial index", Boolean.TRUE);
-		params.put("geometry", "EPSG:4326");
-		//TODO figure out what property/parameter to add so it doesn't run into this NullPointerException:
-		/*
-		 * Exception in thread "AWT-EventQueue-0" java.lang.NullPointerException:
-		 * Cannot invoke "org.opengis.feature.type.GeometryDescriptor.getCoordinateReferenceSystem()" because
-		 * the return value of "org.opengis.feature.simple.SimpleFeatureType.getGeometryDescriptor()" is null
-		 */
 		try {
 			ds = (ShapefileDataStore)dataStoreFactory.createDataStore(params);
 			ds.createSchema(thisFeature);

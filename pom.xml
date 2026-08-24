@@ -168,6 +168,11 @@
     	<artifactId>gt-shapefile</artifactId>
     	<version>${geotools.version}</version>
     </dependency>
+    <dependency>
+    	<groupId>org.geotools</groupId>
+    	<artifactId>gt-swing</artifactId>
+    	<version>${geotools.version}</version>
+    </dependency>
     <!-- Java Advanced Imaging (JAI) -->
     <dependency>
       <groupId>com.sun.media</groupId>

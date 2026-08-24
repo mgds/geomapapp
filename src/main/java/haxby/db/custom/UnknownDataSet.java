@@ -583,6 +583,7 @@ public class UnknownDataSet implements MouseListener,
 		atb.setName("geometryType");
 		atb.setBinding(org.locationtech.jts.geom.Point.class);
 		atb.setNillable(false);
+		atb.setCRS(builder.getCRS());
 		GeometryType gt = atb.buildGeometryType();
 		GeometryDescriptor gd = atb.buildDescriptor("geometry", gt);
 		builder.add(gd);

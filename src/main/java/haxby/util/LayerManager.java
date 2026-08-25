@@ -1758,10 +1758,10 @@ public class LayerManager extends JPanel implements PropertyChangeListener {
 	 //106-character label : 835px-wide window
 	 //nChars - 45 = (106-45)/(835-420) * (windowWidth - 420)
 	 public static int getMaxLabelSizeForWidth(int windowWidth) {
- 		 return 61 * (windowWidth - 420) / 415 + 45;
+ 		 return 61 * (windowWidth - 420) / 415 + 50;
 	 }
 	 //windowWidth - 420 = (835-420)/(106-45) * (nChars - 45)
 	 public static int getMinWindowWidthForLabelSize(int nChars) {
-		 return 415 * (nChars - 45) / 61 + 420;
+		 return 415 * (nChars - 45) / 61 + 440;
 	 }
 }

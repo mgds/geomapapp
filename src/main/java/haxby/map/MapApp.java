@@ -23,6 +23,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
@@ -3890,7 +3892,18 @@ public class MapApp implements ActionListener,
 //		d.getContentPane().add(sp);
 		d.pack();
 		d.setSize(new Dimension(lm.getPreferredSize().width+20,lm.getPreferredSize().height+55));
-		d.setMaximumSize(new Dimension(400,300));
+		d.setMaximumSize(new Dimension(420,300));
+		d.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				for(LayerPanel lp : lm.getLayerPanels()) {
+					int width = d.getWidth();
+					if(width < 420) width = 420;
+					int newLimit = LayerManager.getMaxLabelSizeForWidth(width);
+					lp.resizeDisplayName(newLimit);
+				}
+			}
+		});
 
 		d.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
 		d.setLocationRelativeTo(frame);
@@ -5319,6 +5332,13 @@ public class MapApp implements ActionListener,
 				setCurrentDB(((haxby.db.Database)overlays.get(i)));
 				enableCurrentDB();
 				addDBToDisplay(((haxby.db.Database)overlays.get(i)));
+				break;
+			}
+			else if(overlays.get(i) instanceof haxby.db.custom.UnknownDataSet) {
+				Database d = ((haxby.db.custom.UnknownDataSet)overlays.get(i)).db;
+				setCurrentDB(d);
+				enableCurrentDB();
+				addDBToDisplay(d);
 				break;
 			}
 		}

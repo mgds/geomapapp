@@ -162,12 +162,20 @@ public class CustomDB implements Database,
 		mi.setActionCommand("exportASCII");
 		mi.addActionListener(this);
 		pm.add(mi);
+		mi = new JMenuItem("Export Table Data to Excel File");
+		mi.setActionCommand("exportExcel");
+		mi.addActionListener(this);
+		pm.add(mi);
 		mi = new JMenuItem("Export Table Data to Google Earth (KMZ)");
+		mi.setActionCommand("exportKMZ");
+		mi.addActionListener(this);
+		pm.add(mi);
+		mi = new JMenuItem("Export Table Data to Google Earth (KML)");
 		mi.setActionCommand("exportKML");
 		mi.addActionListener(this);
 		pm.add(mi);
-		mi = new JMenuItem("Export Table Data to Excel File");
-		mi.setActionCommand("exportExcel");
+		mi = new JMenuItem("Export Table Data to Shapefile (.shp)");
+		mi.setActionCommand("exportShp");
 		mi.addActionListener(this);
 		pm.add(mi);
 		
@@ -180,7 +188,15 @@ public class CustomDB implements Database,
 		mi.addActionListener(this);
 		pm.add(mi);
 		mi = new JMenuItem("Export Plotted Data to Google Earth (KMZ)");
+		mi.setActionCommand("exportPlottedKMZ");
+		mi.addActionListener(this);
+		pm.add(mi);
+		mi = new JMenuItem("Export Plotted Data to Google Earth (KML)");
 		mi.setActionCommand("exportPlottedKML");
+		mi.addActionListener(this);
+		pm.add(mi);
+		mi = new JMenuItem("Export Plotted Data to Shapefile (.shp)");
+		mi.setActionCommand("exportPlottedShp");
 		mi.addActionListener(this);
 		pm.add(mi);
 		
@@ -193,7 +209,15 @@ public class CustomDB implements Database,
 		mi.addActionListener(this);
 		pm.add(mi);
 		mi = new JMenuItem("Export Selection to Google Earth (KMZ)");
-		mi.setActionCommand("exportSelectKML");
+		mi.setActionCommand("exportSelectKMZ");
+		mi.addActionListener(this);
+		pm.add(mi);
+		mi = new JMenuItem("Export Selection to Google Earth (KML)");
+		mi.setActionCommand("exportSelectionKML");
+		mi.addActionListener(this);
+		pm.add(mi);
+		mi = new JMenuItem("Export Selection to Shapefile (.shp)");
+		mi.setActionCommand("exportSelectionShp");
 		mi.addActionListener(this);
 		pm.add(mi);
 		mi = new JMenuItem("Close");
@@ -316,6 +340,7 @@ public class CustomDB implements Database,
 	}
 
 	public void actionPerformed(ActionEvent evt) {
+		System.out.println(evt.getActionCommand());
 		if (evt.getActionCommand().equals("load")) {
 			load();
 		} else if (evt.getActionCommand().equals("book")) {
@@ -334,20 +359,43 @@ public class CustomDB implements Database,
 			exportExcel("all");
 		} else if (evt.getActionCommand().equals("exportASCII")) {
 			exportASCII("all");
-		} else if (evt.getActionCommand().equals("exportKML")) {
+		} else if (evt.getActionCommand().equals("exportKMZ")) {
 			exportKML("all");
+		} else if (evt.getActionCommand().equals("exportKML")) {
+			exportKML("all", false);
 		} else if (evt.getActionCommand().equals("exportPlottedExcel")) {
 			exportExcel("plottable");
 		} else if (evt.getActionCommand().equals("exportPlottedASCII")) {
 			exportASCII("plottable");
+		} else if(evt.getActionCommand().equals("exportPlottedKMZ")) {
+			exportKML("plottable");
 		} else if (evt.getActionCommand().equals("exportPlottedKML")) {
-			exportKML("plottable");	
+			exportKML("plottable", false);	
 		} else if (evt.getActionCommand().equals("exportSelectExcel")) {
 			exportExcel("selection");
 		} else if (evt.getActionCommand().equals("exportSelectASCII")) {
 			exportASCII("selection");
-		} else if (evt.getActionCommand().equals("exportSelectKML")) {
+		} else if(evt.getActionCommand().equals("exportSelectKMZ")) {
 			exportKML("selection");
+		} else if (evt.getActionCommand().equals("exportSelectKML")) {
+			exportKML("selection", false);
+		} else if(evt.getActionCommand().toLowerCase().contains("shp")) {
+			if(null == currentData) {
+				System.out.println("Can't export null data to shapefile");
+			}
+			else {
+				String whatToExport = evt.getActionCommand().toLowerCase().replace("shp", "").replace("export", "");
+				String title = String.valueOf(currentData).replace("Data Table:", "").trim();
+				String defaultFilename = title + ".shp";
+				JFileDataStoreChooser chooser = new JFileDataStoreChooser("shp");
+				chooser.setDialogTitle("Saving to shapefile: " + title);
+				chooser.setSelectedFile(new File(defaultFilename));
+				int returnVal = chooser.showSaveDialog(MapApp.anchor);
+				if(JFileDataStoreChooser.APPROVE_OPTION == returnVal) {
+					File newFile = chooser.getSelectedFile();
+					currentData.writeToShapefile(newFile, whatToExport);
+				}
+			}
 		} else if (evt.getActionCommand().equals("graph")) {
 			graph();
 		} else if (evt.getActionCommand().equals("match")) {

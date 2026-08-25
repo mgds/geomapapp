@@ -746,19 +746,6 @@ public class ESRIShapefile extends java.awt.geom.Rectangle2D.Double
 			}
 		}
 	}
-	public boolean writeShapes() throws IOException {
-		if(path.startsWith("http")) {
-			return false;
-		}
-		String thePath = path.startsWith("file://") ? path.replace("file://", "") : path;
-		File f = new File(thePath, filename);
-		if(!exists()) {
-			f.getParentFile().mkdirs();
-			f.createNewFile();
-		}
-		//TODO write the data to the file
-		return true;
-	}
 	public Vector readShapes() throws IOException {
 		if( !exists() ) throw new FileNotFoundException();
 		boolean url = path.startsWith( "http" ) || path.startsWith( "file://" );

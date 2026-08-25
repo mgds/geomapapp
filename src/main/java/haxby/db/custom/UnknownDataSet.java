@@ -95,6 +95,7 @@ import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.feature.type.GeometryDescriptorImpl;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.geotools.util.SimpleInternationalString;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
@@ -578,21 +579,17 @@ public class UnknownDataSet implements MouseListener,
 		}
 		//lat column first, lon column second
 		Map.Entry<Integer,Integer> latLonCols = getLatLonCols(columnNames);
+		final int latitudeCol = latLonCols.getKey()+1,
+				longitudeCol = latLonCols.getValue()+1;
 
-		AttributeTypeBuilder atBuilder = new AttributeTypeBuilder();
-		atBuilder.setName("geometryType");
-		atBuilder.setBinding(org.locationtech.jts.geom.Point.class);
-		atBuilder.setNillable(false);
-		atBuilder.setCRS(sftBuilder.getCRS());
-		GeometryType gt = atBuilder.buildGeometryType();
-		GeometryDescriptor gd = atBuilder.buildDescriptor("geometry", gt);
-		sftBuilder.add(gd);
-		sftBuilder.setDefaultGeometry("geometry");
+		sftBuilder.add("the_geom", org.locationtech.jts.geom.Point.class);
+		sftBuilder.setDefaultGeometry("the_geom");
 		for(int i = 1; i < tm.getColumnCount(); i++) {
-			if(i-1 != latLonCols.getKey() && i-1 != latLonCols.getValue()) {
+			if(latitudeCol != i && longitudeCol != i) {
 				sftBuilder.add(tm.getColumnName(i), tm.getColumnClass(i));
 			}
 		}
+		sftBuilder.setDescription(new SimpleInternationalString(title));
 		
 		final SimpleFeatureType thisFeature = sftBuilder.buildFeatureType();
 		
@@ -603,14 +600,14 @@ public class UnknownDataSet implements MouseListener,
 			if(rowFilter.apply(i)) {
 				SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(thisFeature);
 				//lon/x first, lat/y second
-				Coordinate coords = new Coordinate(Double.valueOf(String.valueOf(tm.getValueAt(i, latLonCols.getValue()+1))), Double.valueOf(String.valueOf(tm.getValueAt(i,  latLonCols.getKey()+1))));
+				Coordinate coords = new Coordinate(Double.valueOf(String.valueOf(tm.getValueAt(i, longitudeCol))), Double.valueOf(String.valueOf(tm.getValueAt(i,  latitudeCol))));
 				featureBuilder.add(geomFactory.createPoint(coords));
 				for(int j = 1; j < tm.getColumnCount(); j++) {
-					if(j-1 != latLonCols.getKey() && j-1 != latLonCols.getValue()) {
+					if(latitudeCol != j && longitudeCol != j) {
 						featureBuilder.add(tm.getValueAt(i, j));
 					}
 				}
-				SimpleFeature feature = featureBuilder.buildFeature(null);
+				SimpleFeature feature = featureBuilder.buildFeature("Point " + features.size());
 				features.add(feature);
 			}
 		}

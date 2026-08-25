@@ -541,9 +541,9 @@ public class UnknownDataSet implements MouseListener,
 	public void writeToShapefile(File shapefile, String whichData) {
 		String title = ((null == desc.name) ? String.valueOf(this) : desc.name).replace("Data Table:", "").trim();
 		//get the table columns
-		SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
-		builder.setName(title);
-		builder.setCRS(DefaultGeographicCRS.WGS84);
+		SimpleFeatureTypeBuilder sftBuilder = new SimpleFeatureTypeBuilder();
+		sftBuilder.setName(title);
+		sftBuilder.setCRS(DefaultGeographicCRS.WGS84);
 		TableModel tm = dataT.getModel();
 		Function<Integer, Boolean> rowFilter = null;
 		if("plotted".equalsIgnoreCase(whichData)) {
@@ -579,22 +579,22 @@ public class UnknownDataSet implements MouseListener,
 		//lat column first, lon column second
 		Map.Entry<Integer,Integer> latLonCols = getLatLonCols(columnNames);
 
-		AttributeTypeBuilder atb = new AttributeTypeBuilder();
-		atb.setName("geometryType");
-		atb.setBinding(org.locationtech.jts.geom.Point.class);
-		atb.setNillable(false);
-		atb.setCRS(builder.getCRS());
-		GeometryType gt = atb.buildGeometryType();
-		GeometryDescriptor gd = atb.buildDescriptor("geometry", gt);
-		builder.add(gd);
-		builder.setDefaultGeometry("geometry");
+		AttributeTypeBuilder atBuilder = new AttributeTypeBuilder();
+		atBuilder.setName("geometryType");
+		atBuilder.setBinding(org.locationtech.jts.geom.Point.class);
+		atBuilder.setNillable(false);
+		atBuilder.setCRS(sftBuilder.getCRS());
+		GeometryType gt = atBuilder.buildGeometryType();
+		GeometryDescriptor gd = atBuilder.buildDescriptor("geometry", gt);
+		sftBuilder.add(gd);
+		sftBuilder.setDefaultGeometry("geometry");
 		for(int i = 1; i < tm.getColumnCount(); i++) {
 			if(i-1 != latLonCols.getKey() && i-1 != latLonCols.getValue()) {
-				builder.add(tm.getColumnName(i), tm.getColumnClass(i));
+				sftBuilder.add(tm.getColumnName(i), tm.getColumnClass(i));
 			}
 		}
 		
-		final SimpleFeatureType thisFeature = builder.buildFeatureType();
+		final SimpleFeatureType thisFeature = sftBuilder.buildFeatureType();
 		
 		//get the data from the JTable
 		GeometryFactory geomFactory = JTSFactoryFinder.getGeometryFactory();

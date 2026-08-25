@@ -8,6 +8,7 @@ import java.awt.Container;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Polygon;
@@ -43,17 +44,24 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.io.StringReader;
+import java.net.MalformedURLException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.function.Function;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -68,6 +76,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
@@ -78,6 +87,28 @@ import org.geomapapp.image.ColorScaleTool;
 import org.geomapapp.io.GMARoot;
 import org.geomapapp.util.SymbolScaleTool;
 import org.geomapapp.util.XML_Menu;
+import org.geotools.data.shapefile.ShapefileDataStore;
+import org.geotools.data.shapefile.ShapefileDataStoreFactory;
+import org.geotools.feature.AttributeTypeBuilder;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.feature.type.GeometryDescriptorImpl;
+import org.geotools.geometry.jts.JTSFactoryFinder;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.geotools.util.SimpleInternationalString;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.AttributeDescriptor;
+import org.opengis.feature.type.GeometryDescriptor;
+import org.opengis.feature.type.GeometryType;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.geotools.data.Transaction;
+import org.geotools.data.DefaultTransaction;
+import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.data.simple.SimpleFeatureCollection;
+import org.geotools.data.collection.ListFeatureCollection;
 
 import haxby.db.XYGraph;
 import haxby.map.MapApp;
@@ -491,6 +522,140 @@ public class UnknownDataSet implements MouseListener,
 					scene.addEntry(new UnknownDataSceneEntry(index));
 			}
 			index++;
+		}
+	}
+	
+	private Map.Entry<Integer, Integer> getLatLonCols(String[] columnNames) {
+		JComboBox<String> latColChooser = new JComboBox<>(columnNames),
+				lonColChooser = new JComboBox<>(columnNames);
+		latColChooser.setSelectedIndex(latIndex-1);
+		lonColChooser.setSelectedIndex(lonIndex-1);
+		JPanel panel = new JPanel(new GridLayout(2, 2));
+		panel.add(new JLabel("Latitude Column:"));
+		panel.add(latColChooser);
+		panel.add(new JLabel("Longitude Column:"));
+		panel.add(lonColChooser);
+		JOptionPane.showMessageDialog(MapApp.anchor, panel);
+		return new AbstractMap.SimpleEntry<Integer, Integer>(latColChooser.getSelectedIndex(), lonColChooser.getSelectedIndex());
+	}
+	
+	public void writeToShapefile(File shapefile, String whichData) {
+		String title = ((null == desc.name) ? String.valueOf(this) : desc.name).replace("Data Table:", "").trim();
+		//get the table columns
+		SimpleFeatureTypeBuilder sftBuilder = new SimpleFeatureTypeBuilder();
+		sftBuilder.setName(title);
+		sftBuilder.setCRS(DefaultGeographicCRS.WGS84);
+		TableModel tm = dataT.getModel();
+		Function<Integer, Boolean> rowFilter = null;
+		if("plotted".equalsIgnoreCase(whichData)) {
+			rowFilter = new Function<Integer, Boolean>() {
+				public Boolean apply(Integer row) {
+					return (Boolean)tm.getValueAt(row, 0);
+				}
+			};
+		}
+		else if("selection".equalsIgnoreCase(whichData)) {
+			rowFilter = new Function<Integer, Boolean>() {
+				public Boolean apply(Integer row) {
+					for(int selected : dataT.getSelectedRows()) {
+						if(row == selected) {
+							return true;
+						}
+					}
+					return false;
+				}
+			};
+		}
+		else {
+			rowFilter = new Function<Integer, Boolean>() {
+				public Boolean apply(Integer row) {
+					return true;
+				}
+			};
+		}
+		String[] columnNames = new String[tm.getColumnCount()-1];
+		for(int i = 1; i < tm.getColumnCount(); i++) {
+			columnNames[i-1] = tm.getColumnName(i);
+		}
+		//lat column first, lon column second
+		Map.Entry<Integer,Integer> latLonCols = getLatLonCols(columnNames);
+		final int latitudeCol = latLonCols.getKey()+1,
+				longitudeCol = latLonCols.getValue()+1;
+
+		sftBuilder.add("the_geom", org.locationtech.jts.geom.Point.class);
+		sftBuilder.setDefaultGeometry("the_geom");
+		for(int i = 1; i < tm.getColumnCount(); i++) {
+			if(latitudeCol != i && longitudeCol != i) {
+				sftBuilder.add(tm.getColumnName(i), tm.getColumnClass(i));
+			}
+		}
+		sftBuilder.setDescription(new SimpleInternationalString(title));
+		
+		final SimpleFeatureType thisFeature = sftBuilder.buildFeatureType();
+		
+		//get the data from the JTable
+		GeometryFactory geomFactory = JTSFactoryFinder.getGeometryFactory();
+		List<SimpleFeature> features = new ArrayList<>();
+		for(int i = 0; i < tm.getRowCount(); i++) {
+			if(rowFilter.apply(i)) {
+				SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(thisFeature);
+				//lon/x first, lat/y second
+				Coordinate coords = new Coordinate(Double.valueOf(String.valueOf(tm.getValueAt(i, longitudeCol))), Double.valueOf(String.valueOf(tm.getValueAt(i,  latitudeCol))));
+				featureBuilder.add(geomFactory.createPoint(coords));
+				for(int j = 1; j < tm.getColumnCount(); j++) {
+					if(latitudeCol != j && longitudeCol != j) {
+						featureBuilder.add(tm.getValueAt(i, j));
+					}
+				}
+				SimpleFeature feature = featureBuilder.buildFeature("Point " + features.size());
+				features.add(feature);
+			}
+		}
+		
+		//get the data store ready
+		ShapefileDataStore ds = null;
+		ShapefileDataStoreFactory dataStoreFactory = new ShapefileDataStoreFactory();
+		Map<String, Serializable> params = new HashMap<>();
+		try {
+			params.put("url", shapefile.toURI().toURL());
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+		params.put("create spatial index", Boolean.TRUE);
+		try {
+			ds = (ShapefileDataStore)dataStoreFactory.createDataStore(params);
+			ds.createSchema(thisFeature);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		//write to the file
+		if(null != ds) {
+			Transaction t = new DefaultTransaction("create");
+			try {
+				String typeName = ds.getTypeNames()[0];
+				SimpleFeatureSource featureSource = ds.getFeatureSource(typeName);
+				SimpleFeatureType shapeType = featureSource.getSchema();
+				System.out.println("Shape: " + shapeType);
+				if(featureSource instanceof SimpleFeatureStore) {
+					SimpleFeatureStore featureStore = (SimpleFeatureStore)featureSource;
+					SimpleFeatureCollection collection = new ListFeatureCollection(thisFeature, features);
+					featureStore.setTransaction(t);
+					try {
+						featureStore.addFeatures(collection);
+						t.commit();
+					}
+					catch(Exception e) {
+						e.printStackTrace();
+						t.rollback();
+					}
+					finally {
+						t.close();
+					}
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	

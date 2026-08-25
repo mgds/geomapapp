@@ -4,7 +4,7 @@
 
   <groupId>org.geomapapp</groupId>
   <artifactId>geomapapp_maven</artifactId>
-  <version>3.7.7.9</version>
+  <version>3.7.7.10</version>
   <packaging>jar</packaging>
 
   <name>geomapapp_maven</name>
@@ -166,6 +166,11 @@
     <dependency>
     	<groupId>org.geotools</groupId>
     	<artifactId>gt-shapefile</artifactId>
+    	<version>${geotools.version}</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.geotools</groupId>
+    	<artifactId>gt-swing</artifactId>
     	<version>${geotools.version}</version>
     </dependency>
     <!-- Java Advanced Imaging (JAI) -->

@@ -116,7 +116,7 @@ public class CustomDB implements Database,
 		saveOptions.add(" -Plotted Data to Excel File (.xlsx)");
 		saveOptions.add(" -Plotted Data to Google Earth (KMZ)");
 		saveOptions.add(" -Plotted Data to Google Earth (KML)");
-		saveOptions.add(" -Table Data to Shapefile (.shp)");
+		saveOptions.add(" -Plotted Data to Shapefile (.shp)");
 		saveOptions.add(" -Selection to ASCII File");
 		saveOptions.add(" -Selection to Excel File (.xls)");
 		saveOptions.add(" -Selection to Excel File (.xlsx)");

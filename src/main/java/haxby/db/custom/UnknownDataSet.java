@@ -554,7 +554,7 @@ public class UnknownDataSet implements MouseListener,
 				}
 			};
 		}
-		else if("selected".equalsIgnoreCase(whichData)) {
+		else if("selection".equalsIgnoreCase(whichData)) {
 			rowFilter = new Function<Integer, Boolean>() {
 				public Boolean apply(Integer row) {
 					for(int selected : dataT.getSelectedRows()) {

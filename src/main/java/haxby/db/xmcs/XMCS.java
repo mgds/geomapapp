@@ -211,6 +211,7 @@ public class XMCS implements ActionListener,
 	
 	//Last update date
 	static String UPDATE_DATE_FILE = PathUtil.getPath("PORTALS/MULTI_CHANNEL_PATH/UPDATE_DATE_FILE", MapApp.BASE_URL + "data/portals/mcs/lastEditDate.txt");
+	static String USGS_UPDATE_DATE_FILE = Database.getCacheBaseDir() + String.join(File.separator, "", "mcs_cmd", "usgsLastUpdateDate.txt");
 
 	//TODO
 	static String ANTARCTIC_SDLS_PATH = PathUtil.getPath("PORTALS/ANTARCTIC_SDLS",
@@ -1175,6 +1176,34 @@ public class XMCS implements ActionListener,
 		}
 	}
 	
+	protected static boolean checkIfNeedsNewUsgsCache() throws IOException {
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		URL updateDateFileUrl = URLFactory.url(USGS_MULTI_CHANNEL_PATH);
+		File updateDateFile = new File(USGS_UPDATE_DATE_FILE);
+		if(!updateDateFile.exists()) return true;
+		String cachePath_mcs = cacheFileGetter.apply(USGS_MULTI_CHANNEL_PATH);
+		String cachePath_scs = cacheFileGetter.apply(USGS_SINGLE_CHANNEL_PATH);
+		File mcsCache = new File(cachePath_mcs), scsCache = new File(cachePath_scs);
+		if(!mcsCache.isDirectory() || !scsCache.isDirectory()) return true;
+		Scanner s = new Scanner(updateDateFile);
+		String dateLine = s.nextLine();
+		s.close();
+		try {
+			Date usgsCacheLastUpdated = dateFormat.parse(dateLine);
+			URL mcsUrl = URLFactory.url(USGS_MULTI_CHANNEL_PATH);
+			URLConnection mcsConnection = mcsUrl.openConnection();
+			long mcsLastMod = mcsConnection.getLastModified();
+			URL scsUrl = URLFactory.url(USGS_SINGLE_CHANNEL_PATH);
+			URLConnection scsConnection = scsUrl.openConnection();
+			long scsLastMod = scsConnection.getLastModified();
+			long usgsLastMod = Math.max(mcsLastMod, scsLastMod);
+			return usgsCacheLastUpdated.before(new Date(usgsLastMod));
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return true;
+		}
+	}
+	
 	protected static boolean checkIfNeedsNewCache(String listPath) throws IOException {
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		String listCachePath = cacheFileGetter.apply(listPath);
@@ -1202,6 +1231,81 @@ public class XMCS implements ActionListener,
 			}
 		}
 		return needsNewCache;
+	}
+	
+	private static Thread refreshCacheInBackground(final XMap map, final XMCS mcs, final String usgsPaths_i, final String listPath_i) throws IOException {
+		Thread t = null;
+		final String listCachePath_i = cacheFileGetter.apply(listPath_i);
+		File listCacheFile_i = new File(listCachePath_i);
+		if(!listCacheFile_i.exists()) {
+			listCacheFile_i.getParentFile().mkdirs();
+			listCacheFile_i.createNewFile();
+		}
+		URL url_i = URLFactory.url(listPath_i);
+		final String cachePath = cacheFileGetter.apply(usgsPaths_i);
+		try {
+			BufferedReader in_i = new BufferedReader(new InputStreamReader(url_i.openStream()));
+			final PrintStream listCacheOut_i = new PrintStream(listCacheFile_i);
+			Runnable r = new Runnable() {
+				public void run() {
+					Vector<XMCruise> tmp = new Vector<>();
+					String inStr;
+					try {
+						while(null != (inStr = in_i.readLine())) {
+							String[] split = inStr.split("\t");
+							if(6 == split.length) {
+								listCacheOut_i.println(inStr);
+								int mapType = MapApp.MERCATOR_MAP;
+								if(map.getApp() instanceof MapApp) {
+									mapType = ((MapApp)map.getApp()).getMapType();
+								}
+								try {
+									int cruiseType = Integer.parseInt(split[1]);
+									switch (mapType) {
+									case MapApp.MERCATOR_MAP:
+										if ((cruiseType & XMCS.MERCATOR_MAP) == 0) continue;
+										break;
+									case MapApp.SOUTH_POLAR_MAP:
+										if ((cruiseType & XMCS.SOUTH_POLAR_MAP) == 0) continue;
+										break;
+									case MapApp.NORTH_POLAR_MAP:
+										if ((cruiseType & XMCS.NORTH_POLAR_MAP) == 0) continue;
+										break;
+									default:
+										break;
+									}
+
+									Point2D.Double wn = new Point2D.Double(Double.parseDouble(split[2]),
+															Double.parseDouble(split[5]));
+									Point2D.Double es = new Point2D.Double(Double.parseDouble(split[3]),
+															Double.parseDouble(split[4]));
+
+									XMCruise cruise = new XMCruise(mcs, map, split[0]);
+									cruise.setBounds(wn, es);
+									tmp.add(cruise);
+								}
+								catch(NumberFormatException e) {
+									e.printStackTrace();
+								}
+							}
+						}
+						listCacheOut_i.close();
+						for(int i = 0; i < tmp.size(); i++) {
+							tmp.get(i).setCacheOutBase(cachePath);
+							tmp.get(i).loadLines(usgsPaths_i);
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			};
+			t = new Thread(r);
+			t.start();
+		}
+		catch(IOException e) {
+			e.printStackTrace();
+		}
+		return t;
 	}
 
 	/**
@@ -1242,86 +1346,44 @@ public class XMCS implements ActionListener,
 		File listCacheFile = new File(listCachePath);
 		boolean needsNewCache = checkIfNeedsNewCache(listPath);
 		BufferedReader in = new BufferedReader( new InputStreamReader(needsNewCache ? url.openStream() : new FileInputStream(listCacheFile)));
-		if(needsNewCache && path.equals(MULTI_CHANNEL_PATH)) {
-			//also load the others in the background
-			String[] otherPaths = new String[] {USGS_MULTI_CHANNEL_PATH, USGS_SINGLE_CHANNEL_PATH, ANTARCTIC_SDLS_PATH};
-			String[] otherExpListPaths = new String[] {USGS_MULTI_CHANNEL_EXP_LIST, USGS_SINGLE_CHANNEL_EXP_LIST, ANTARCTIC_SDLS_EXP_LIST};
-			for(int i = 0; i < otherPaths.length; i++) {
-				final String listPath_i = otherExpListPaths[i];
-				final String listCachePath_i = cacheFileGetter.apply(listPath_i);
-				File listCacheFile_i = new File(listCachePath_i);
-				if(!listCacheFile_i.exists()) {
-					listCacheFile_i.getParentFile().mkdirs();
-					listCacheFile_i.createNewFile();
-				}
-				URL url_i = URLFactory.url(listPath_i);
-				final String otherPaths_i = otherPaths[i];
-				final String cachePath = cacheFileGetter.apply(otherPaths[i]);
-				try {
-					BufferedReader in_i = new BufferedReader(new InputStreamReader(url_i.openStream()));
-					final PrintStream listCacheOut_i = new PrintStream(listCacheFile_i);
-					Runnable r = new Runnable() {
-						public void run() {
-							Vector<XMCruise> tmp = new Vector<XMCruise>();
-							String inStr;
-							try {
-								while(null != (inStr = in_i.readLine())) {
-									String[] split = inStr.split("\t");
-									if(split.length == 6) {
-										listCacheOut_i.println(inStr);
-									}
-									int mapType = MapApp.MERCATOR_MAP;
-									if (map.getApp() instanceof MapApp)
-										mapType =((MapApp) map.getApp()).getMapType();
-	
-									try {
-										int cruiseType = Integer.parseInt(split[1]);
-										switch (mapType) {
-										case MapApp.MERCATOR_MAP:
-											if ((cruiseType & XMCS.MERCATOR_MAP) == 0) continue;
-											break;
-										case MapApp.SOUTH_POLAR_MAP:
-											if ((cruiseType & XMCS.SOUTH_POLAR_MAP) == 0) continue;
-											break;
-										case MapApp.NORTH_POLAR_MAP:
-											if ((cruiseType & XMCS.NORTH_POLAR_MAP) == 0) continue;
-											break;
-										default:
-											break;
-										}
-	
-										Point2D.Double wn = new Point2D.Double(Double.parseDouble(split[2]),
-																Double.parseDouble(split[5]));
-										Point2D.Double es = new Point2D.Double(Double.parseDouble(split[3]),
-																Double.parseDouble(split[4]));
-	
-										XMCruise cruise = new XMCruise(mcs, map, split[0]);
-										cruise.setBounds(wn, es);
-										tmp.add(cruise);
-									} catch (NumberFormatException ex) {
-										continue;
-									}
-								}
-								listCacheOut_i.close();
-								XMCruise[] _cruises = new XMCruise[tmp.size()];
-								for(int i = 0; i < _cruises.length; i++) {
-									_cruises[i] = tmp.get(i);
-									_cruises[i].setCacheOutBase(cachePath);
-									_cruises[i].loadLines(otherPaths_i);
-								}
-							}
-							catch(IOException e) {
-								e.printStackTrace();
-							}
-						}
-					};
-					new Thread(r).start();
-				}
-				catch(IOException e) {
-					canAccessRemote = false;
-					e.printStackTrace();
-				}
+		//load the USGS stuff in the background
+		if(checkIfNeedsNewUsgsCache()) {
+			String[] usgsPaths = new String[] {USGS_MULTI_CHANNEL_PATH, USGS_SINGLE_CHANNEL_PATH};
+			String[] usgsExpListPaths = new String[] {USGS_MULTI_CHANNEL_EXP_LIST, USGS_SINGLE_CHANNEL_EXP_LIST};
+			boolean canAccessUsgs = true;
+			final Thread[] threads = new Thread[usgsPaths.length];
+			for(int i = 0; i < usgsPaths.length; i++) {
+				threads[i] = refreshCacheInBackground(map, mcs, usgsPaths[i], usgsExpListPaths[i]);
+				canAccessUsgs &= (null != threads[i]);
 			}
+			if(canAccessUsgs) {
+				Runnable r = new Runnable() {
+					public void run() {
+						try {
+							for(int i = 0; i < threads.length; i++) {
+								threads[i].join();
+							}
+							File f = new File(USGS_UPDATE_DATE_FILE);
+							if(!f.exists()) {
+								f.getParentFile().mkdirs();
+								f.createNewFile();
+							}
+							PrintStream ps = new PrintStream(f);
+							SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+							ps.println(dateFormat.format(new Date()));
+						}
+						catch(InterruptedException | IOException e) {
+							e.printStackTrace();
+						}
+					}
+				};
+				new Thread(r).start();
+			}
+		}
+		if(needsNewCache && path.equals(MULTI_CHANNEL_PATH)) {
+			//load the antarctic SDLS in the background alongside the regular MCS
+			Thread car = refreshCacheInBackground(map, mcs, ANTARCTIC_SDLS_PATH, ANTARCTIC_SDLS_EXP_LIST);
+			canAccessRemote &= (null != car);
 		}
 
 		PrintStream cacheOut = null;

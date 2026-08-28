@@ -1,6 +1,5 @@
 package org.geomapapp.grid;
 
-import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -15,12 +14,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Vector;
@@ -29,24 +25,20 @@ import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.JTextArea;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
 import org.geomapapp.geom.CylindricalProjection;
 import org.geomapapp.geom.MapProjection;
 import org.geomapapp.geom.Mercator;
-import org.geomapapp.geom.MercatorProjection;
 import org.geomapapp.geom.ProjectionDialog;
 import org.geomapapp.geom.RectangularProjection;
 import org.geomapapp.geom.UTM;
@@ -60,12 +52,9 @@ import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.imageio.geotiff.GeoTiffIIOMetadataDecoder;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.Envelope2D;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.Matrix;
-import org.opengis.referencing.operation.Projection;
-import org.geotools.referencing.crs.DefaultProjectedCRS;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
+import org.opengis.geometry.DirectPosition;
+import org.opengis.referencing.operation.Matrix;
 
 import haxby.map.MapApp;
 import haxby.proj.PolarStereo;
@@ -175,6 +164,7 @@ public class ImportGrid implements Runnable {
 	JFrame frame;
 	JTextArea area;
 	JButton gridB;
+	JProgressBar progressBar;
 	double dxMin,
 			dyMin,
 			zMin, 
@@ -200,6 +190,7 @@ public class ImportGrid implements Runnable {
 	ShapeSuite suite;
 	int currentIndex,
 		gridType;
+	private int progressTotalFiles = 1;
 	protected int mapType;
 	boolean waiting = false;
 	protected String logFileName;
@@ -234,6 +225,10 @@ public class ImportGrid implements Runnable {
 				begin();
 			}
 		});
+		progressBar = new JProgressBar(0, 100);
+		progressBar.setVisible(false);
+		progressBar.setStringPainted(true);
+		panel.add(progressBar);
 
 		frame.getContentPane().add( panel, "North");
 	    JScrollPane scroll = new JScrollPane (area);
@@ -308,9 +303,6 @@ public class ImportGrid implements Runnable {
 				double nanValue = mdd.hasNoData()?mdd.getNoData():Double.NaN;
 				pd.setNoData(nanValue);
 				double minZ = Double.MAX_VALUE, maxZ = -Double.MAX_VALUE;
-				GridCoordinates2D low = env.getLow(), high = env.getHigh();
-				int numCells = (high.y-low.y+1)*(high.x-low.x+1);
-				int howManyHundred = numCells/100;
 				appendNewText("\nGetting Z range… ");
 				MathContext rounder = new MathContext(7);
 				final double nv = nanValue;
@@ -324,9 +316,12 @@ public class ImportGrid implements Runnable {
 					}
 				};
 				try {
+					progressBar.setVisible(true);
 					BufferedImage imgBuf = ImageIO.read(gFile);
 					WritableRaster raster = imgBuf.getRaster();
-					for(int i = 0; i < raster.getDataBuffer().getSize(); i++) {
+					int numCells = raster.getDataBuffer().getSize();
+					int howManyHundred = numCells/100;
+					for(int i = 0; i < numCells; i++) {
 						double zVal = raster.getDataBuffer().getElemDouble(i);
 						if(!mightAsWellBeNan.apply(zVal)) {
 							if(zVal < minZ) {
@@ -336,31 +331,16 @@ public class ImportGrid implements Runnable {
 								maxZ = zVal;
 							}
 						}
+						if(0 == howManyHundred || 0 == i % howManyHundred) {
+							showFileProgress(0, currentIndex, (double) i / numCells);
+						}
 					}
+					showFileProgress(0, currentIndex, 1.0);
 					System.out.println("Z range is " + minZ + " to " + maxZ);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-//				for(int y = low.y; y < high.y; y++) {
-//					for(int x = low.x; x < high.x; x++) {
-//						int whichCell = (y*(high.x-low.x+1) + (x-low.x));
-//						if(0 == howManyHundred || 0 == whichCell % howManyHundred) {
-//							int percent = whichCell * 100 / numCells;
-//							showPercent(percent);
-//						}
-//						else if(x+1 == high.x && y+1 == high.y) {
-//							showPercent(100);
-//						}
-//						double[] vals = gridCoverage.evaluate(new GridCoordinates2D(x, y), (double[])null);
-//						if(!Double.isNaN(vals[0]) && (Double.isNaN(nanValue) || !(new BigDecimal(vals[0], rounder).equals(new BigDecimal(nanValue, rounder))))) {
-//							if(vals[0] < minZ) {
-//								minZ = vals[0];
-//								//System.out.println("min Z is now " + minZ + " at (" + x + ", " + y + ")");
-//							}
-//							if(vals[0] > maxZ) maxZ = vals[0];
-//						}
-//					}
-//				}
+				progressBar.setVisible(false);
 				pd.setMinMaxZ(minZ, maxZ);
 				pd.showPixelNodeCheckBox(true);
 				pd.setDx(dx);
@@ -476,53 +456,58 @@ public class ImportGrid implements Runnable {
 					return;
 				}
 
-				switch (gridType) {
-				case 0:
-					try {
-						openNETCDF(choice);
-					} catch (IOException e) {
-						showFormatError(choice[0].getName());
+				final File[] choiceFinal = choice;
+				new Thread(new Runnable() {
+					public void run() {
+						switch (gridType) {
+						case 0:
+							try {
+								openNETCDF(choiceFinal);
+							} catch (IOException e) {
+								showFormatError(choiceFinal[0].getName());
+							}
+							break;
+						case 2:
+							try {
+								openESRI_ASCII(choiceFinal);
+							} catch (IOException e) {
+								showFormatError(choiceFinal[0].getName());
+							}
+							break;
+						case 3:
+							try {
+								openESRI_Binary(choiceFinal);
+							} catch (IOException e) {
+								showFormatError(choiceFinal[0].getName());
+							}
+							break;
+						case 4:
+							try {
+								// GMA 1.6.6: Added GRD98 grid format option
+								openGRD98(choiceFinal);
+							} catch (IOException e) {
+								showFormatError(choiceFinal[0].getName());
+							}
+							break;
+						case 5:
+							try {
+								openPolarASC(choiceFinal);
+							} catch (IOException e) {
+								showFormatError(choiceFinal[0].getName());
+							}
+						case 1:
+							try {
+								//GMA 3.7.5: added Geotiff grid import
+								openGeotiff(choiceFinal);
+							}
+							catch(IOException e) {
+								showFormatError(choiceFinal[0].getName());
+							}
+						default:
+							break;
+						}
 					}
-					break;
-				case 2:
-					try {
-						openESRI_ASCII(choice);
-					} catch (IOException e) {
-						showFormatError(choice[0].getName());
-					}
-					break;
-				case 3:
-					try {
-						openESRI_Binary(choice);
-					} catch (IOException e) {
-						showFormatError(choice[0].getName());
-					}
-					break;
-				case 4:
-					try {
-						// GMA 1.6.6: Added GRD98 grid format option
-						openGRD98(choice);
-					} catch (IOException e) {
-						showFormatError(choice[0].getName());
-					}
-					break;
-				case 5:
-					try {
-						openPolarASC(choice);
-					} catch (IOException e) {
-						showFormatError(choice[0].getName());
-					}
-				case 1:
-					try {
-						//GMA 3.7.5: added Geotiff grid import
-						openGeotiff(choice);
-					}
-					catch(IOException e) {
-						showFormatError(choice[0].getName());
-					}
-				default:
-					break;
-				}
+				}).start();
 			}
 		});
 	}
@@ -655,6 +640,7 @@ public class ImportGrid implements Runnable {
 		TileIO.Short tileIO = new TileIO.Short(proj, dir +"/z_"+res, 320, 0);
 		tileIO.setReadonly(false);
 
+		progressTotalFiles = files.length;
 		boolean nullGrid = false;
 		if (log) {
 			logFileName = "GridImports_" + name +
@@ -665,9 +651,10 @@ public class ImportGrid implements Runnable {
 			writer = new BufferedWriter(new FileWriter(logFile));
 		}
 		for( int k=0 ; k<files.length ; k++) {
+			currentIndex = k;
 			area.setText("Processing "+files[k].getName()+", "+ (k+1) +" of "+ files.length);
 			area.update(area.getGraphics());
-			if (grids[k].getGrid() != null) {			
+			if (grids[k].getGrid() != null) {
 				tile( grids[k].getGrid(), tileIO, proj, scale, offset, zScale[k], add_offset[k], res);
 				//if logging, write filename to log
 				if (log) {
@@ -713,7 +700,8 @@ public class ImportGrid implements Runnable {
 		}
 		zScale = new double[files.length];
 		zScale[0] = 1;
-		add_offset = new double[files.length]; 
+		add_offset = new double[files.length];
+		progressTotalFiles = files.length;
 		area.setText("Opening " + name);
 		area.update(area.getGraphics());
 		double furthestWest = Double.MAX_VALUE, furthestEast = -Double.MAX_VALUE, furthestNorth = -Double.MAX_VALUE, furthestSouth = Double.MAX_VALUE;
@@ -1501,10 +1489,10 @@ public class ImportGrid implements Runnable {
 			for( int iy=iy1 ; iy<=iy2 ; iy++) {
 				int whichCell = (ix-ix1)*(iy2-iy1) + (iy-iy1);
 				if(0 == howManyHundred || whichCell%howManyHundred == 0) {
-					showPercent(whichCell * 100 / numCells);
+					showFileProgress(1, currentIndex, (double) whichCell / numCells);
 				}
 				else if(iy == iy2 && ix == ix2) {
-					showPercent(100);
+					showFileProgress(1, currentIndex, 1.0);
 				}
 				int yA = (int)Math.max(iy*320, y1);
 				int yB = (int)Math.min((iy+1)*320, y2);
@@ -1688,44 +1676,24 @@ public class ImportGrid implements Runnable {
 		new Thread(r).start();
 	}
 	
-	public void showPercent(int percent) {
-		if(1 > percent) {
-			appendNewText("(0%)");
-		}
-		else {
-			new Thread(new PercentDisplay(percent)).start();
-		}
-	}
-	
-	class PercentDisplay implements Runnable {
-		private int percent;
-		public PercentDisplay(int percentIn) {
-			percent = percentIn;
-		}
-		private String percString() {
-			return "(" + percent + "%)";
-		}
-		private String prevPercString() {
-			return "(" + (percent-1) + "%)";
-		}
-		public void run() {
-			synchronized(area) {
-				if(0 == percent) {
-					area.append("\n"+percString());
-				}
-				else {
-					area.setText(area.getText().replace(prevPercString(), percString()));
-				}
-				if(area.getText().length()>0)area.setCaretPosition(area.getText().length()-1);
-				if(area.getGraphics() != null) area.update(area.getGraphics());
+	public void showPercent(final int percent) {
+		final int clamped = Math.max(0, Math.min(100, percent));
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				progressBar.setValue(clamped);
+				progressBar.setString(clamped + "%");
 			}
-		}
+		});
 	}
 
-	/*
-	 * Add a Please Wait... message top the Import Grid log area.
-	 * Add a new . every 2s until the global variable 'waiting' is set to false. 
-	 */
+	private void showFileProgress(int phase, int fileIndex, double localFrac) {
+		int totalFiles = Math.max(1, progressTotalFiles);
+		localFrac = Math.max(0., Math.min(1., localFrac));
+		double doneUnits = phase * totalFiles + fileIndex + localFrac;
+		showPercent((int) (100 * doneUnits / (totalFiles)));
+	}
+
+
 	protected void displayWaitingDots() {
 		Runnable runnable = new WaitingDots();
 		Thread thread = new Thread(runnable);

@@ -6,6 +6,8 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -23,7 +25,9 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Function;
 
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
@@ -255,12 +259,13 @@ public class ImportGrid implements Runnable {
 		private GeoTiffIIOMetadataDecoder mdd;
 		private boolean flip;
 		private String name;
+		private File gFile;
 		
-		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn, String nameIn) {
-			this(gcIn, envIn, projIn, mddIn, nameIn, false);
+		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn, File fileIn) {
+			this(gcIn, envIn, projIn, mddIn, fileIn, false);
 		}
 		
-		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn, String nameIn, boolean shouldFlip) {
+		public GeotiffGridFile(GridCoverage2D gcIn, GridEnvelope2D envIn, MapProjection projIn, GeoTiffIIOMetadataDecoder mddIn, File fileIn, boolean shouldFlip) {
 			grid = null;
 			_wesn = null;
 			gridCoverage = gcIn;
@@ -268,7 +273,8 @@ public class ImportGrid implements Runnable {
 			proj = projIn;
 			mdd = mddIn;
 			flip = shouldFlip;
-			name = nameIn;
+			gFile = fileIn;
+			name = gFile.getName();
 		}
 		
 		public Grid2D getGrid() {
@@ -307,26 +313,54 @@ public class ImportGrid implements Runnable {
 				int howManyHundred = numCells/100;
 				appendNewText("\nGetting Z range… ");
 				MathContext rounder = new MathContext(7);
-				for(int y = low.y; y < high.y; y++) {
-					for(int x = low.x; x < high.x; x++) {
-						int whichCell = (y*(high.x-low.x+1) + (x-low.x));
-						if(0 == howManyHundred || 0 == whichCell % howManyHundred) {
-							int percent = whichCell * 100 / numCells;
-							showPercent(percent);
+				final double nv = nanValue;
+				Function<Double, Boolean> mightAsWellBeNan = new Function<Double, Boolean>() {
+					public Boolean apply(Double d) {
+						if(Double.isNaN(nv)) {
+							return Double.isNaN(d);
 						}
-						else if(x+1 == high.x && y+1 == high.y) {
-							showPercent(100);
-						}
-						double[] vals = gridCoverage.evaluate(new GridCoordinates2D(x, y), (double[])null);
-						if(!Double.isNaN(vals[0]) && (Double.isNaN(nanValue) || !(new BigDecimal(vals[0], rounder).equals(new BigDecimal(nanValue, rounder))))) {
-							if(vals[0] < minZ) {
-								minZ = vals[0];
-								//System.out.println("min Z is now " + minZ + " at (" + x + ", " + y + ")");
+						BigDecimal bd = new BigDecimal(d, rounder);
+						return bd.equals(new BigDecimal(nv, rounder));
+					}
+				};
+				try {
+					BufferedImage imgBuf = ImageIO.read(gFile);
+					WritableRaster raster = imgBuf.getRaster();
+					for(int i = 0; i < raster.getDataBuffer().getSize(); i++) {
+						double zVal = raster.getDataBuffer().getElemDouble(i);
+						if(!mightAsWellBeNan.apply(zVal)) {
+							if(zVal < minZ) {
+								minZ = zVal;
 							}
-							if(vals[0] > maxZ) maxZ = vals[0];
+							if(zVal > maxZ) {
+								maxZ = zVal;
+							}
 						}
 					}
+					System.out.println("Z range is " + minZ + " to " + maxZ);
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
+//				for(int y = low.y; y < high.y; y++) {
+//					for(int x = low.x; x < high.x; x++) {
+//						int whichCell = (y*(high.x-low.x+1) + (x-low.x));
+//						if(0 == howManyHundred || 0 == whichCell % howManyHundred) {
+//							int percent = whichCell * 100 / numCells;
+//							showPercent(percent);
+//						}
+//						else if(x+1 == high.x && y+1 == high.y) {
+//							showPercent(100);
+//						}
+//						double[] vals = gridCoverage.evaluate(new GridCoordinates2D(x, y), (double[])null);
+//						if(!Double.isNaN(vals[0]) && (Double.isNaN(nanValue) || !(new BigDecimal(vals[0], rounder).equals(new BigDecimal(nanValue, rounder))))) {
+//							if(vals[0] < minZ) {
+//								minZ = vals[0];
+//								//System.out.println("min Z is now " + minZ + " at (" + x + ", " + y + ")");
+//							}
+//							if(vals[0] > maxZ) maxZ = vals[0];
+//						}
+//					}
+//				}
 				pd.setMinMaxZ(minZ, maxZ);
 				pd.showPixelNodeCheckBox(true);
 				pd.setDx(dx);
@@ -711,7 +745,7 @@ public class ImportGrid implements Runnable {
 			//convert the file to Grid2D
 			//get the projection first
 			final MapProjection proj = GTConverter.getGmaProj(geom);
-			gridFiles[currentIndex] = new GeotiffGridFile(gridCoverage, env, proj, mdd, file.getName());
+			gridFiles[currentIndex] = new GeotiffGridFile(gridCoverage, env, proj, mdd, file);
 			if(null == gridFiles[currentIndex].getGrid()) {
 				appendNewText("\nCancelled import of " + file.getName());
 				continue;

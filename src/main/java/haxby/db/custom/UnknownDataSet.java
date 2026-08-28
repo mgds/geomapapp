@@ -586,7 +586,9 @@ public class UnknownDataSet implements MouseListener,
 		sftBuilder.setDefaultGeometry("the_geom");
 		for(int i = 1; i < tm.getColumnCount(); i++) {
 			if(latitudeCol != i && longitudeCol != i) {
-				sftBuilder.add(tm.getColumnName(i), tm.getColumnClass(i));
+				String colName = tm.getColumnName(i);
+				Class<?> clazz = tm.getColumnClass(i);
+				sftBuilder.add(colName.length()>10 ? colName.substring(0,10) : colName, clazz);
 			}
 		}
 		sftBuilder.setDescription(new SimpleInternationalString(title));

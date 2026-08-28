@@ -682,6 +682,7 @@ public class XMCS implements ActionListener,
 		dialogProgress.setAlwaysOnTop(true);
 		File cacheDir = new File(cacheFileGetter.apply(MULTI_CHANNEL_PATH));
 		boolean needsNewCache = !(cacheDir.isDirectory());
+		boolean needsNewUsgsCache = !(cacheDir.isDirectory());
 		if(needsNewCache) {
 			if(cacheDir.exists()) {
 				cacheDir.delete();
@@ -690,12 +691,14 @@ public class XMCS implements ActionListener,
 		}
 		try {
 			needsNewCache = checkIfNeedsNewCache();
+			needsNewUsgsCache = checkIfNeedsNewUsgsCache();
 		}
 		catch(IOException e) {
 			System.err.println("Unsure if new cache is needed.");
 			e.printStackTrace();
 		}
-		if(needsNewCache) {
+		boolean thisNeedsNewCache = (path.equals(MULTI_CHANNEL_PATH) || path.equals(ANTARCTIC_SDLS_PATH)) ? needsNewCache : needsNewUsgsCache;
+		if(thisNeedsNewCache) {
 			//delete the old cache
 			String cachedPath = cacheFileGetter.apply(MULTI_CHANNEL_PATH);
 			File cachedDir = new File(cachedPath);
@@ -705,7 +708,7 @@ public class XMCS implements ActionListener,
 				}
 			}
 		}
-		String pathToReadFrom = needsNewCache ? path : cacheFileGetter.apply(path);
+		String pathToReadFrom = thisNeedsNewCache ? path : cacheFileGetter.apply(path);
 	//	while(k!=k0) {
 		for(k=0 ; k<cruises.length ; k++) {
 			pb.setValue(k+1);
@@ -1233,17 +1236,27 @@ public class XMCS implements ActionListener,
 		return needsNewCache;
 	}
 	
-	private static Thread refreshCacheInBackground(final XMap map, final XMCS mcs, final String usgsPaths_i, final String listPath_i) throws IOException {
+	private static Thread refreshCacheInBackground(final XMap map, final XMCS mcs, final String remoteFolderPath, final String expListPath) throws IOException {
 		Thread t = null;
-		final String listCachePath_i = cacheFileGetter.apply(listPath_i);
+		final String listCachePath_i = cacheFileGetter.apply(expListPath);
 		File listCacheFile_i = new File(listCachePath_i);
 		if(!listCacheFile_i.exists()) {
 			listCacheFile_i.getParentFile().mkdirs();
 			listCacheFile_i.createNewFile();
 		}
-		URL url_i = URLFactory.url(listPath_i);
-		final String cachePath = cacheFileGetter.apply(usgsPaths_i);
+		URL url_i = URLFactory.url(expListPath);
+		final String cachePath = cacheFileGetter.apply(remoteFolderPath);
 		try {
+			File f = new File(cachePath);
+			if(f.exists()) {
+				if(f.isDirectory()) {
+					org.apache.commons.io.FileUtils.deleteDirectory(f);
+				}
+				else {
+					f.delete();
+				}
+			}
+			f.mkdirs();
 			BufferedReader in_i = new BufferedReader(new InputStreamReader(url_i.openStream()));
 			final PrintStream listCacheOut_i = new PrintStream(listCacheFile_i);
 			Runnable r = new Runnable() {
@@ -1292,7 +1305,7 @@ public class XMCS implements ActionListener,
 						listCacheOut_i.close();
 						for(int i = 0; i < tmp.size(); i++) {
 							tmp.get(i).setCacheOutBase(cachePath);
-							tmp.get(i).loadLines(usgsPaths_i);
+							tmp.get(i).loadLines(remoteFolderPath);
 						}
 					} catch (IOException e) {
 						e.printStackTrace();

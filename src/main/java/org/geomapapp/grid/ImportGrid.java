@@ -1,5 +1,7 @@
 package org.geomapapp.grid;
 
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -34,7 +36,10 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.plaf.ProgressBarUI;
+import javax.swing.plaf.basic.BasicProgressBarUI;
 
 import org.geomapapp.geom.CylindricalProjection;
 import org.geomapapp.geom.MapProjection;
@@ -225,9 +230,21 @@ public class ImportGrid implements Runnable {
 				begin();
 			}
 		});
+		//UIManager.put("ProgressBarUI", "javax.swing.plaf.basic.BasicProgressBarUI");
 		progressBar = new JProgressBar(0, 100);
+		ProgressBarUI pbui = new BasicProgressBarUI() {
+			protected Color getSelectionForeground() {
+				return Color.WHITE;
+			}
+			protected Color getSelectionBackground() {
+				return Color.BLACK;
+			}
+		};
 		progressBar.setVisible(false);
 		progressBar.setStringPainted(true);
+		progressBar.setUI(pbui);
+		progressBar.setForeground(new Color(0, 107, 255));
+		
 		panel.add(progressBar);
 
 		frame.getContentPane().add( panel, "North");
@@ -316,11 +333,13 @@ public class ImportGrid implements Runnable {
 					}
 				};
 				try {
+					progressBar.setIndeterminate(true);
 					progressBar.setVisible(true);
 					BufferedImage imgBuf = ImageIO.read(gFile);
 					WritableRaster raster = imgBuf.getRaster();
 					int numCells = raster.getDataBuffer().getSize();
 					int howManyHundred = numCells/100;
+					progressBar.setIndeterminate(false);
 					for(int i = 0; i < numCells; i++) {
 						double zVal = raster.getDataBuffer().getElemDouble(i);
 						if(!mightAsWellBeNan.apply(zVal)) {
@@ -363,6 +382,7 @@ public class ImportGrid implements Runnable {
 				appendNewText("\nConverting the grid… ");
 				//displayWaitingDots();
 				Date start = new Date();
+				progressBar.setValue(0);
 				progressBar.setVisible(true);
 				GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, tmpProj, hasNoData, nanValue, rounder, signDx, flip?(-signDy):signDy, ImportGrid.this);
 				progressBar.setVisible(false);

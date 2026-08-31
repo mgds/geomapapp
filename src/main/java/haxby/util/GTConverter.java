@@ -129,10 +129,10 @@ public class GTConverter {
 			double percentCompleted = numCompleted * 100. / numTotalRows;
 //			System.out.println(percentCompleted + "%");
 			ig.showPercent((int)Math.round(percentCompleted));
-			if(0 == numCompleted % 1000) {
-				System.out.println(numCompleted + "/" + numTotalRows);
-			}
-			//if this is the last one, shut down the ForkJoinPool
+//			if(0 == numCompleted % 1000) {
+//				System.out.println(numCompleted + "/" + numTotalRows);
+//			}
+			//return true iff there are more tasks to complete
 			if(numTotalRows == numCompleted) {
 				return false;
 			}

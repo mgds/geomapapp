@@ -363,7 +363,9 @@ public class ImportGrid implements Runnable {
 				appendNewText("\nConverting the grid… ");
 				//displayWaitingDots();
 				Date start = new Date();
+				progressBar.setVisible(true);
 				GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, tmpProj, hasNoData, nanValue, rounder, signDx, flip?(-signDy):signDy, ImportGrid.this);
+				progressBar.setVisible(false);
 				Date end = new Date();
 				long durMillis = end.getTime() - start.getTime();
 				if(durMillis > 1000) {
@@ -1476,7 +1478,8 @@ public class ImportGrid implements Runnable {
 		appendNewText("\nTiling from X: " + ix1 + " to " + ix2 + "\n\t and Y: " + iy1 + " to " + iy2 + "…\n");
 		waiting = true;
 		//displayWaitingDots();
-
+		progressBar.setVisible(true);
+		showPercent(0);
 		int numCells = (ix2-ix1+1) * (iy2-iy1+1);
 		int howManyHundred = numCells/100;
 		for( int ix=ix1 ; ix<=ix2 ; ix++) {
@@ -1489,10 +1492,12 @@ public class ImportGrid implements Runnable {
 			for( int iy=iy1 ; iy<=iy2 ; iy++) {
 				int whichCell = (ix-ix1)*(iy2-iy1) + (iy-iy1);
 				if(0 == howManyHundred || whichCell%howManyHundred == 0) {
-					showFileProgress(1, currentIndex, (double) whichCell / numCells);
+					//showFileProgress(1, currentIndex, (double) whichCell / numCells);
+					showPercent(0 == howManyHundred ? (whichCell * 100 / numCells) : (whichCell / howManyHundred));
 				}
 				else if(iy == iy2 && ix == ix2) {
-					showFileProgress(1, currentIndex, 1.0);
+					//showFileProgress(1, currentIndex, 1.0);
+					showPercent(100);
 				}
 				int yA = (int)Math.max(iy*320, y1);
 				int yB = (int)Math.min((iy+1)*320, y2);
@@ -1540,6 +1545,7 @@ public class ImportGrid implements Runnable {
 				totalCount += count;
 			}
 		}
+		progressBar.setVisible(false);
 		waiting = false;
 	}
 

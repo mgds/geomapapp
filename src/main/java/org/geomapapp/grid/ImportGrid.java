@@ -1617,11 +1617,10 @@ public class ImportGrid implements Runnable {
 		appendNewText("\nTiling from X: " + ix1 + " to " + ix2 + "\n\t and Y: " + iy1 + " to " + iy2 + "…\n");
 		waiting = true;
 		//displayWaitingDots();
-		progressBar.setVisible(true);
 		showPercent(0);
+		progressBar.setVisible(true);
 		int numCells = (ix2-ix1+1) * (iy2-iy1+1);
 		int howManyHundred = numCells/100;
-		//TODO ColumnTiler will be used here with Fork/Join
 		ForkJoinPool fjp = new ForkJoinPool();
 		for( int ix=ix1 ; ix<=ix2 ; ix++) {
 			int xA = (int)Math.max(ix*320, x1);

@@ -4,7 +4,7 @@
   <groupId>org.geomapapp</groupId>
   <artifactId>geomapapp_maven</artifactId>
   <name>geomapapp_maven</name>
-  <version>3.7.7.3</version>
+  <version>3.7.7.12</version>
   <url>http://maven.apache.org</url>
   <build>
     <plugins>
@@ -65,8 +65,8 @@
     </repository>
   </repositories>
   <properties>
-    <poi.version>3.16</poi.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <geotools.version>28.5</geotools.version>
+    <poi.version>3.16</poi.version>
   </properties>
 </project>

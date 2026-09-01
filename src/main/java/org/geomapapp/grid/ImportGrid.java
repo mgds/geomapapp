@@ -502,7 +502,7 @@ public class ImportGrid implements Runnable {
 				appendNewText("\nConverting the grid… ");
 				//displayWaitingDots();
 				Date start = new Date();
-				progressBar.setValue(0);
+				showPercent(0);
 				progressBar.setVisible(true);
 				GTConverter.Grid2DWrapper tmp = GTConverter.getGrid(gridCoverage, tmpProj, hasNoData, nanValue, rounder, signDx, flip?(-signDy):signDy, ImportGrid.this);
 				progressBar.setVisible(false);

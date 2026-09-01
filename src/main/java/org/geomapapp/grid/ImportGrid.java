@@ -361,13 +361,12 @@ public class ImportGrid implements Runnable {
 				}
 			}
 			colsProcessed++;
-//			if(numCols < 100 || colsProcessed % (numCols/100) == 0) {
-				ig.showPercent((int)Math.round(100. * colsProcessed / numCols));
-//			}
-//			else if(colsProcessed == numCols) {
-//				ig.showPercent(100);
-//			}
-			return colsProcessed != numCols;
+			ig.showPercent((int)Math.round(100. * colsProcessed / numCols));
+			if(colsProcessed == numCols) {
+				colsProcessed = 0;
+				return true;
+			}
+			return false;
 		}
 
 		@Override

@@ -134,6 +134,7 @@ public class GTConverter {
 //			}
 			//return true iff there are more tasks to complete
 			if(numTotalRows == numCompleted) {
+				numCompleted = 0;
 				return false;
 			}
 			return true;

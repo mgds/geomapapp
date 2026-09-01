@@ -5,7 +5,14 @@ import java.awt.geom.Point2D;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.AbstractMap;
 import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import javax.swing.JOptionPane;
@@ -68,6 +75,83 @@ public class GTConverter {
 		public double getdy() { return dy; }
 	}
 	
+	private static class RowProcessor extends ForkJoinTask<Map.Entry<Double, Double>> {
+		
+		private final GridCoverage2D gtGrid;
+		private final GridCoordinates2D low, high;
+		private final int xDir, y, realY;
+		private final Function<Double, Boolean> isData;
+		private final Grid2D.Double gmaGrid;
+		private final ImportGrid ig;
+		private final int numTotalRows;
+		private double lowest, highest;
+		
+		private static volatile int numCompleted = 0;
+		
+		public RowProcessor(GridCoverage2D gridIn, Grid2D.Double gmaGridIn, GridCoordinates2D lowIn, GridCoordinates2D highIn, int xDirIn, int yIn, int realYIn, Function<Double, Boolean> dataFn, ImportGrid igIn, int numRowsIn, double lowestIn, double highestIn) {
+			gtGrid = gridIn;
+			gmaGrid = gmaGridIn;
+			low = lowIn;
+			high = highIn;
+			xDir = xDirIn;
+			y = yIn;
+			realY = realYIn;
+			isData = dataFn;
+			ig = igIn;
+			numTotalRows = numRowsIn;
+			lowest = lowestIn;
+			highest = highestIn;
+		}
+
+		@Override
+		public boolean exec() {
+//			LocalDateTime start = LocalDateTime.now();
+			for(int x = low.x; x < high.x; x++) {
+				int realX = (xDir > 0)?(x):(high.x-x-1+low.x);
+				GridCoordinates2D pt = new GridCoordinates2D(realX, realY);
+				double[] vals = gtGrid.evaluate(pt, (double[])null);
+				if(isData.apply(vals[0])) {
+					if(vals[0] < lowest) {
+						lowest = vals[0];
+					}
+					if(vals[0] > highest) {
+						highest = vals[0];
+					}
+					gmaGrid.setValue(x, y, vals[0]);
+				}
+				else {
+					gmaGrid.setValue(x, y, Double.NaN);
+				}
+			}
+//			LocalDateTime end = LocalDateTime.now();
+//			System.out.println(Duration.between(start, end).toNanos() / (high.x - low.x));
+			numCompleted++;
+			double percentCompleted = numCompleted * 100. / numTotalRows;
+//			System.out.println(percentCompleted + "%");
+			ig.showPercent((int)Math.round(percentCompleted));
+//			if(0 == numCompleted % 1000) {
+//				System.out.println(numCompleted + "/" + numTotalRows);
+//			}
+			//return true iff there are more tasks to complete
+			if(numTotalRows == numCompleted) {
+				numCompleted = 0;
+				return false;
+			}
+			return true;
+		}
+
+		@Override
+		public Entry<Double, Double> getRawResult() {
+			return new AbstractMap.SimpleEntry<Double, Double>(lowest, highest);
+		}
+
+		@Override
+		protected void setRawResult(Entry<Double, Double> value) {
+			lowest = value.getKey();
+			highest = value.getValue();
+		}
+	}
+	
 	/**
 	 * Converts a GeoMapApp Grid2D into an array that GeoTools can use.
 	 * @param grid the grid to convert
@@ -116,35 +200,29 @@ public class GTConverter {
 		long numCells = numRows * cellsPerRow;
 		long howManyHundred = numCells/100;
 		//TODO consider multithreading for larger grids
-		for(int y = low.y; y < high.y; y++) {
+		//Probably better to use a ForkJoinPool than to spawn a new thread for every row or cell
+		ForkJoinPool fjp = new ForkJoinPool();
+		RowProcessor[] rps = new RowProcessor[(int)numRows];
+		for(int y = low.y; y <= high.y; y++) {
 			int realY = (yDir < 0)?(y):(high.y-y-1+low.y);
-			for(int x = low.x; x < high.x; x++) {
-				
-				int realX = (xDir > 0)?(x):(high.x-x-1+low.x);
-				long whichCell = (x - low.x) + (y - low.y)*cellsPerRow;
-				if(whichCell % howManyHundred == 0) {
-					ig.showPercent((int)(whichCell/howManyHundred));
+			RowProcessor rp = new RowProcessor(geotoolsGrid, grid, low, high, xDir, y, realY, isData, ig, (int)numRows, lowest, highest);
+			rps[y - low.y] = rp; 
+			fjp.submit(rp);
+		}
+		try {
+			fjp.shutdown();
+			boolean finished = fjp.awaitTermination(9*numCells, TimeUnit.MILLISECONDS);
+			for(int i = 0; i < rps.length; i++) {
+				Map.Entry<Double, Double> zBounds = rps[i].getRawResult();
+				if(zBounds.getKey() < lowest) {
+					lowest = zBounds.getKey();
 				}
-				else if(x+1 == high.x && y+1 == high.y) {
-					ig.showPercent(100);
+				if(zBounds.getValue() > highest) {
+					highest = zBounds.getValue();
 				}
-				
-				GridCoordinates2D pt = new GridCoordinates2D(realX, realY);
-				//try {
-					double[] vals = geotoolsGrid.evaluate(pt, (double[])null);
-					if(isData.apply(vals[0])) {
-						//System.out.println("("+x + ", "+y+"): "+vals[0]);
-						if(vals[0] < lowest) lowest = vals[0];
-						if(vals[0] > highest) highest = vals[0];
-						grid.setValue(x, y, vals[0]);
-					}
-					else {
-						grid.setValue(x, y, Double.NaN);
-					}
-				//}
-				//catch(Exception e) {
-				//}
 			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 		return new Grid2DWrapper(grid, lowest, highest, xOffset, yOffset, dx, dy);
 	}

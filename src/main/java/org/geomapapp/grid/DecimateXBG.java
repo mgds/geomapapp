@@ -6,10 +6,12 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Vector;
 
+import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 
 import org.geomapapp.io.FileUtility;
 
+import haxby.map.MapApp;
 import haxby.proj.IdentityProjection;
 
 public class DecimateXBG {
@@ -138,6 +140,7 @@ public class DecimateXBG {
 			if (ig != null) {
 				ig.appendNewText( "\n"+ files.length +" files,\t" + corners.size() +" new tiles");	
 				ig.waiting = true;
+				ig.progressBar.setVisible(true);
 				//ig.displayWaitingDots();
 			}
 			
@@ -201,9 +204,15 @@ public class DecimateXBG {
 				if( kount>0 ) halfIO.writeGridTile(tile);
 			}
 			decimate( root1, isWrap);
-			if (ig != null) ig.waiting = false;
+			if (ig != null) {
+				ig.waiting = false;
+				ig.progressBar.setVisible(false);
+			}
 		} catch (IOException ex) {
-			if (ig != null) ig.waiting = false;
+			if (ig != null) {
+				ig.waiting = false;
+				ig.progressBar.setVisible(false);
+			}
 			ex.printStackTrace();
 		}
 	}

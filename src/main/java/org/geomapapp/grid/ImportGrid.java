@@ -379,6 +379,12 @@ public class ImportGrid implements Runnable {
 			cellsWithData = value;
 		}
 		
+		public static int reset() {
+			int prevColsProcessed = colsProcessed;
+			colsProcessed = 0;
+			return prevColsProcessed;
+		}
+		
 	}
 	
 	class GeotiffGridFile implements GridFile {
@@ -1622,6 +1628,7 @@ public class ImportGrid implements Runnable {
 		int numCells = (ix2-ix1+1) * (iy2-iy1+1);
 		int howManyHundred = numCells/100;
 		ForkJoinPool fjp = new ForkJoinPool();
+		ColumnTiler.reset();
 		for( int ix=ix1 ; ix<=ix2 ; ix++) {
 			int xA = (int)Math.max(ix*320, x1);
 			int xB = (int)Math.min((ix+1)*320, x2);

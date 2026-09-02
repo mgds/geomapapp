@@ -6,9 +6,11 @@ import haxby.layers.image.ImageProvider.ZipImageProvider;
 import haxby.map.FocusOverlay;
 import haxby.map.MapApp;
 import haxby.util.GTConverter;
+import haxby.util.RotationPanel;
 import haxby.util.WESNPanel;
 
 import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,6 +35,7 @@ import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -440,6 +443,7 @@ public class ImportImageLayer {
 		final JDialog d = new JDialog(owner, "Image Location", true);
 		
 		final WESNPanel wesnP = new WESNPanel();
+		final RotationPanel rotP = new RotationPanel();
 		if(null != wesn) {
 			wesnP.setWESN(wesn[0], wesn[1], wesn[2], wesn[3]);
 			wesn = null; //so it doesn't use wrong values on subsequent image imports
@@ -498,9 +502,14 @@ public class ImportImageLayer {
 		bg.add(merc);
 		p3.add(merc);
 		
+		JPanel e = new JPanel();
+		e.setLayout(new BoxLayout(e, BoxLayout.Y_AXIS));
+		e.add(wesnP);
+		e.add(rotP);
+		
 		JPanel c = new JPanel(new BorderLayout());
 		c.add(p3, BorderLayout.NORTH);
-		c.add(wesnP);
+		c.add(e);
 		c.add(p2, BorderLayout.SOUTH);
 		
 		d.addWindowListener( new WindowAdapter() {

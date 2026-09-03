@@ -361,10 +361,13 @@ public class ImportImageLayer {
 		int w = image.getWidth();
 		int h = image.getHeight();
 		double rads = Math.toRadians(-degrees);
-		double cos = Math.abs(Math.cos(rads));
-		double sin = Math.abs(Math.sin(rads));
-		double newW_dbl = w * cos + h * sin;
-		double newH_dbl = w * sin + h * cos;
+		
+		//TODO this math seems to be wrong, or apply to only certain values of "degrees".
+		double diag = Math.sqrt(w*w + h*h);
+		double vertAngle = Math.atan2(w, h);
+		double horizAngle = Math.atan2(h, w);
+		double newH_dbl = diag * Math.abs(Math.cos(vertAngle - rads));
+		double newW_dbl = diag * Math.abs(Math.cos(horizAngle - rads));
 		int newW = (int) Math.round(newW_dbl);
 		int newH = (int) Math.round(newH_dbl);
 
@@ -376,6 +379,7 @@ public class ImportImageLayer {
 		BufferedImage rotated = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = rotated.createGraphics();
 		g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		//g.setTransform(tx);
 		g.drawImage(image, tx, null);
 		g.dispose();
 		return rotated;
@@ -454,6 +458,34 @@ public class ImportImageLayer {
 		double rads = Math.atan2(m10, m00);
 		return Math.toDegrees(rads);
 	}
+	
+	public double[] padWesnForRotation(double[] theWesn, double angleRad) {
+		if(null == theWesn || 4 != theWesn.length) {
+			return theWesn;
+		}
+		double width = theWesn[1] - theWesn[0];
+		double height = theWesn[3] - theWesn[2];
+		double diag = Math.sqrt(width * width + height * height);
+		double vertAngle = Math.atan2(width, height);
+		double horizAngle = Math.atan2(height, width);
+		double newWidth = diag * Math.cos(horizAngle - angleRad);
+		double newHeight = diag * Math.cos(vertAngle - angleRad);
+		double centerX = theWesn[0] + width/2;
+		double centerY = theWesn[2] + height/2;
+		double[] newWesn = new double[] {
+				centerX - newWidth/2,
+				centerX + newWidth/2,
+				centerY - newHeight/2,
+				centerY + newHeight/2
+		};
+		return newWesn;
+	}
+	public double[] padWesnForRotation(double[] theWesn, double angle, boolean isRad) {
+		if(!isRad) {
+			angle = Math.toRadians(angle);
+		}
+		return padWesnForRotation(theWesn, angle);
+	}
 
 	protected void importImage(MapApp mapApp, File file) {
 		geotiffAngle = 0.0;
@@ -466,13 +498,16 @@ public class ImportImageLayer {
 		
 		try {
 			BufferedImage image = ImageIO.read(file);
-			if (geotiffAngle != 0.0)
+			double[] realWesn = wesnDialog.wesn;
+			if (geotiffAngle != 0.0) {
 				image = rotateImage(image, geotiffAngle);
+				realWesn = padWesnForRotation(wesnDialog.wesn, geotiffAngle, false);
+			}
 			FocusOverlay overlay;
 			if (wesnDialog.merc)
-				overlay = new MercatorImageOverlay(mapApp.getMap(), image, wesnDialog.wesn);
+				overlay = new MercatorImageOverlay(mapApp.getMap(), image, realWesn);
 			else
-				overlay = new GeographicImageOverlay(mapApp.getMap(), image, wesnDialog.wesn);
+				overlay = new GeographicImageOverlay(mapApp.getMap(), image, realWesn);
 			
 			mapApp.addFocusOverlay(overlay, file.getName());
 		} catch (IOException e) {

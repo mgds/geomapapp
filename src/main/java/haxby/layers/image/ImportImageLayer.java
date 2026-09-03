@@ -1,16 +1,6 @@
 package haxby.layers.image;
 
-import haxby.layers.image.ImageProvider.FileImageProvider;
-import haxby.layers.image.ImageProvider.URLImageProvider;
-import haxby.layers.image.ImageProvider.ZipImageProvider;
-import haxby.map.FocusOverlay;
-import haxby.map.MapApp;
-import haxby.util.GTConverter;
-import haxby.util.RotationPanel;
-import haxby.util.WESNPanel;
-
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,7 +33,6 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.TitledBorder;
@@ -58,21 +47,26 @@ import org.geomapapp.geom.RectangularProjection;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.imageio.geotiff.GeoTiffIIOMetadataDecoder;
-import org.geotools.data.DataSourceException;
 import org.geotools.gce.geotiff.GeoTiffReader;
-import org.geotools.geometry.GeneralEnvelope;
-import org.geotools.referencing.operation.matrix.AffineTransform2D;
 import org.opengis.geometry.Envelope;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import haxby.layers.image.ImageProvider.FileImageProvider;
+import haxby.layers.image.ImageProvider.URLImageProvider;
+import haxby.layers.image.ImageProvider.ZipImageProvider;
+import haxby.map.FocusOverlay;
+import haxby.map.MapApp;
+import haxby.util.GTConverter;
+import haxby.util.RotationPanel;
+import haxby.util.WESNPanel;
+
 public class ImportImageLayer {
 	
 	private static double[] wesn = null;
 	private static double geotiffAngle = 0.0;
-	private static AffineTransform geotiffTransform = null;
 
 	public static List<FileFilter> supportedImageSources = new LinkedList<FileFilter>();
 	static {
@@ -357,20 +351,21 @@ public class ImportImageLayer {
 		catch (NumberFormatException e) { }
 	}
 	
-	//TODO make degrees a double and allow for angles that aren't multiples of 90°
-	private static BufferedImage rotateImage(BufferedImage image, int degrees) {
+	private static BufferedImage rotateImage(BufferedImage image, double degrees) {
 		degrees = ((degrees % 360) + 360) % 360;
 		if (degrees == 0) return image;
 
 		int w = image.getWidth();
 		int h = image.getHeight();
-		int newW = (degrees == 90 || degrees == 270) ? h : w;
-		int newH = (degrees == 90 || degrees == 270) ? w : h;
+		double rads = Math.toRadians(-degrees);
+		double cos = Math.abs(Math.cos(rads));
+		double sin = Math.abs(Math.sin(rads));
+		int newW = (int) Math.round(w * cos + h * sin);
+		int newH = (int) Math.round(w * sin + h * cos);
 
-		//TODO use geotiffTransform here instead of creating a new one
 		AffineTransform tx = new AffineTransform();
 		tx.translate(newW / 2.0, newH / 2.0);
-		tx.rotate(Math.toRadians(degrees));
+		tx.rotate(rads);
 		tx.translate(-w / 2.0, -h / 2.0);
 
 		BufferedImage rotated = new BufferedImage(newW, newH, image.getType() == 0 ?
@@ -455,6 +450,7 @@ public class ImportImageLayer {
 	}
 
 	protected void importImage(MapApp mapApp, File file) {
+		geotiffAngle = 0.0;
 		String extension = FilenameUtils.getExtension(file.getName());
 		if(extension.toLowerCase().equals("tif") || extension.toLowerCase().equals("tiff")) {
 			readWesnFromGeotiff(file);
@@ -464,6 +460,8 @@ public class ImportImageLayer {
 		
 		try {
 			BufferedImage image = ImageIO.read(file);
+			if (geotiffAngle != 0.0)
+				image = rotateImage(image, geotiffAngle);
 			FocusOverlay overlay;
 			if (wesnDialog.merc)
 				overlay = new MercatorImageOverlay(mapApp.getMap(), image, wesnDialog.wesn);
@@ -563,7 +561,6 @@ public class ImportImageLayer {
 		
 		double wesn[] = wesnP.getWESN();
 		geotiffAngle = rotP.getAngle();
-		geotiffTransform = rotP.getRotationMatrix(wesn);
 		if (wesn == null) return null;
 		
 		return new ImageWESNProj(wesn, merc.isSelected());

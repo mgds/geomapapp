@@ -1,8 +1,11 @@
 package haxby.util;
 
-import java.awt.geom.AffineTransform;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 
+import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -11,30 +14,64 @@ public class RotationPanel extends JPanel {
 	private JFormattedTextField angleField;
 	private DecimalFormat format;
 	private JLabel info, unit;
-	
+	private JButton rotateLeft, rotateRight;
+
 	public RotationPanel() {
 		this(0.0);
 	}
-	
+
 	public RotationPanel(double degrees) {
-		format = new DecimalFormat();
+		format = new DecimalFormat("#0.###");
 		angleField = new JFormattedTextField(format);
+		angleField.setColumns(6);
 		info = new JLabel("Rotate image (counterclockwise) by");
 		unit = new JLabel("\u00B0");
-		angleField.setText(String.valueOf(degrees));
+		angleField.setValue(Double.valueOf(normalize(degrees)));
+
+		rotateLeft = new JButton("\u21B6 90\u00B0");
+		rotateLeft.setToolTipText("Rotate 90\u00B0 counterclockwise");
+		rotateLeft.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				nudge(90);
+			}
+		});
+
+		rotateRight = new JButton("90\u00B0 \u21B7");
+		rotateRight.setToolTipText("Rotate 90\u00B0 clockwise");
+		rotateRight.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				nudge(-90);
+			}
+		});
+
 		this.add(info);
+		this.add(rotateLeft);
 		this.add(angleField);
+		this.add(rotateRight);
 		this.add(unit);
 	}
-	
-	public double getAngle() {
-		return Double.valueOf(angleField.getText());
+
+	private void nudge(double delta) {
+		try {
+			angleField.commitEdit();
+		} catch (ParseException pe) { }
+		angleField.setValue(Double.valueOf(normalize(getAngle() + delta)));
 	}
-	
-	public AffineTransform getRotationMatrix(double[] wesn) {
-		if(null == wesn || 4 > wesn.length) return null;
-		double midX = (wesn[0] + wesn[1])/2;
-		double midY = (wesn[2] + wesn[3])/2;
-		return AffineTransform.getRotateInstance(Double.valueOf(angleField.getText()), midX, midY);
+
+	private static double normalize(double degrees) {
+		degrees = degrees % 360;
+		if (degrees <= -180) degrees += 360;
+		if (degrees > 180) degrees -= 360;
+		return degrees;
+	}
+
+	public double getAngle() {
+		try {
+			angleField.commitEdit();
+		} catch (ParseException pe) { }
+		Object value = angleField.getValue();
+		if (value instanceof Number)
+			return ((Number) value).doubleValue();
+		return Double.parseDouble(angleField.getText());
 	}
 }

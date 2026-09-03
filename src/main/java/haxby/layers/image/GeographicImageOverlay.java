@@ -4,6 +4,7 @@ import haxby.map.XMap;
 import haxby.proj.Projection;
 
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -14,6 +15,7 @@ import javax.swing.JOptionPane;
 public class GeographicImageOverlay extends ImageOverlay {
 
 	protected GeoRefImage geoImage;
+	protected AffineTransform transform = null;
 
 	public GeographicImageOverlay(XMap map, GeoRefImage source) {
 		super(map);
@@ -28,6 +30,14 @@ public class GeographicImageOverlay extends ImageOverlay {
 
 	public double[] getWESN() {
 		return geoImage.wesn;
+	}
+	
+	public AffineTransform getRotationMatrix() {
+		return transform;
+	}
+	
+	public void setRotationMatrix(AffineTransform atIn) {
+		transform = atIn;
 	}
 
 	protected void retrieveImage(Rectangle2D rect) {

@@ -4,6 +4,7 @@ import haxby.map.XMap;
 import haxby.proj.Projection;
 
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -11,6 +12,7 @@ import java.awt.image.BufferedImage;
 public class MercatorImageOverlay extends ImageOverlay {
 
 	protected GeoRefImage geoImage;
+	protected AffineTransform transform = null;
 
 	public MercatorImageOverlay(XMap map, GeoRefImage source) {
 		super(map);
@@ -25,6 +27,14 @@ public class MercatorImageOverlay extends ImageOverlay {
 
 	public double[] getWESN() {
 		return geoImage.wesn;
+	}
+	
+	public AffineTransform getRotationMatrix() {
+		return transform;
+	}
+	
+	public void setRotationMatrix(AffineTransform atIn) {
+		transform = atIn;
 	}
 
 	protected void retrieveImage(Rectangle2D rect) {

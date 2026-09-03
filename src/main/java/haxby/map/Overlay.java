@@ -1,5 +1,7 @@
 package haxby.map;
 
+import java.awt.geom.AffineTransform;
+
 /**
  	Overlay is called by map objects in paintComponent methods.
 */
@@ -13,4 +15,10 @@ public abstract interface Overlay {
 	public default boolean shouldShow() {
 		return true;
 	} 
+	public default AffineTransform getRotationMatrix() {
+		return null;
+	}
+	public default void setRotationMatrix(AffineTransform atIn) {
+		
+	}
 }

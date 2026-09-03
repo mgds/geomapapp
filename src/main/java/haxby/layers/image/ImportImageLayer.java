@@ -16,6 +16,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
@@ -41,6 +42,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.TitledBorder;
@@ -58,6 +60,7 @@ import org.geotools.coverage.grid.io.imageio.geotiff.GeoTiffIIOMetadataDecoder;
 import org.geotools.data.DataSourceException;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.referencing.operation.matrix.AffineTransform2D;
 import org.opengis.geometry.Envelope;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -67,6 +70,8 @@ import org.xml.sax.SAXException;
 public class ImportImageLayer {
 	
 	private static double[] wesn = null;
+	private static double geotiffAngle = 0.0;
+	private static AffineTransform geotiffTransform = null;
 
 	public static List<FileFilter> supportedImageSources = new LinkedList<FileFilter>();
 	static {
@@ -388,12 +393,13 @@ public class ImportImageLayer {
 	}
 	
 	private double[] readWesnFromGeotiff(File geotiffFile) {
-		//TODO read the wesn, then set it and return it
+		geotiffAngle = 0.0;
 		try {
 			GeoTiffReader reader = new GeoTiffReader(geotiffFile);
 			GeoTiffIIOMetadataDecoder mdd = reader.getMetadata();
 			GridCoverage2D gridCoverage = reader.read(null);
 			GridGeometry2D geom = gridCoverage.getGridGeometry();
+			geotiffAngle = readRotationFromGridGeometry(geom);
 			Envelope env = geom.getEnvelope();
 			double[] ws = env.getLowerCorner().getCoordinate();
 			double[] en = env.getUpperCorner().getCoordinate();
@@ -415,6 +421,14 @@ public class ImportImageLayer {
 		}
 		return wesn;
 	}
+	
+	private static double readRotationFromGridGeometry(GridGeometry2D geom) {
+		org.geotools.referencing.operation.transform.AffineTransform2D gridToCRS = (org.geotools.referencing.operation.transform.AffineTransform2D) geom.getGridToCRS2D();
+		double m00 = gridToCRS.getScaleX(), m10 = gridToCRS.getShearY();
+		if(0 == m00 && 0 == m10) return 0;
+		double rads = Math.atan2(m10, m00);
+		return Math.toDegrees(rads);
+	}
 
 	protected void importImage(MapApp mapApp, File file) {
 		String extension = FilenameUtils.getExtension(file.getName());
@@ -431,6 +445,7 @@ public class ImportImageLayer {
 				overlay = new MercatorImageOverlay(mapApp.getMap(), image, wesnDialog.wesn);
 			else
 				overlay = new GeographicImageOverlay(mapApp.getMap(), image, wesnDialog.wesn);
+			overlay.setRotationMatrix(geotiffTransform);
 			
 			mapApp.addFocusOverlay(overlay, file.getName());
 		} catch (IOException e) {
@@ -443,7 +458,7 @@ public class ImportImageLayer {
 		final JDialog d = new JDialog(owner, "Image Location", true);
 		
 		final WESNPanel wesnP = new WESNPanel();
-		final RotationPanel rotP = new RotationPanel();
+		final RotationPanel rotP = new RotationPanel(geotiffAngle);
 		if(null != wesn) {
 			wesnP.setWESN(wesn[0], wesn[1], wesn[2], wesn[3]);
 			wesn = null; //so it doesn't use wrong values on subsequent image imports
@@ -524,6 +539,8 @@ public class ImportImageLayer {
 		d.setVisible(true);
 		
 		double wesn[] = wesnP.getWESN();
+		geotiffAngle = rotP.getAngle();
+		geotiffTransform = rotP.getRotationMatrix(wesn);
 		if (wesn == null) return null;
 		
 		return new ImageWESNProj(wesn, merc.isSelected());

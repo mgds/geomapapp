@@ -98,6 +98,7 @@ public class MercatorImageOverlay extends ImageOverlay {
 				BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = mercImage.createGraphics();
 		BufferedImage source = geoImage.getImage();
+		//TODO rotate the image here
 		g.drawImage(geoImage.getImage(), sX, sY, eX, eY, 0, 0, source.getWidth(), source.getHeight(), null);
 		if (fullWrap && eX > width) 
 		{

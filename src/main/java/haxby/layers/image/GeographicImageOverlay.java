@@ -106,6 +106,7 @@ public class GeographicImageOverlay extends ImageOverlay {
 		BufferedImage orthoImage = new BufferedImage(ortho_width, ortho_height,
 				BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = orthoImage.createGraphics();
+		//TODO rotate the image here?
 
 		if (maxX < minX) {
 			drawTile(minX, minY, 180, maxY, 
@@ -126,6 +127,7 @@ public class GeographicImageOverlay extends ImageOverlay {
 		BufferedImage image = new BufferedImage(width, height,
 				BufferedImage.TYPE_INT_ARGB);
 		g = image.createGraphics();
+		//TODO rotate the image here too?
 
 		float deltaLat = maxY - minY;
 		float minYR = (float) Math.toRadians(minY);

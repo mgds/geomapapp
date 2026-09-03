@@ -18,6 +18,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -355,6 +356,29 @@ public class ImportImageLayer {
 		catch (IOException e) { e.printStackTrace(); }
 		catch (NumberFormatException e) { }
 	}
+	
+	//TODO make degrees a double and allow for angles that aren't multiples of 90°
+	private static BufferedImage rotateImage(BufferedImage image, int degrees) {
+		degrees = ((degrees % 360) + 360) % 360;
+		if (degrees == 0) return image;
+
+		int w = image.getWidth();
+		int h = image.getHeight();
+		int newW = (degrees == 90 || degrees == 270) ? h : w;
+		int newH = (degrees == 90 || degrees == 270) ? w : h;
+
+		//TODO use geotiffTransform here instead of creating a new one
+		AffineTransform tx = new AffineTransform();
+		tx.translate(newW / 2.0, newH / 2.0);
+		tx.rotate(Math.toRadians(degrees));
+		tx.translate(-w / 2.0, -h / 2.0);
+
+		BufferedImage rotated = new BufferedImage(newW, newH, image.getType() == 0 ?
+				BufferedImage.TYPE_INT_ARGB : image.getType());
+		AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
+		op.filter(image, rotated);
+		return rotated;
+	}
 
 	private static List<Node> findElements(Node root, String elementName) {
 		LinkedList<Node> matches = new LinkedList<Node>();
@@ -445,7 +469,6 @@ public class ImportImageLayer {
 				overlay = new MercatorImageOverlay(mapApp.getMap(), image, wesnDialog.wesn);
 			else
 				overlay = new GeographicImageOverlay(mapApp.getMap(), image, wesnDialog.wesn);
-			overlay.setRotationMatrix(geotiffTransform);
 			
 			mapApp.addFocusOverlay(overlay, file.getName());
 		} catch (IOException e) {

@@ -12,7 +12,6 @@ import java.awt.image.BufferedImage;
 public class MercatorImageOverlay extends ImageOverlay {
 
 	protected GeoRefImage geoImage;
-	protected AffineTransform transform = null;
 
 	public MercatorImageOverlay(XMap map, GeoRefImage source) {
 		super(map);
@@ -27,14 +26,6 @@ public class MercatorImageOverlay extends ImageOverlay {
 
 	public double[] getWESN() {
 		return geoImage.wesn;
-	}
-	
-	public AffineTransform getRotationMatrix() {
-		return transform;
-	}
-	
-	public void setRotationMatrix(AffineTransform atIn) {
-		transform = atIn;
 	}
 
 	protected void retrieveImage(Rectangle2D rect) {
@@ -98,7 +89,6 @@ public class MercatorImageOverlay extends ImageOverlay {
 				BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = mercImage.createGraphics();
 		BufferedImage source = geoImage.getImage();
-		//TODO rotate the image here
 		g.drawImage(geoImage.getImage(), sX, sY, eX, eY, 0, 0, source.getWidth(), source.getHeight(), null);
 		if (fullWrap && eX > width) 
 		{

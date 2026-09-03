@@ -1,6 +1,8 @@
 package haxby.layers.image;
 
 import java.awt.BorderLayout;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -8,7 +10,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -33,6 +34,8 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.TitledBorder;
@@ -360,18 +363,21 @@ public class ImportImageLayer {
 		double rads = Math.toRadians(-degrees);
 		double cos = Math.abs(Math.cos(rads));
 		double sin = Math.abs(Math.sin(rads));
-		int newW = (int) Math.round(w * cos + h * sin);
-		int newH = (int) Math.round(w * sin + h * cos);
+		double newW_dbl = w * cos + h * sin;
+		double newH_dbl = w * sin + h * cos;
+		int newW = (int) Math.round(newW_dbl);
+		int newH = (int) Math.round(newH_dbl);
 
 		AffineTransform tx = new AffineTransform();
 		tx.translate(newW / 2.0, newH / 2.0);
 		tx.rotate(rads);
 		tx.translate(-w / 2.0, -h / 2.0);
 
-		BufferedImage rotated = new BufferedImage(newW, newH, image.getType() == 0 ?
-				BufferedImage.TYPE_INT_ARGB : image.getType());
-		AffineTransformOp op = new AffineTransformOp(tx, AffineTransformOp.TYPE_BILINEAR);
-		op.filter(image, rotated);
+		BufferedImage rotated = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = rotated.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		g.drawImage(image, tx, null);
+		g.dispose();
 		return rotated;
 	}
 
@@ -471,6 +477,11 @@ public class ImportImageLayer {
 			mapApp.addFocusOverlay(overlay, file.getName());
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (OutOfMemoryError oome) {
+			oome.printStackTrace();
+			JLabel memE = new JLabel("<html>GeoMapApp needs more memory to import this image<br>Continue without image or restart from terminal with more memory<br>java -Xmx2g -jar GeoMapApp.jar</html>");
+			JOptionPane.showMessageDialog(mapApp.getFrame(), memE, "Out Of Memory Error",
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

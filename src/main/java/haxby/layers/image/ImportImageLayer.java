@@ -394,7 +394,7 @@ public class ImportImageLayer {
 		int w = image.getWidth();
 		int h = image.getHeight();
 		//want to rotate counter clockwise
-		double rads = Math.toRadians(-degrees);
+		double rads = Math.toRadians(degrees);
 		Pair<Double, Double> newSize = getDimsAfterRotating(w, h, rads);
 		int newW = (int)newSize.getLeft().doubleValue(), newH = (int)newSize.getRight().doubleValue();
 

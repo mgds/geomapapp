@@ -25,7 +25,7 @@ public class RotationPanel extends JPanel {
 		format = new DecimalFormat("#0.###");
 		angleField = new JFormattedTextField(format);
 		angleField.setColumns(6);
-		info = new JLabel("Rotate image (counterclockwise) by");
+		info = new JLabel("Rotate image (clockwise) by");
 		unit = new JLabel("\u00B0");
 		angleField.setValue(Double.valueOf(normalize(degrees)));
 

@@ -45,6 +45,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.geomapapp.geom.MapProjection;
 import org.geomapapp.geom.RectangularProjection;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -354,6 +355,38 @@ public class ImportImageLayer {
 		catch (NumberFormatException e) { }
 	}
 	
+	private static Pair<Double, Double> getDimsAfterRotating(double initW, double initH, double rads) {
+		double radsModPi = rads % Math.PI;
+		if(radsModPi < 0) radsModPi += Math.PI;
+		
+		double newW = -1, newH = -1;
+
+		if(0 == radsModPi) {
+			newW = initW;
+			newH = initH;
+		}
+		else if(radsModPi*2 < Math.PI) {
+			double diag = Math.sqrt(initW*initW + initH*initH);
+			double vertAngle = Math.atan2(initW, initH);
+			double horizAngle = Math.atan2(initH, initW);
+			newH = diag * Math.cos(vertAngle - radsModPi);
+			newW = diag * Math.cos(horizAngle - radsModPi);
+		}
+		else if (radsModPi*2 == Math.PI) {
+			newW = initH;
+			newH = initW;
+		}
+		else {
+			double reverseAngle = Math.PI - radsModPi;
+			double diag = Math.sqrt(initW*initW + initH*initH);
+			double vertAngle = Math.atan2(initW, initH);
+			double horizAngle = Math.atan2(initH, initW);
+			newH = diag * Math.cos(vertAngle - reverseAngle);
+			newW = diag * Math.cos(horizAngle - reverseAngle);
+		}
+		return Pair.of(newW, newH);
+	}
+	
 	private static BufferedImage rotateImage(BufferedImage image, double degrees) {
 		degrees = ((degrees % 360) + 360) % 360;
 		if (degrees == 0) return image;
@@ -362,40 +395,10 @@ public class ImportImageLayer {
 		int h = image.getHeight();
 		//want to rotate counter clockwise
 		double rads = Math.toRadians(-degrees);
-		
-		double radsModPi = rads % Math.PI;
-		if(radsModPi < 0) radsModPi += Math.PI;
-		
-		int newW = -1, newH = -1;
+		Pair<Double, Double> newSize = getDimsAfterRotating(w, h, rads);
+		int newW = (int)newSize.getLeft().doubleValue(), newH = (int)newSize.getRight().doubleValue();
 
-		if(0 == radsModPi) {
-			newW = w;
-			newH = h;
-		}
-		else if(radsModPi*2 < Math.PI) {
-			double diag = Math.sqrt(w*w + h*h);
-			double vertAngle = Math.atan2(w, h);
-			double horizAngle = Math.atan2(h, w);
-			double newH_dbl = diag * Math.cos(vertAngle - radsModPi);
-			double newW_dbl = diag * Math.cos(horizAngle - radsModPi);
-			newW = (int) Math.round(newW_dbl);
-			newH = (int) Math.round(newH_dbl);
-		}
-		else if (radsModPi*2 == Math.PI) {
-			newW = h;
-			newH = w;
-		}
-		else {
-			double reverseAngle = Math.PI - radsModPi;
-			double diag = Math.sqrt(w*w + h*h);
-			double vertAngle = Math.atan2(w, h);
-			double horizAngle = Math.atan2(h, w);
-			double newH_dbl = diag * Math.cos(vertAngle - reverseAngle);
-			double newW_dbl = diag * Math.cos(horizAngle - reverseAngle);
-			newW = (int) Math.round(newW_dbl);
-			newH = (int) Math.round(newH_dbl);
-		}
-
+		//TODO why doesn't this rotate at all when an angle of 180° is specified?
 		AffineTransform tx = new AffineTransform();
 		tx.translate(newW / 2.0, newH / 2.0);
 		tx.rotate(rads);
@@ -490,11 +493,9 @@ public class ImportImageLayer {
 		}
 		double width = theWesn[1] - theWesn[0];
 		double height = theWesn[3] - theWesn[2];
-		double diag = Math.sqrt(width * width + height * height);
-		double vertAngle = Math.atan2(width, height);
-		double horizAngle = Math.atan2(height, width);
-		double newWidth = diag * Math.cos(horizAngle - angleRad);
-		double newHeight = diag * Math.cos(vertAngle - angleRad);
+		Pair<Double, Double> newDims = getDimsAfterRotating(width, height, angleRad);
+		double newWidth = newDims.getLeft();
+		double newHeight = newDims.getRight();
 		double centerX = theWesn[0] + width/2;
 		double centerY = theWesn[2] + height/2;
 		double[] newWesn = new double[] {

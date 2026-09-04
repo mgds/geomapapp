@@ -360,16 +360,41 @@ public class ImportImageLayer {
 
 		int w = image.getWidth();
 		int h = image.getHeight();
+		//want to rotate counter clockwise
 		double rads = Math.toRadians(-degrees);
 		
-		//TODO this math seems to be wrong, or apply to only certain values of "degrees".
-		double diag = Math.sqrt(w*w + h*h);
-		double vertAngle = Math.atan2(w, h);
-		double horizAngle = Math.atan2(h, w);
-		double newH_dbl = diag * Math.abs(Math.cos(vertAngle - rads));
-		double newW_dbl = diag * Math.abs(Math.cos(horizAngle - rads));
-		int newW = (int) Math.round(newW_dbl);
-		int newH = (int) Math.round(newH_dbl);
+		double radsModPi = rads % Math.PI;
+		if(radsModPi < 0) radsModPi += Math.PI;
+		
+		int newW = -1, newH = -1;
+
+		if(0 == radsModPi) {
+			newW = w;
+			newH = h;
+		}
+		else if(radsModPi*2 < Math.PI) {
+			double diag = Math.sqrt(w*w + h*h);
+			double vertAngle = Math.atan2(w, h);
+			double horizAngle = Math.atan2(h, w);
+			double newH_dbl = diag * Math.cos(vertAngle - radsModPi);
+			double newW_dbl = diag * Math.cos(horizAngle - radsModPi);
+			newW = (int) Math.round(newW_dbl);
+			newH = (int) Math.round(newH_dbl);
+		}
+		else if (radsModPi*2 == Math.PI) {
+			newW = h;
+			newH = w;
+		}
+		else {
+			double reverseAngle = Math.PI - radsModPi;
+			double diag = Math.sqrt(w*w + h*h);
+			double vertAngle = Math.atan2(w, h);
+			double horizAngle = Math.atan2(h, w);
+			double newH_dbl = diag * Math.cos(vertAngle - reverseAngle);
+			double newW_dbl = diag * Math.cos(horizAngle - reverseAngle);
+			newW = (int) Math.round(newW_dbl);
+			newH = (int) Math.round(newH_dbl);
+		}
 
 		AffineTransform tx = new AffineTransform();
 		tx.translate(newW / 2.0, newH / 2.0);

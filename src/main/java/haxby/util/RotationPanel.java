@@ -16,8 +16,6 @@ public class RotationPanel extends JPanel {
 	private JFormattedTextField angleField;
 	private DecimalFormat format;
 	private JLabel info, unit;
-	private JButton rotateLeft, rotateRight;
-	private JPanel upperPanel, lowerPanel;
 
 	public RotationPanel() {
 		this(0.0);
@@ -31,42 +29,9 @@ public class RotationPanel extends JPanel {
 		unit = new JLabel("\u00B0");
 		angleField.setValue(Double.valueOf(normalize(degrees)));
 
-		rotateLeft = new JButton("\u293F +90\u00B0");
-		rotateLeft.setToolTipText("Rotate 90\u00B0 counterclockwise");
-		rotateLeft.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				nudge(90);
-			}
-		});
-
-		rotateRight = new JButton("-90\u00B0 \u293E");
-		rotateRight.setToolTipText("Rotate 90\u00B0 clockwise");
-		rotateRight.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				nudge(-90);
-			}
-		});
-		upperPanel = new JPanel();
-		lowerPanel = new JPanel();
-		BoxLayout bl = new BoxLayout(this, BoxLayout.Y_AXIS);
-		this.setLayout(bl);
-
-		upperPanel.add(info);
-		upperPanel.add(angleField);
-		upperPanel.add(unit);
-		lowerPanel.setAlignmentX(LEFT_ALIGNMENT);
-		lowerPanel.add(rotateLeft);
-		lowerPanel.add(rotateRight);
-		
-		this.add(upperPanel);
-		this.add(lowerPanel);
-	}
-
-	private void nudge(double delta) {
-		try {
-			angleField.commitEdit();
-		} catch (ParseException pe) { }
-		angleField.setValue(Double.valueOf(normalize(getAngle() + delta)));
+		this.add(info);
+		this.add(angleField);
+		this.add(unit);
 	}
 
 	private static double normalize(double degrees) {

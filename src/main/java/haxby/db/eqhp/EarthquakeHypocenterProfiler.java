@@ -113,7 +113,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	
 	private void showData() {
 		resetDataPane();
-		if(urlToName.containsValue(currentDataset) && !data.containsKey(currentDataset)) {
+		if(null != currentDataset && urlToName.containsValue(currentDataset) && !data.containsKey(currentDataset)) {
 			getData(urlToName.getKey(currentDataset), currentDataset);
 		}
 		if(null != currentDataset && data.containsKey(currentDataset) && !isDataShowing) {
@@ -124,6 +124,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			isDataShowing = true;
 		}
 		else {
+			dataPane.repaint();
 			isDataShowing = false;
 		}
 		map.repaint();
@@ -146,7 +147,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				dig = new Digitizer(map);
 			}
 			if(!dig.startStopBtn.isSelected()) {
-				System.out.println(dig.objects.size() + " previous profile line(s)");
 				while(dig.objects.size() > 0) {
 //					((LineSegmentsObject)dig.objects.elementAt(dig.objects.size()-1)).dispose();
 					dig.objects.removeElementAt(dig.objects.size()-1);
@@ -159,7 +159,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		}
 		else {
 			if(null != dig) {
-				System.out.println("Start/Stop button is " + (dig.startStopBtn.isSelected() ? "selected" : "unselected"));
 				if(dig.startStopBtn.isSelected()) {
 					dig.startStopBtn.setSelected(false);
 					map.removeMouseListener(dig);
@@ -168,16 +167,15 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 						map.removeMouseListener((LineSegmentsObject)dig.getCurObj());
 						map.removeMouseMotionListener((LineSegmentsObject)dig.getCurObj());
 					}
-					dig.objects.add(dig.getCurObj());
-					dig.model.objectAdded();
 				}
-				System.out.println("Should be done digitizing now");
 			}
 		}
 	}
 	
 	private void finishDigitizing() {
 		setIsDigitizing(false);
+		dig.objects.add(dig.getCurObj());
+		dig.model.objectAdded();
 	}
 
 	@Override
@@ -291,6 +289,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			contentPane.add(dropdown);
 			dropdown.addActionListener(this);
 			setIsDigitizing(false);
+			digitizingBtn.setEnabled(false);
 			contentPane.add(digitizingBtn);
 			isLoaded = true;
 		}
@@ -353,18 +352,25 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource().equals(dropdown) && dropdown.getSelectedIndex() > 0) {
-			String name = dropdown.getItemAt(dropdown.getSelectedIndex());
-			System.out.println("You selected " + name);
-			String url = urlToName.getKey(name);
-			System.out.println("Getting data from " + url);
-			MapApp.anchor.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-			getData(url, name);
-			System.out.println("Got the data");
-			currentDataset = name;
-			showData();
-			MapApp.anchor.setCursor(Cursor.getDefaultCursor());
-			System.out.println("The data should be showing now");
+		if(e.getSource().equals(dropdown)) {
+			digitizingBtn.setEnabled(dropdown.getSelectedIndex()>0);
+			if(dropdown.getSelectedIndex() > 0) {
+				String name = dropdown.getItemAt(dropdown.getSelectedIndex());
+				System.out.println("You selected " + name);
+				String url = urlToName.getKey(name);
+				System.out.println("Getting data from " + url);
+				MapApp.anchor.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+				getData(url, name);
+				System.out.println("Got the data");
+				currentDataset = name;
+				showData();
+				MapApp.anchor.setCursor(Cursor.getDefaultCursor());
+				System.out.println("The data should be showing now");
+			}
+			else {
+				currentDataset = null;
+				showData();
+			}
 		}
 		else if(e.getSource().equals(digitizingBtn)) {
 			if(0 == digitizingState) {
@@ -386,7 +392,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		//dig.setCurObjectSelected(true);
 		if(digitizingState > 0) {
 			digitizingState--;
-			System.out.println("Digitizing state: " + digitizingState);
 			if(0 == digitizingState) {
 				dig.passClickEvent(e);
 				dig.getCurObj().redraw();

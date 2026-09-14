@@ -429,7 +429,6 @@ public class LineSegmentsObject extends DBTableModel
 		drawing = false;
 	}
 	public void mousePressed( MouseEvent evt ) {
-		System.out.println("PRESS!");
 		//finish drawing segment on double click
 		if (evt.getClickCount() == 2 && !evt.isConsumed() && dig.startStopBtn.isSelected()) {
 			evt.consume();
@@ -486,7 +485,6 @@ public class LineSegmentsObject extends DBTableModel
 		currentPoint = -1;
 	}
 	public void mouseReleased( MouseEvent evt ) {
-		System.out.println("RELEASE!");
         
 		if( !editShape ) {
 			currentPoint = -1;
@@ -509,7 +507,6 @@ public class LineSegmentsObject extends DBTableModel
 		
 	}
 	public void mouseClicked( MouseEvent evt ) {
-		System.out.println("CLICK!");
 		dig.insertBtn.setEnabled(dig.table.getSelectedRows().length == 1);
 		if(!active || evt.isControlDown())return;
 		drawSeg();

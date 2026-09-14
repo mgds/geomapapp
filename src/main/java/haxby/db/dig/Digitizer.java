@@ -364,7 +364,6 @@ public class Digitizer implements Database,
 			return;
 		}
 		if(evt.getSource() == startStopBtn) { 
-			System.out.println(startStopBtn.isSelected() ? "Start" : "Stop");
 			if (startStopBtn.isSelected()) {
 				//make sure zoom and pan buttons are de-selected
 				map.getMapTools().selectB.doClick();

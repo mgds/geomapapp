@@ -146,12 +146,15 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				dig = new Digitizer(map);
 			}
 			if(!dig.startStopBtn.isSelected()) {
-				dig.startStopBtn.doClick();
+				System.out.println(dig.objects.size() + " previous profile line(s)");
 				while(dig.objects.size() > 0) {
+//					((LineSegmentsObject)dig.objects.elementAt(dig.objects.size()-1)).dispose();
 					dig.objects.removeElementAt(dig.objects.size()-1);
 					dig.model.objectRemoved();
 				}
+				dig.startStopBtn.doClick();
 				dig.redraw();
+				map.repaint();
 			}
 		}
 		else {
@@ -165,6 +168,8 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 						map.removeMouseListener((LineSegmentsObject)dig.getCurObj());
 						map.removeMouseMotionListener((LineSegmentsObject)dig.getCurObj());
 					}
+					dig.objects.add(dig.getCurObj());
+					dig.model.objectAdded();
 				}
 				System.out.println("Should be done digitizing now");
 			}

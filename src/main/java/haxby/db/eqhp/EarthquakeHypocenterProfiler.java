@@ -1,14 +1,18 @@
 package haxby.db.eqhp;
 
+import java.awt.AWTException;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Robot;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
@@ -68,7 +72,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		map = mapIn;
 		map.addMouseListener(this);
 		digitizingState = 0;
-		path = null;
 	}
 	
 	public String nameForUrl(String url) {
@@ -138,6 +141,34 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		}
 		digitizingBtn.setForeground(textColor);
 		digitizingState = digitizing ? 2 : 0;
+		if(digitizing) {
+			if(null == dig) {
+				dig = new Digitizer(map);
+			}
+			if(!dig.startStopBtn.isSelected()) {
+				dig.startStopBtn.doClick();
+				while(dig.objects.size() > 0) {
+					dig.objects.removeElementAt(dig.objects.size()-1);
+					dig.model.objectRemoved();
+				}
+				dig.redraw();
+			}
+		}
+		else {
+			if(null != dig) {
+				System.out.println("Start/Stop button is " + (dig.startStopBtn.isSelected() ? "selected" : "unselected"));
+				if(dig.startStopBtn.isSelected()) {
+					dig.startStopBtn.setSelected(false);
+					map.removeMouseListener(dig);
+					map.removeMouseMotionListener(dig);
+					if(dig.getCurObj() instanceof LineSegmentsObject) {
+						map.removeMouseListener((LineSegmentsObject)dig.getCurObj());
+						map.removeMouseMotionListener((LineSegmentsObject)dig.getCurObj());
+					}
+				}
+				System.out.println("Should be done digitizing now");
+			}
+		}
 	}
 	
 	private void finishDigitizing() {
@@ -281,7 +312,10 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		digitizingBtn = null;
 		contentPane = null;
 		dataPane = null;
-		path = null;
+		if(null != dig && dig.isLoaded()) {
+			dig.disposeDB();
+			dig = null;
+		}
 		unloadDB();
 		System.gc();
 	}
@@ -330,10 +364,10 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		else if(e.getSource().equals(digitizingBtn)) {
 			if(0 == digitizingState) {
 				map.getMapTools().selectB.doClick();
-				dig = new Digitizer(map);
 				setIsDigitizing(true);
 			}
 			else {
+				//dig.startStopBtn.doClick();
 				setIsDigitizing(false);
 			}
 		}
@@ -344,10 +378,13 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		//digitizingState == 2: this is the first point
 		//digitizingState == 1: this is the second/last point
 		//digitizingState == 0: not digitizing
+		//dig.setCurObjectSelected(true);
 		if(digitizingState > 0) {
 			digitizingState--;
-			System.out.println(digitizingState);
+			System.out.println("Digitizing state: " + digitizingState);
 			if(0 == digitizingState) {
+				dig.passClickEvent(e);
+				dig.getCurObj().redraw();
 				finishDigitizing();
 			}
 		}

@@ -364,6 +364,7 @@ public class Digitizer implements Database,
 			return;
 		}
 		if(evt.getSource() == startStopBtn) { 
+			System.out.println(startStopBtn.isSelected() ? "Start" : "Stop");
 			if (startStopBtn.isSelected()) {
 				//make sure zoom and pan buttons are de-selected
 				map.getMapTools().selectB.doClick();
@@ -822,6 +823,22 @@ public class Digitizer implements Database,
 			if( ok==JFileChooser.CANCEL_OPTION ) return JOptionPane.CANCEL_OPTION;
 			if( !chooser.getSelectedFile().exists() ) return JOptionPane.YES_OPTION;
 		}
+	}
+	
+	public void setCurObjectSelected(boolean tf) {
+		if(null != currentObject) {
+			currentObject.setSelected(tf);
+		}
+	}
+	
+	public void passClickEvent(MouseEvent e) {
+		if(currentObject instanceof LineSegmentsObject) {
+			((LineSegmentsObject)currentObject).mouseClicked(e);
+		}
+	}
+	
+	public DigitizerObject getCurObj() {
+		return currentObject;
 	}
 	
 	void saveTable() {

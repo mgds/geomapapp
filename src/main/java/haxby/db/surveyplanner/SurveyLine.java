@@ -25,6 +25,7 @@ public class SurveyLine implements Overlay {
 	private static double speed = 0;
 	private static boolean isStraightLine = false;
 	private boolean selected;
+	public boolean plain = false;
 	String selectedPoint = "none";
 	
 	public SurveyLine(XMap map) {
@@ -313,7 +314,7 @@ public class SurveyLine implements Overlay {
 		while( min + offset < xmax ) {
 			if (selected) g.setColor(Color.WHITE);
 			else {
-				if (lineNum == 1) g.setColor( Color.RED ); 
+				if (lineNum == 1 && !plain) g.setColor( Color.RED ); 
 				else g.setColor( Color.black );
 			}
 			if (isStraightLine) {
@@ -338,6 +339,7 @@ public class SurveyLine implements Overlay {
 	        g.fill(startSq);
 	        g.fill(endSq);
 	        
+	        if(!plain) {
 	        //draw the arrow
 	        Path2D arrow = new Path2D.Double();
 	        double[] xpts = {0, 0-arr_size, 0-arr_size, 0};
@@ -379,6 +381,7 @@ public class SurveyLine implements Overlay {
 			if (lineNum == 1) g.setColor( Color.ORANGE ); 
 			else g.setColor( Color.ORANGE );
 	        g.fill(arrow);
+	        }
 
 			offset += wrap;
 			g.setTransform(at);

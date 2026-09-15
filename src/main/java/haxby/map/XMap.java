@@ -1181,6 +1181,23 @@ public class XMap extends ScaledComponent implements Zoomable,
 		y /= zoom;
 		return new Point2D.Double(x, y);
 	}
+	
+	/**
+	 * Gets the cursor location for the given mouse coordinates relative to the map.
+	 * @param mapPoint the mouse coordinates relative to the map
+	 * @return the real coordinates of this point
+	 */
+	public Point2D getMousePoint(Point2D scaledPoint) {
+		double x = scaledPoint.getX(), y = scaledPoint.getY();
+		x *= zoom;
+		y *= zoom;
+		if(null != mapBorder) {
+			Insets ins = mapBorder.getBorderInsets(this);
+			x += (double)ins.left;
+			y += ins.top;
+		}
+		return new Point2D.Double(x, y);
+	}
 
 	/**
 	 * Gets the units of the current map overlay

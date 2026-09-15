@@ -20,6 +20,7 @@ import java.awt.geom.Rectangle2D;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Vector;
 
 import javax.swing.Icon;
@@ -543,6 +544,16 @@ public class LineSegmentsObject extends DBTableModel
 		}
 	}
 	
+	public void appendPoints(Collection<Point2D> pts) {
+		if(null == points) {
+			points = new Vector();
+		}
+		for(Point2D pt : pts) {
+			double[] xyz = new double[] {pt.getX(), pt.getY(), Double.NaN};
+			points.add(xyz);
+		}
+	}
+	
 	public double getZ(Point2D p) {
 		if( map.getFocus()==null )return Double.NaN;
 		return map.getFocus().getZ(map.getProjection().getRefXY(p));
@@ -1041,5 +1052,9 @@ public class LineSegmentsObject extends DBTableModel
 			p.setLocation(x, y);
 		}
 		
+	}
+
+	public ArrayList<Point2D> getCurrentPath() {
+		return currentPath;
 	}
 }

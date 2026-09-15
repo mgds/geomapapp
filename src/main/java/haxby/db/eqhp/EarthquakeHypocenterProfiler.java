@@ -15,6 +15,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -36,6 +37,7 @@ import javax.swing.JPanel;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.geomapapp.util.XML_Menu;
+import org.joda.time.DateTime;
 
 import haxby.db.Database;
 import haxby.db.custom.DBDescription;
@@ -44,8 +46,10 @@ import haxby.db.custom.UnknownDataSet;
 import haxby.db.dig.Digitizer;
 import haxby.db.dig.DigitizerObject;
 import haxby.db.dig.LineSegmentsObject;
+import haxby.db.surveyplanner.SurveyLine;
 import haxby.map.MapApp;
 import haxby.map.XMap;
+import haxby.util.GeneralUtils;
 
 public class EarthquakeHypocenterProfiler implements Database, ActionListener, MouseListener {
 	
@@ -56,6 +60,8 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	private XMap map;
 	private int digitizingState;
 	private Digitizer dig;
+	private DigitizerObject mainLine;
+	private SurveyLine lineAbove, lineBelow;
 	
 	private boolean isLoaded = false, isDataShowing = false, enabled = false;
 	private JPanel contentPane, dataPane;
@@ -152,6 +158,9 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 					dig.objects.removeElementAt(dig.objects.size()-1);
 					dig.model.objectRemoved();
 				}
+				mainLine = null;
+				lineAbove = null;
+				lineBelow = null;
 				dig.startStopBtn.doClick();
 				dig.redraw();
 				map.repaint();
@@ -175,7 +184,31 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	private void finishDigitizing() {
 		setIsDigitizing(false);
 		dig.objects.add(dig.getCurObj());
+		mainLine = dig.getCurObj();
 		dig.model.objectAdded();
+		//get the parallel lines on either side
+		drawParallelLines(500, false);
+		map.repaint();
+	}
+	
+	private void drawParallelLines(double gapKm, boolean useStraightLines) {
+		SurveyLine.setIsStraightLine(useStraightLines);
+		if(null != dig && null != dig.getCurObj()) {
+			ArrayList<Point2D> path = ((LineSegmentsObject)dig.getCurObj()).getCurrentPath();
+			Point2D startPt = path.get(0);
+			Point2D endPt = path.get(path.size()-1);
+			Point2D[] curPts = {startPt, endPt};
+			Point2D[] ptsAbove = GeneralUtils.parallelLine(curPts, gapKm, (byte)1);
+			Point2D[] ptsBelow = GeneralUtils.parallelLine(curPts, gapKm, (byte)-1);
+//			lineAbove = new LineSegmentsObject(map, dig);
+//			((LineSegmentsObject)lineAbove).appendPoints(((LineSegmentsObject)lineAbove).getPath(ptsAbove[0], ptsAbove[1]));
+//			lineAbove.setVisible(true);
+			lineAbove = new SurveyLine(map, ptsAbove[0].getY(), ptsAbove[0].getX(), ptsAbove[1].getY(), ptsAbove[1].getX());
+			lineBelow = new SurveyLine(map, ptsBelow[0].getY(), ptsBelow[0].getX(), ptsBelow[1].getY(), ptsBelow[1].getX());
+			lineAbove.plain = true;
+			lineBelow.plain = true;
+			System.out.println("Got the points for the parallel lines");
+		}
 	}
 
 	@Override
@@ -195,6 +228,15 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				data.get(currentDataset).setSymbolShape(nameToShape.get(currentDataset));
 			}
 			data.get(currentDataset).draw(g);
+		}
+		if(null != mainLine) {
+			mainLine.draw(g);
+		}
+		if(null != lineAbove) {
+			lineAbove.draw(g);
+		}
+		if(null != lineBelow) {
+			lineBelow.draw(g);
 		}
 	}
 
@@ -289,7 +331,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			contentPane.add(dropdown);
 			dropdown.addActionListener(this);
 			setIsDigitizing(false);
-			digitizingBtn.setEnabled(false);
+			digitizingBtn.setVisible(false);
 			contentPane.add(digitizingBtn);
 			isLoaded = true;
 		}
@@ -353,7 +395,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource().equals(dropdown)) {
-			digitizingBtn.setEnabled(dropdown.getSelectedIndex()>0);
+			digitizingBtn.setVisible(dropdown.getSelectedIndex()>0);
 			if(dropdown.getSelectedIndex() > 0) {
 				String name = dropdown.getItemAt(dropdown.getSelectedIndex());
 				System.out.println("You selected " + name);

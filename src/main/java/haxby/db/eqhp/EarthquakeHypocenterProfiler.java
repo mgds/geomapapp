@@ -16,6 +16,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -30,6 +31,8 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -64,10 +67,11 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	private SurveyLine lineAbove, lineBelow;
 	
 	private boolean isLoaded = false, isDataShowing = false, enabled = false;
-	private JPanel contentPane, dataPane;
+	private JPanel contentPane, dataPane, digitizingPane;
 	private String currentDataset;
 	
 	private JComboBox<String> dropdown;
+	private JFormattedTextField gapDecider;
 	private JButton digitizingBtn;
 	
 	public EarthquakeHypocenterProfiler(XMap mapIn) {
@@ -78,6 +82,8 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		map = mapIn;
 		map.addMouseListener(this);
 		digitizingState = 0;
+		gapDecider = new JFormattedTextField(NumberFormat.getIntegerInstance());
+		gapDecider.addActionListener(this);
 	}
 	
 	public String nameForUrl(String url) {
@@ -124,7 +130,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		}
 		if(null != currentDataset && data.containsKey(currentDataset) && !isDataShowing) {
 			data.get(currentDataset).setSymbolShape(XML_Menu.getXML_Menu(currentDataset).symbol_shape);
-			data.get(currentDataset).setColor(Color.RED);
 			dataPane.add(data.get(currentDataset).tableSP);
 			((MapApp)map.getApp()).addDBToDisplay(this);
 			isDataShowing = true;
@@ -187,11 +192,11 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		mainLine = dig.getCurObj();
 		dig.model.objectAdded();
 		//get the parallel lines on either side
-		drawParallelLines(500, false);
+		drawParallelLines(Integer.valueOf(String.valueOf(gapDecider.getValue())), false);
 		map.repaint();
 	}
 	
-	private void drawParallelLines(double gapKm, boolean useStraightLines) {
+	private void drawParallelLines(long gapKm, boolean useStraightLines) {
 		SurveyLine.setIsStraightLine(useStraightLines);
 		if(null != dig && null != dig.getCurObj()) {
 			ArrayList<Point2D> path = ((LineSegmentsObject)dig.getCurObj()).getCurrentPath();
@@ -330,9 +335,17 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			dropdown.setSelectedIndex(0);
 			contentPane.add(dropdown);
 			dropdown.addActionListener(this);
+			digitizingPane = new JPanel();
+			digitizingPane.setVisible(false);
+			contentPane.add(digitizingPane);
 			setIsDigitizing(false);
-			digitizingBtn.setVisible(false);
-			contentPane.add(digitizingBtn);
+			gapDecider.setValue(500);
+			JLabel label = new JLabel("Max distance from survey line: ");
+			JLabel units = new JLabel("km");
+			digitizingPane.add(label);
+			digitizingPane.add(gapDecider);
+			digitizingPane.add(units);
+			digitizingPane.add(digitizingBtn);
 			isLoaded = true;
 		}
 		return true;
@@ -395,7 +408,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource().equals(dropdown)) {
-			digitizingBtn.setVisible(dropdown.getSelectedIndex()>0);
+			digitizingPane.setVisible(dropdown.getSelectedIndex()>0);
 			if(dropdown.getSelectedIndex() > 0) {
 				String name = dropdown.getItemAt(dropdown.getSelectedIndex());
 				System.out.println("You selected " + name);
@@ -423,6 +436,10 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				//dig.startStopBtn.doClick();
 				setIsDigitizing(false);
 			}
+		}
+		else if(e.getSource().equals(gapDecider) && null != mainLine) {
+			drawParallelLines(Integer.valueOf(String.valueOf(gapDecider.getValue())), false);
+			map.repaint();
 		}
 	}
 

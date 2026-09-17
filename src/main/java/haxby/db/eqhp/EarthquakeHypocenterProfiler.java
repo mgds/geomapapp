@@ -9,12 +9,14 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Polygon;
 import java.awt.Robot;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -25,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
@@ -45,6 +49,7 @@ import org.joda.time.DateTime;
 import haxby.db.Database;
 import haxby.db.custom.DBDescription;
 import haxby.db.custom.OtherDBInputDialog;
+import haxby.db.custom.UnknownData;
 import haxby.db.custom.UnknownDataSet;
 import haxby.db.dig.Digitizer;
 import haxby.db.dig.DigitizerObject;
@@ -52,9 +57,12 @@ import haxby.db.dig.LineSegmentsObject;
 import haxby.db.surveyplanner.SurveyLine;
 import haxby.map.MapApp;
 import haxby.map.XMap;
+import haxby.proj.Projection;
 import haxby.util.GeneralUtils;
 
 public class EarthquakeHypocenterProfiler implements Database, ActionListener, MouseListener {
+	
+	private static final int ROUNDING_FACTOR = 10000;
 	
 	private Map<String, UnknownDataSet> data;
 	private BidiMap<String, String> urlToName;
@@ -65,6 +73,8 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	private Digitizer dig;
 	private DigitizerObject mainLine;
 	private SurveyLine lineAbove, lineBelow;
+	private List<Point2D> selectArea;
+	private boolean isStraightLine;
 	
 	private boolean isLoaded = false, isDataShowing = false, enabled = false;
 	private JPanel contentPane, dataPane, digitizingPane;
@@ -73,6 +83,8 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	private JComboBox<String> dropdown;
 	private JFormattedTextField gapDecider;
 	private JButton digitizingBtn;
+	
+	private SurveyLine[] surveyLinesTest;
 	
 	public EarthquakeHypocenterProfiler(XMap mapIn) {
 		data = new HashMap<>();
@@ -84,6 +96,9 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		digitizingState = 0;
 		gapDecider = new JFormattedTextField(NumberFormat.getIntegerInstance());
 		gapDecider.addActionListener(this);
+		selectArea = null;
+		isStraightLine = false;
+		surveyLinesTest = null;
 	}
 	
 	public String nameForUrl(String url) {
@@ -166,6 +181,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				mainLine = null;
 				lineAbove = null;
 				lineBelow = null;
+				surveyLinesTest = null;
 				dig.startStopBtn.doClick();
 				dig.redraw();
 				map.repaint();
@@ -186,17 +202,62 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		}
 	}
 	
+	private void refresh() {
+		//get the parallel lines on either side
+		calculateParallellLines(Integer.valueOf(String.valueOf(gapDecider.getValue())), false);
+		selectArea = getPolygon();
+		List<UnknownData> points = getPointsForProfile();
+		points.stream().forEach(new Consumer<UnknownData>() {
+
+			@Override
+			public void accept(UnknownData t) {
+				t.rgb = new int[] {200, 0, 0};
+			}
+			
+		});
+	}
+	
+	private List<UnknownData> getPointsForProfile() {
+		if(null == currentDataset || dropdown.getSelectedIndex() == 0) {
+			return null;
+		}
+		UnknownDataSet uds = data.get(currentDataset);
+		Predicate<UnknownData> filterFn = new Predicate<UnknownData>() {
+			public boolean test(UnknownData ud) {
+				return true;
+			}
+		};
+		if(null != selectArea) {
+			Polygon p = new Polygon();
+			for(Point2D pt : selectArea) {
+//				Point2D mousePt = map.getMousePoint(pt);
+//				int x = (int)Math.round(mousePt.getX()), y = (int)Math.round(mousePt.getY());
+				p.addPoint((int)Math.round(pt.getX()*ROUNDING_FACTOR), (int)Math.round(pt.getY()*ROUNDING_FACTOR));
+			}
+			Projection proj = map.getProjection();
+			filterFn = new Predicate<UnknownData>() {
+				public boolean test(UnknownData ud) {
+					ud.rgb = null;
+					float[] lonLat = ud.getPointLonLat(uds.lonIndex, uds.latIndex);
+					Point2D pt = new Point2D.Float(lonLat[0]*ROUNDING_FACTOR, lonLat[1]*ROUNDING_FACTOR);
+					return p.contains(pt);
+				}
+			};
+		}
+		List<UnknownData> points = uds.data.stream().filter(filterFn).toList();
+		return points;
+	}
+	
 	private void finishDigitizing() {
 		setIsDigitizing(false);
 		dig.objects.add(dig.getCurObj());
 		mainLine = dig.getCurObj();
 		dig.model.objectAdded();
-		//get the parallel lines on either side
-		drawParallelLines(Integer.valueOf(String.valueOf(gapDecider.getValue())), false);
+		refresh();
 		map.repaint();
 	}
 	
-	private void drawParallelLines(long gapKm, boolean useStraightLines) {
+	private void calculateParallellLines(long gapKm, boolean useStraightLines) {
 		SurveyLine.setIsStraightLine(useStraightLines);
 		if(null != dig && null != dig.getCurObj()) {
 			ArrayList<Point2D> path = ((LineSegmentsObject)dig.getCurObj()).getCurrentPath();
@@ -215,6 +276,86 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			System.out.println("Got the points for the parallel lines");
 		}
 	}
+	
+	private List<Point2D> getPolygon() {
+		if(null == mainLine || null == lineAbove || null == lineBelow) {
+			return null;
+		}
+		List<Point2D> mainPts = ((LineSegmentsObject)mainLine).getCurrentPath();
+		final Point2D[] waypoints = new Point2D[] {
+				new Point2D.Double(lineAbove.getStartLon(), lineAbove.getStartLat()),
+				lineAbove.getEndPoint(),
+				mainPts.get(mainPts.size()-1),
+				lineBelow.getEndPoint(),
+				new Point2D.Double(lineBelow.getStartLon(), lineBelow.getStartLat()),
+				mainPts.get(0),
+				new Point2D.Double(lineAbove.getStartLon(), lineAbove.getStartLat())
+		};
+		surveyLinesTest = new SurveyLine[waypoints.length-1];
+		for(int i = 0; i+1 < waypoints.length; i++) {
+			surveyLinesTest[i] = new SurveyLine(map, waypoints[i].getY(), waypoints[i].getX(), waypoints[i+1].getY(), waypoints[i+1].getX());
+		}
+		List<Point2D> points = new ArrayList<>();
+		points.add(waypoints[0]);
+		for(int i = 0; i+1 < waypoints.length; i++) {
+			if(0 == i%3) {
+				ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath(waypoints[i], waypoints[i+1]);
+				for(int j = 1; j < curPath.size(); j++) {
+					points.add(curPath.get(j));
+				}
+			}
+			else {
+				points.add(waypoints[i+1]);
+			}
+		}
+		return points;
+	}
+	
+//	private GeneralPath getPolygon() {
+//		return getPolygon(Integer.valueOf(String.valueOf(gapDecider.getValue())));
+//	}
+//	
+//	private GeneralPath getPolygon(long gapKm) {
+//		if(null == mainLine || null == lineAbove || null == lineBelow) {
+//			return null;
+//		}
+//		GeneralPath path = new GeneralPath();
+//		ArrayList<Point2D> centerLinePts = ((LineSegmentsObject)mainLine).getCurrentPath();
+//		Projection proj = map.getProjection();
+//		float[] lastP = null;
+//		float wrap = (float)map.getWrap()/2f;
+//		final Point2D startAndEnd = new Point2D.Double(lineAbove.getStartLon(), lineAbove.getStartLat());
+//		final Point2D[] waypoints = new Point2D[] {
+//				lineAbove.getEndPoint(),
+//				lineBelow.getEndPoint(),
+//				centerLinePts.get(centerLinePts.size()-1),
+//				new Point2D.Double(lineBelow.getStartLon(), lineBelow.getStartLat()),
+//				centerLinePts.get(0)
+//		};
+//		Point2D mapCoords = proj.getMapXY(startAndEnd);
+//		float x = (float)mapCoords.getX(), y = (float)mapCoords.getY();
+//		lastP = new float[] {x, y};
+//		path.moveTo(x, y);
+//		for(int i = 0; i <= waypoints.length; i++) {
+//			ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath((0 == i) ? startAndEnd : waypoints[i-1], (waypoints.length == i) ? startAndEnd : waypoints[i]);
+//			for(int j = 0; j < curPath.size(); j++) {
+//				mapCoords = proj.getMapXY(curPath.get(j));
+//				x = (float)mapCoords.getX();
+//				y = (float)mapCoords.getY();
+//	
+//				if(wrap > 0f) {
+//					while( x-lastP[0] <-wrap ){
+//						x+=wrap*2f;
+//						}
+//					while( x-lastP[0] > wrap ){
+//						x-=wrap*2f;
+//					}
+//				}
+//				path.lineTo(x, y);
+//			}
+//		}
+//		return path;
+//	}
 
 	@Override
 	public void draw(Graphics2D g) {
@@ -242,6 +383,13 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		}
 		if(null != lineBelow) {
 			lineBelow.draw(g);
+		}
+		if(null != surveyLinesTest) {
+			for(int i = 0; i < surveyLinesTest.length; i++) {
+				if(null != surveyLinesTest[i]) {
+					surveyLinesTest[i].draw(g);
+				}
+			}
 		}
 	}
 
@@ -438,7 +586,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			}
 		}
 		else if(e.getSource().equals(gapDecider) && null != mainLine) {
-			drawParallelLines(Integer.valueOf(String.valueOf(gapDecider.getValue())), false);
+			refresh();
 			map.repaint();
 		}
 	}

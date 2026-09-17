@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Polygon;
 import java.awt.Robot;
+import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -18,9 +19,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +62,7 @@ import haxby.map.MapApp;
 import haxby.map.XMap;
 import haxby.proj.Projection;
 import haxby.util.GeneralUtils;
+import haxby.util.XBTable;
 
 public class EarthquakeHypocenterProfiler implements Database, ActionListener, MouseListener {
 	
@@ -73,8 +77,9 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	private Digitizer dig;
 	private DigitizerObject mainLine;
 	private SurveyLine lineAbove, lineBelow;
-	private Polygon selectArea;
+	private Shape selectArea;
 	private boolean isStraightLine;
+	private List<UnknownData> selectedData;
 	
 	private boolean isLoaded = false, isDataShowing = false, enabled = false;
 	private JPanel contentPane, dataPane, digitizingPane;
@@ -186,9 +191,10 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				map.repaint();
 			}
 			if(null != currentDataset && data.containsKey(currentDataset)) {
-				data.get(currentDataset).poly = null;
+//				data.get(currentDataset).poly = null;
 				data.get(currentDataset).dataT.clearSelection();
 			}
+			selectArea = null;
 		}
 		else {
 			if(null != dig) {
@@ -208,9 +214,9 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	private void refresh() {
 		//get the parallel lines on either side
 		calculateParallellLines(Integer.valueOf(String.valueOf(gapDecider.getValue())), false);
-		selectArea = getPolygon();
-//		List<UnknownData> points = getPointsForProfile();
-//		points.stream().forEach(new Consumer<UnknownData>() {
+		selectArea = calcSelectedArea();
+		selectedData = getSelected();
+//		selectedData.stream().forEach(new Consumer<UnknownData>() {
 //
 //			@Override
 //			public void accept(UnknownData t) {
@@ -245,11 +251,10 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			lineBelow = new SurveyLine(map, ptsBelow[0].getY(), ptsBelow[0].getX(), ptsBelow[1].getY(), ptsBelow[1].getX());
 			lineAbove.plain = true;
 			lineBelow.plain = true;
-			System.out.println("Got the points for the parallel lines");
 		}
 	}
 	
-	private Polygon getPolygon() {
+	private Shape calcSelectedArea() {
 		if(null == mainLine || null == lineAbove || null == lineBelow || null == currentDataset || !data.containsKey(currentDataset)) {
 			return null;
 		}
@@ -262,30 +267,82 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				mainPts.get(mainPts.size()-1),
 				lineBelow.getEndPoint(),
 				new Point2D.Double(lineBelow.getStartLon(), lineBelow.getStartLat()),
-				mainPts.get(0),
-				new Point2D.Double(lineAbove.getStartLon(), lineAbove.getStartLat())
+				mainPts.get(0)
 		};
-		uds.poly = new Polygon();
+		GeneralPath path = new GeneralPath();
+		//uds.poly = new Polygon();
 		Projection proj = map.getProjection();
-		for(int i = 0; i+1 < waypoints.length; i++) {
+		for(int i = 0; i < waypoints.length; i++) {
 			if(0 == i%3) {
 				ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath(proj.getMapXY(waypoints[i]), proj.getMapXY(waypoints[i+1]));
 				for(int j = 0; j < curPath.size(); j++) {
 					Point2D pt = proj.getMapXY(curPath.get(j));
-					uds.poly.addPoint((int)Math.round(pt.getX()), (int)Math.round(pt.getY()));
-//					if(j>0 || j>0) {
-//						uds.drawLasso();
-//					}
+					if(0 == i && 0 == j) {
+						path.moveTo(pt.getX(), pt.getY());
+					}
+					else {
+						path.lineTo(pt.getX(), pt.getY());
+					}
 				}
 			}
 			else {
 				Point2D pt = proj.getMapXY(waypoints[i]);
-				uds.poly.addPoint((int)Math.round(pt.getX()), (int)Math.round(pt.getY()));
-//				uds.drawLasso();
+				path.lineTo(pt.getX(), pt.getY());
 			}
 		}
-		uds.selectLasso();
-		return uds.poly;
+		path.closePath();
+		//uds.selectLasso();
+		return path;
+	}
+	
+	private List<UnknownData> getSelected() {
+		if(null == currentDataset || !data.containsKey(currentDataset)) {
+			return null;
+		}
+		if(null == selectArea) {
+			selectArea = calcSelectedArea();
+		}
+		UnknownDataSet uds = data.get(currentDataset);
+		XBTable table = uds.dataT;
+		float wrap = (float)map.getWrap();
+		Rectangle2D rect = map.getClipRect2D();
+		float yMin = (float)rect.getY();
+		float yMax = (float)(rect.getY() + rect.getHeight());
+		float xMin = (float)rect.getX();
+		float xMax = (float)(rect.getX() + rect.getWidth());
+		List<UnknownData> selected = new ArrayList<>();
+		table.getSelectionModel().setValueIsAdjusting(true);
+		for(int i = 0; i < uds.tm.displayToDataIndex.size(); i++) {
+			int index = uds.tm.displayToDataIndex.get(i);
+			UnknownData ud = uds.data.get(index);
+			float x = ud.x, y = ud.y;
+			if(!Float.isNaN(x) && !Float.isNaN(y)) {
+				if(wrap > 0f) {
+					while( x>xMin+wrap ) x -= wrap;
+					while( x<xMin ) x += wrap;
+					while( x<xMax ) {
+						if (rect.contains(x, y) && selectArea.contains(x, y)) {
+							table.getSelectionModel().addSelectionInterval(i, i);
+							//uds.selected[i] = true;
+							selected.add(ud);
+						}
+						x += wrap;
+					}
+				}
+				else {
+					if( x>xMin && x<xMax ) {
+						if (rect.contains(x, y) && selectArea.contains(x, y)) {
+							table.getSelectionModel().addSelectionInterval(i, i);
+							//uds.selected[i] = true;
+							selected.add(ud);
+						}
+					}
+				}
+			}
+		}
+		table.getSelectionModel().setValueIsAdjusting(false);
+		return selected;
+	}
 //		surveyLinesTest = new SurveyLine[waypoints.length-1];
 //		for(int i = 0; i+1 < waypoints.length; i++) {
 //			surveyLinesTest[i] = new SurveyLine(map, waypoints[i].getY(), waypoints[i].getX(), waypoints[i+1].getY(), waypoints[i+1].getX());
@@ -304,7 +361,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 //			}
 //		}
 //		return points;
-	}
+//	}
 	
 //	private GeneralPath getPolygon() {
 //		return getPolygon(Integer.valueOf(String.valueOf(gapDecider.getValue())));
@@ -369,8 +426,8 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				data.get(currentDataset).setSymbolShape(nameToShape.get(currentDataset));
 			}
 			data.get(currentDataset).draw(g);
-			if(data.get(currentDataset).enabled && null != data.get(currentDataset).poly) {
-				g.draw(data.get(currentDataset).poly);
+			if(data.get(currentDataset).enabled && null != selectArea) {
+				g.draw(selectArea);
 //				for(int i = 1; i < data.get(currentDataset).poly.npoints; i++) {
 //					g.drawLine
 //				}

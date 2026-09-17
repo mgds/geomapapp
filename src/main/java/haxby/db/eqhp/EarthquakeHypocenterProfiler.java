@@ -73,7 +73,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	private Digitizer dig;
 	private DigitizerObject mainLine;
 	private SurveyLine lineAbove, lineBelow;
-	private List<Point2D> selectArea;
+	private Polygon selectArea;
 	private boolean isStraightLine;
 	
 	private boolean isLoaded = false, isDataShowing = false, enabled = false;
@@ -174,7 +174,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			}
 			if(!dig.startStopBtn.isSelected()) {
 				while(dig.objects.size() > 0) {
-//					((LineSegmentsObject)dig.objects.elementAt(dig.objects.size()-1)).dispose();
 					dig.objects.removeElementAt(dig.objects.size()-1);
 					dig.model.objectRemoved();
 				}
@@ -185,6 +184,10 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				dig.startStopBtn.doClick();
 				dig.redraw();
 				map.repaint();
+			}
+			if(null != currentDataset && data.containsKey(currentDataset)) {
+				data.get(currentDataset).poly = null;
+				data.get(currentDataset).dataT.clearSelection();
 			}
 		}
 		else {
@@ -206,46 +209,15 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		//get the parallel lines on either side
 		calculateParallellLines(Integer.valueOf(String.valueOf(gapDecider.getValue())), false);
 		selectArea = getPolygon();
-		List<UnknownData> points = getPointsForProfile();
-		points.stream().forEach(new Consumer<UnknownData>() {
-
-			@Override
-			public void accept(UnknownData t) {
-				t.rgb = new int[] {200, 0, 0};
-			}
-			
-		});
-	}
-	
-	private List<UnknownData> getPointsForProfile() {
-		if(null == currentDataset || dropdown.getSelectedIndex() == 0) {
-			return null;
-		}
-		UnknownDataSet uds = data.get(currentDataset);
-		Predicate<UnknownData> filterFn = new Predicate<UnknownData>() {
-			public boolean test(UnknownData ud) {
-				return true;
-			}
-		};
-		if(null != selectArea) {
-			Polygon p = new Polygon();
-			for(Point2D pt : selectArea) {
-//				Point2D mousePt = map.getMousePoint(pt);
-//				int x = (int)Math.round(mousePt.getX()), y = (int)Math.round(mousePt.getY());
-				p.addPoint((int)Math.round(pt.getX()*ROUNDING_FACTOR), (int)Math.round(pt.getY()*ROUNDING_FACTOR));
-			}
-			Projection proj = map.getProjection();
-			filterFn = new Predicate<UnknownData>() {
-				public boolean test(UnknownData ud) {
-					ud.rgb = null;
-					float[] lonLat = ud.getPointLonLat(uds.lonIndex, uds.latIndex);
-					Point2D pt = new Point2D.Float(lonLat[0]*ROUNDING_FACTOR, lonLat[1]*ROUNDING_FACTOR);
-					return p.contains(pt);
-				}
-			};
-		}
-		List<UnknownData> points = uds.data.stream().filter(filterFn).toList();
-		return points;
+//		List<UnknownData> points = getPointsForProfile();
+//		points.stream().forEach(new Consumer<UnknownData>() {
+//
+//			@Override
+//			public void accept(UnknownData t) {
+//				t.rgb = new int[] {200, 0, 0};
+//			}
+//			
+//		});
 	}
 	
 	private void finishDigitizing() {
@@ -277,10 +249,12 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		}
 	}
 	
-	private List<Point2D> getPolygon() {
-		if(null == mainLine || null == lineAbove || null == lineBelow) {
+	private Polygon getPolygon() {
+		if(null == mainLine || null == lineAbove || null == lineBelow || null == currentDataset || !data.containsKey(currentDataset)) {
 			return null;
 		}
+		UnknownDataSet uds = data.get(currentDataset);
+		uds.dataT.clearSelection();
 		List<Point2D> mainPts = ((LineSegmentsObject)mainLine).getCurrentPath();
 		final Point2D[] waypoints = new Point2D[] {
 				new Point2D.Double(lineAbove.getStartLon(), lineAbove.getStartLat()),
@@ -291,24 +265,45 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				mainPts.get(0),
 				new Point2D.Double(lineAbove.getStartLon(), lineAbove.getStartLat())
 		};
-		surveyLinesTest = new SurveyLine[waypoints.length-1];
-		for(int i = 0; i+1 < waypoints.length; i++) {
-			surveyLinesTest[i] = new SurveyLine(map, waypoints[i].getY(), waypoints[i].getX(), waypoints[i+1].getY(), waypoints[i+1].getX());
-		}
-		List<Point2D> points = new ArrayList<>();
-		points.add(waypoints[0]);
+		uds.poly = new Polygon();
+		Projection proj = map.getProjection();
 		for(int i = 0; i+1 < waypoints.length; i++) {
 			if(0 == i%3) {
-				ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath(waypoints[i], waypoints[i+1]);
-				for(int j = 1; j < curPath.size(); j++) {
-					points.add(curPath.get(j));
+				ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath(proj.getMapXY(waypoints[i]), proj.getMapXY(waypoints[i+1]));
+				for(int j = 0; j < curPath.size(); j++) {
+					Point2D pt = proj.getMapXY(curPath.get(j));
+					uds.poly.addPoint((int)Math.round(pt.getX()), (int)Math.round(pt.getY()));
+//					if(j>0 || j>0) {
+//						uds.drawLasso();
+//					}
 				}
 			}
 			else {
-				points.add(waypoints[i+1]);
+				Point2D pt = proj.getMapXY(waypoints[i]);
+				uds.poly.addPoint((int)Math.round(pt.getX()), (int)Math.round(pt.getY()));
+//				uds.drawLasso();
 			}
 		}
-		return points;
+		uds.selectLasso();
+		return uds.poly;
+//		surveyLinesTest = new SurveyLine[waypoints.length-1];
+//		for(int i = 0; i+1 < waypoints.length; i++) {
+//			surveyLinesTest[i] = new SurveyLine(map, waypoints[i].getY(), waypoints[i].getX(), waypoints[i+1].getY(), waypoints[i+1].getX());
+//		}
+//		List<Point2D> points = new ArrayList<>();
+//		points.add(waypoints[0]);
+//		for(int i = 0; i+1 < waypoints.length; i++) {
+//			if(0 == i%3) {
+//				ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath(waypoints[i], waypoints[i+1]);
+//				for(int j = 1; j < curPath.size(); j++) {
+//					points.add(curPath.get(j));
+//				}
+//			}
+//			else {
+//				points.add(waypoints[i+1]);
+//			}
+//		}
+//		return points;
 	}
 	
 //	private GeneralPath getPolygon() {
@@ -374,6 +369,12 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				data.get(currentDataset).setSymbolShape(nameToShape.get(currentDataset));
 			}
 			data.get(currentDataset).draw(g);
+			if(data.get(currentDataset).enabled && null != data.get(currentDataset).poly) {
+				g.draw(data.get(currentDataset).poly);
+//				for(int i = 1; i < data.get(currentDataset).poly.npoints; i++) {
+//					g.drawLine
+//				}
+			}
 		}
 		if(null != mainLine) {
 			mainLine.draw(g);

@@ -1701,9 +1701,9 @@ public class ImportGrid implements Runnable {
 		}
 		try {
 			fjp.shutdown();
-			boolean finished = fjp.awaitTermination(40*numCells, TimeUnit.MILLISECONDS);
+			boolean finished = fjp.awaitTermination(40*numCells, TimeUnit.SECONDS);
 			if(!finished) {
-				System.out.println("Couldn't finish tiling in " + (40*numCells) + "ms");
+				System.out.println("Couldn't finish tiling in " + (40*numCells) + "s");
 			}
 		}
 		catch(InterruptedException e) {

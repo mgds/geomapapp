@@ -18,6 +18,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.text.NumberFormat;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -232,6 +234,10 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		mainLine = dig.getCurObj();
 		dig.model.objectAdded();
 		refresh();
+		for(UnknownData d : selectedData) {
+			double percent = getPercentAlongProfile(d);
+			System.out.println("(" + percent + ", " + d.data + ")");
+		}
 		map.repaint();
 	}
 	
@@ -343,71 +349,49 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		table.getSelectionModel().setValueIsAdjusting(false);
 		return selected;
 	}
-//		surveyLinesTest = new SurveyLine[waypoints.length-1];
-//		for(int i = 0; i+1 < waypoints.length; i++) {
-//			surveyLinesTest[i] = new SurveyLine(map, waypoints[i].getY(), waypoints[i].getX(), waypoints[i+1].getY(), waypoints[i+1].getX());
-//		}
-//		List<Point2D> points = new ArrayList<>();
-//		points.add(waypoints[0]);
-//		for(int i = 0; i+1 < waypoints.length; i++) {
-//			if(0 == i%3) {
-//				ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath(waypoints[i], waypoints[i+1]);
-//				for(int j = 1; j < curPath.size(); j++) {
-//					points.add(curPath.get(j));
-//				}
-//			}
-//			else {
-//				points.add(waypoints[i+1]);
-//			}
-//		}
-//		return points;
-//	}
 	
-//	private GeneralPath getPolygon() {
-//		return getPolygon(Integer.valueOf(String.valueOf(gapDecider.getValue())));
-//	}
-//	
-//	private GeneralPath getPolygon(long gapKm) {
-//		if(null == mainLine || null == lineAbove || null == lineBelow) {
-//			return null;
-//		}
-//		GeneralPath path = new GeneralPath();
-//		ArrayList<Point2D> centerLinePts = ((LineSegmentsObject)mainLine).getCurrentPath();
-//		Projection proj = map.getProjection();
-//		float[] lastP = null;
-//		float wrap = (float)map.getWrap()/2f;
-//		final Point2D startAndEnd = new Point2D.Double(lineAbove.getStartLon(), lineAbove.getStartLat());
-//		final Point2D[] waypoints = new Point2D[] {
-//				lineAbove.getEndPoint(),
-//				lineBelow.getEndPoint(),
-//				centerLinePts.get(centerLinePts.size()-1),
-//				new Point2D.Double(lineBelow.getStartLon(), lineBelow.getStartLat()),
-//				centerLinePts.get(0)
-//		};
-//		Point2D mapCoords = proj.getMapXY(startAndEnd);
-//		float x = (float)mapCoords.getX(), y = (float)mapCoords.getY();
-//		lastP = new float[] {x, y};
-//		path.moveTo(x, y);
-//		for(int i = 0; i <= waypoints.length; i++) {
-//			ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath((0 == i) ? startAndEnd : waypoints[i-1], (waypoints.length == i) ? startAndEnd : waypoints[i]);
-//			for(int j = 0; j < curPath.size(); j++) {
-//				mapCoords = proj.getMapXY(curPath.get(j));
-//				x = (float)mapCoords.getX();
-//				y = (float)mapCoords.getY();
-//	
-//				if(wrap > 0f) {
-//					while( x-lastP[0] <-wrap ){
-//						x+=wrap*2f;
-//						}
-//					while( x-lastP[0] > wrap ){
-//						x-=wrap*2f;
-//					}
-//				}
-//				path.lineTo(x, y);
-//			}
-//		}
-//		return path;
-//	}
+	public double getPercentAlongProfile(UnknownData datum) {
+		if(null == mainLine || null == currentDataset || !data.containsKey(currentDataset)) {
+			return -1;
+		}
+		UnknownDataSet uds = data.get(currentDataset);
+		ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getCurrentPath();
+		//find the closest interpolated point to the given point
+		float[] dataLoc = datum.getPointLonLat(uds.lonIndex, uds.latIndex);
+		Point2D dataLocPt = new Point2D.Float(dataLoc[0], dataLoc[1]);
+		Line2D.Float closestSeg = new Line2D.Float(curPath.get(0), curPath.get(1));
+		int closestSegIndex = 0;
+		for(int i = 1; i+1 < curPath.size(); i++) {
+			Line2D.Float curSeg = new Line2D.Float(curPath.get(i), curPath.get(i+1));
+			if(closestSeg.ptSegDist(dataLocPt) > curSeg.ptSegDist(dataLocPt)) {
+				closestSeg = curSeg;
+				closestSegIndex = i;
+			}
+		}
+		//find the closest point on the closest segment to the given point
+		double slope = closestSeg.getX2() == closestSeg.getX1() ? (Double.NaN) : ((closestSeg.getY2()-closestSeg.getY1()) / (closestSeg.getX2()-closestSeg.getX1()));
+		double perpSlope = Double.isNaN(slope) ? (0) : ((0 == slope)?(Double.NaN):(-1./slope));
+		double howFarOnSeg = -1;
+		//special case for if the line is perfectly horizontal or perfectly vertical
+		if(0.0 == slope) {
+			howFarOnSeg = (dataLocPt.getX() - closestSeg.getX1()) / (closestSeg.getX2()/closestSeg.getX1());
+		}
+		else if(0.0 == perpSlope) {
+			howFarOnSeg = (dataLocPt.getY() - closestSeg.getY1()) / (closestSeg.getY2()/closestSeg.getY1());
+		}
+		//if it's not, then have to find the intersection point with some more complex math
+		else {
+			//need the distance
+			double distToSeg = closestSeg.ptSegDist(dataLocPt);
+			//get the angle of the shortest line
+			double angleRad = Math.atan(perpSlope);
+			double rise = distToSeg * Math.sin(angleRad),
+					run = distToSeg * Math.cos(angleRad);
+			Point2D intersectionPoint = new Point2D.Double(dataLocPt.getX() + run, dataLocPt.getY() + rise);
+			howFarOnSeg = (intersectionPoint.getX() - closestSeg.getX1()) / (closestSeg.getX2() - closestSeg.getX1());
+		}
+		return (double)closestSegIndex/curPath.size() + howFarOnSeg;
+	}
 
 	@Override
 	public void draw(Graphics2D g) {

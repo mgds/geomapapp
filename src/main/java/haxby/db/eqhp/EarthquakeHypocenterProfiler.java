@@ -237,6 +237,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		for(UnknownData d : selectedData) {
 			double percent = getPercentAlongProfile(d);
 			System.out.println("(" + percent + ", " + d.data + ")");
+			d.rgb = new int[] {null == d.rgb ? 0 : d.rgb[0], (int)Math.round(percent*255/100), null == d.rgb ? 0 : d.rgb[2]};
 		}
 		map.repaint();
 	}
@@ -350,7 +351,20 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		return selected;
 	}
 	
-	public double getPercentAlongProfile(UnknownData datum) {
+	//TODO make sure this math is correct
+	private double projectHowFarOnSeg(Line2D segment, Point2D point) {
+		double segRise = segment.getY2() - segment.getY1(), segRun = segment.getX2() - segment.getX1();
+		double ptRise = point.getY() - segment.getY1(), ptRun = point.getX() - segment.getX1();
+		double segLength = segment.getP1().distance(segment.getP2()), ptLength = segment.getP1().distance(point);
+//		return lengthAlongSeg / segLength;
+		double slope = 0 == segRun ? Double.NaN : segRise/segRun;
+		double angleRad = Math.atan(slope);
+		double rawDist = Math.abs(ptLength * Math.cos(angleRad));
+		return rawDist / segLength;
+	}
+	
+	//TODO figure out why this is coming up with incorrect values (probably the projectHowFarOnSeg method)
+	private double getPercentAlongProfile(UnknownData datum) {
 		if(null == mainLine || null == currentDataset || !data.containsKey(currentDataset)) {
 			return -1;
 		}
@@ -359,38 +373,108 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		//find the closest interpolated point to the given point
 		float[] dataLoc = datum.getPointLonLat(uds.lonIndex, uds.latIndex);
 		Point2D dataLocPt = new Point2D.Float(dataLoc[0], dataLoc[1]);
-		Line2D.Float closestSeg = new Line2D.Float(curPath.get(0), curPath.get(1));
+		Line2D.Float bestSeg = new Line2D.Float(curPath.get(0), curPath.get(1));
 		int closestSegIndex = 0;
-		for(int i = 1; i+1 < curPath.size(); i++) {
-			Line2D.Float curSeg = new Line2D.Float(curPath.get(i), curPath.get(i+1));
-			if(closestSeg.ptSegDist(dataLocPt) > curSeg.ptSegDist(dataLocPt)) {
-				closestSeg = curSeg;
-				closestSegIndex = i;
+		double bestProjection = projectHowFarOnSeg(bestSeg, dataLocPt);
+		if(bestProjection < 0 && bestSeg.getX2() != bestSeg.getX1()) {
+			dataLocPt.setLocation(dataLocPt.getX() + 360. * (bestSeg.getX2()-bestSeg.getX1())/Math.abs(bestSeg.getX2() - bestSeg.getX1()), dataLocPt.getY());
+			bestProjection = projectHowFarOnSeg(bestSeg, dataLocPt);
+		}
+		if(bestProjection < 0) {
+			System.out.println("Initial projection is too low: " + bestProjection);
+			System.out.println("This should NEVER happen. Printing inputs for testing purposes");
+			System.out.println("Line goes from " + curPath.get(0) + " to " + curPath.get(1));
+			System.out.println("Point being projected is " + dataLocPt);
+			System.exit(1);
+		}
+		closestSegIndex++;
+		while(bestProjection > 1 && closestSegIndex+1 < curPath.size()) {
+			bestProjection = projectHowFarOnSeg(new Line2D.Float(curPath.get(closestSegIndex), curPath.get(closestSegIndex+1)), dataLocPt);
+			//System.out.println("Current best projection is " + bestProjection + " at index " + closestSegIndex);
+			closestSegIndex++;
+		}
+		System.out.println("First projection that's not too big is " + bestProjection + " at index " + (closestSegIndex-1));
+		bestSeg = new Line2D.Float(curPath.get(closestSegIndex-1), curPath.get(closestSegIndex));
+		boolean foundBetter = false;
+		for(int curSegIndex = closestSegIndex; curSegIndex+1 < curPath.size(); curSegIndex++) {
+			Line2D.Float curSeg = new Line2D.Float(curPath.get(curSegIndex), curPath.get(curSegIndex+1));
+			double curProj = projectHowFarOnSeg(curSeg, dataLocPt);
+			//System.out.println("Now considering " + curProj + " at index " + curSegIndex);
+			if(Math.abs(curProj - 0.5) < Math.abs(bestProjection - 0.5)) {
+				bestProjection = curProj;
+				bestSeg = curSeg;
+				closestSegIndex = curSegIndex;
+				foundBetter = true;
 			}
 		}
-		//find the closest point on the closest segment to the given point
-		double slope = closestSeg.getX2() == closestSeg.getX1() ? (Double.NaN) : ((closestSeg.getY2()-closestSeg.getY1()) / (closestSeg.getX2()-closestSeg.getX1()));
-		double perpSlope = Double.isNaN(slope) ? (0) : ((0 == slope)?(Double.NaN):(-1./slope));
-		double howFarOnSeg = -1;
-		//special case for if the line is perfectly horizontal or perfectly vertical
-		if(0.0 == slope) {
-			howFarOnSeg = (dataLocPt.getX() - closestSeg.getX1()) / (closestSeg.getX2()/closestSeg.getX1());
+		if(!foundBetter) {
+			closestSegIndex--;
 		}
-		else if(0.0 == perpSlope) {
-			howFarOnSeg = (dataLocPt.getY() - closestSeg.getY1()) / (closestSeg.getY2()/closestSeg.getY1());
+		System.out.println("Best projection seems to be " + bestProjection + " at index " + closestSegIndex);
+		if(bestProjection>1) {
+			datum.rgb = new int[] {closestSegIndex*255/curPath.size(), 0, 0};
+			return 100;
 		}
-		//if it's not, then have to find the intersection point with some more complex math
-		else {
-			//need the distance
-			double distToSeg = closestSeg.ptSegDist(dataLocPt);
-			//get the angle of the shortest line
-			double angleRad = Math.atan(perpSlope);
-			double rise = distToSeg * Math.sin(angleRad),
-					run = distToSeg * Math.cos(angleRad);
-			Point2D intersectionPoint = new Point2D.Double(dataLocPt.getX() + run, dataLocPt.getY() + rise);
-			howFarOnSeg = (intersectionPoint.getX() - closestSeg.getX1()) / (closestSeg.getX2() - closestSeg.getX1());
+		if(bestProjection<0) {
+			datum.rgb = new int[] {0, 0, closestSegIndex*255/curPath.size()};
+			return (double)closestSegIndex*100/curPath.size();
 		}
-		return (double)closestSegIndex/curPath.size() + howFarOnSeg;
+		return (closestSegIndex + bestProjection) * 100./curPath.size();
+//		for(int i = 1; i+1 < curPath.size(); i++) {
+//			Line2D.Float curSeg = new Line2D.Float(curPath.get(i), curPath.get(i+1));
+//			double curProjection = projectHowFarOnSeg(curSeg, dataLocPt);
+//			if(Math.abs(curProjection - 0.5) < Math.abs(bestProjection - 0.5)) {
+//				bestProjection = curProjection;
+//				closestSegIndex = i;
+//				bestSeg = curSeg;
+//			}
+//		}
+//		if(bestProjection < 0) {
+//			datum.rgb = new int[] {255, 0, 0};
+//		}
+//		if(bestProjection > 1) {
+//			datum.rgb = new int[] {0, 0, 255};
+//		}
+//		bestProjection = Math.min(1, Math.max(0, bestProjection));
+//		double rawDist = closestSegIndex + bestProjection;
+//		return 100 * rawDist / curPath.size();
+//		//find the closest point on the closest segment to the given point
+//		double slope = closestSeg.getX2() == closestSeg.getX1() ? (Double.NaN) : ((closestSeg.getY2()-closestSeg.getY1()) / (closestSeg.getX2()-closestSeg.getX1()));
+//		double perpSlope = Double.isNaN(slope) ? (0) : ((0 == slope)?(Double.NaN):(-1./slope));
+//		double howFarOnSeg = -1;
+//		//special case for if the line is perfectly horizontal or perfectly vertical
+//		if(0.0 == slope) {
+//			howFarOnSeg = (dataLocPt.getX() - closestSeg.getX1()) / (closestSeg.getX2()/closestSeg.getX1());
+//		}
+//		else if(0.0 == perpSlope) {
+//			howFarOnSeg = (dataLocPt.getY() - closestSeg.getY1()) / (closestSeg.getY2()/closestSeg.getY1());
+//		}
+//		//if it's not, then have to find the intersection point with some more complex math
+//		else {
+//			//need the distance
+//			double distToSeg = closestSeg.ptSegDist(dataLocPt);
+//			//get the angle of the shortest line
+//			double angleRad = Math.atan(perpSlope);
+//			double rise = distToSeg * Math.sin(angleRad),
+//					run = distToSeg * Math.cos(angleRad);
+//			Point2D intersectionPoint = new Point2D.Double(dataLocPt.getX() + run, dataLocPt.getY() + rise);
+//			howFarOnSeg = (intersectionPoint.getX() - closestSeg.getX1()) / (closestSeg.getX2() - closestSeg.getX1());
+//			if(howFarOnSeg < 0 || howFarOnSeg > 1) {
+//				System.out.println("This math ain't mathing");
+//				if(null == datum.rgb) {
+//					datum.rgb = new int[] {0, 0, 255};
+//				}
+//				else {
+//					datum.rgb[2] = 255;
+//				}
+//			}
+//		}
+//		howFarOnSeg = Math.min(100, Math.max(0, howFarOnSeg));
+//		double percent = (closestSegIndex + howFarOnSeg)*100/curPath.size();
+//		if(percent < 0 || percent > 100) {
+//			System.out.println("How is the percent " + percent + "?");
+//		}
+//		return Math.min(100, Math.max(0, percent));
 	}
 
 	@Override

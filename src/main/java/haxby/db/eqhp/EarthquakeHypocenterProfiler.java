@@ -356,7 +356,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		double segRise = segment.getY2() - segment.getY1(), segRun = segment.getX2() - segment.getX1();
 		double ptRise = point.getY() - segment.getY1(), ptRun = point.getX() - segment.getX1();
 		double segLength = segment.getP1().distance(segment.getP2()), ptLength = segment.getP1().distance(point);
-//		return lengthAlongSeg / segLength;
 		double slope = 0 == segRun ? Double.NaN : segRise/segRun;
 		double angleRad = Math.atan(slope);
 		double rawDist = Math.abs(ptLength * Math.cos(angleRad));
@@ -420,61 +419,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			return (double)closestSegIndex*100/curPath.size();
 		}
 		return (closestSegIndex + bestProjection) * 100./curPath.size();
-//		for(int i = 1; i+1 < curPath.size(); i++) {
-//			Line2D.Float curSeg = new Line2D.Float(curPath.get(i), curPath.get(i+1));
-//			double curProjection = projectHowFarOnSeg(curSeg, dataLocPt);
-//			if(Math.abs(curProjection - 0.5) < Math.abs(bestProjection - 0.5)) {
-//				bestProjection = curProjection;
-//				closestSegIndex = i;
-//				bestSeg = curSeg;
-//			}
-//		}
-//		if(bestProjection < 0) {
-//			datum.rgb = new int[] {255, 0, 0};
-//		}
-//		if(bestProjection > 1) {
-//			datum.rgb = new int[] {0, 0, 255};
-//		}
-//		bestProjection = Math.min(1, Math.max(0, bestProjection));
-//		double rawDist = closestSegIndex + bestProjection;
-//		return 100 * rawDist / curPath.size();
-//		//find the closest point on the closest segment to the given point
-//		double slope = closestSeg.getX2() == closestSeg.getX1() ? (Double.NaN) : ((closestSeg.getY2()-closestSeg.getY1()) / (closestSeg.getX2()-closestSeg.getX1()));
-//		double perpSlope = Double.isNaN(slope) ? (0) : ((0 == slope)?(Double.NaN):(-1./slope));
-//		double howFarOnSeg = -1;
-//		//special case for if the line is perfectly horizontal or perfectly vertical
-//		if(0.0 == slope) {
-//			howFarOnSeg = (dataLocPt.getX() - closestSeg.getX1()) / (closestSeg.getX2()/closestSeg.getX1());
-//		}
-//		else if(0.0 == perpSlope) {
-//			howFarOnSeg = (dataLocPt.getY() - closestSeg.getY1()) / (closestSeg.getY2()/closestSeg.getY1());
-//		}
-//		//if it's not, then have to find the intersection point with some more complex math
-//		else {
-//			//need the distance
-//			double distToSeg = closestSeg.ptSegDist(dataLocPt);
-//			//get the angle of the shortest line
-//			double angleRad = Math.atan(perpSlope);
-//			double rise = distToSeg * Math.sin(angleRad),
-//					run = distToSeg * Math.cos(angleRad);
-//			Point2D intersectionPoint = new Point2D.Double(dataLocPt.getX() + run, dataLocPt.getY() + rise);
-//			howFarOnSeg = (intersectionPoint.getX() - closestSeg.getX1()) / (closestSeg.getX2() - closestSeg.getX1());
-//			if(howFarOnSeg < 0 || howFarOnSeg > 1) {
-//				System.out.println("This math ain't mathing");
-//				if(null == datum.rgb) {
-//					datum.rgb = new int[] {0, 0, 255};
-//				}
-//				else {
-//					datum.rgb[2] = 255;
-//				}
-//			}
-//		}
-//		howFarOnSeg = Math.min(100, Math.max(0, howFarOnSeg));
-//		double percent = (closestSegIndex + howFarOnSeg)*100/curPath.size();
-//		if(percent < 0 || percent > 100) {
-//			System.out.println("How is the percent " + percent + "?");
-//		}
-//		return Math.min(100, Math.max(0, percent));
 	}
 
 	@Override

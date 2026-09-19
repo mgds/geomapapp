@@ -67,6 +67,7 @@ import haxby.util.GeneralUtils;
 import haxby.util.XBTable;
 
 public class EarthquakeHypocenterProfiler implements Database, ActionListener, MouseListener {
+	private static boolean DEBUG = false;
 	
 	private static final int ROUNDING_FACTOR = 10000;
 	
@@ -357,7 +358,9 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		double ptRise = point.getY() - segment.getY1(), ptRun = point.getX() - segment.getX1();
 		double segLength = segment.getP1().distance(segment.getP2()), ptLength = segment.getP1().distance(point);
 		double slope = 0 == segRun ? Double.NaN : segRise/segRun;
-		double angleRad = Math.atan(slope);
+		double dotProduct = ptRun*segRun + ptRise*segRise;
+		double cosine = dotProduct / segLength / ptLength;
+		double angleRad = Math.acos(cosine);
 		double rawDist = Math.abs(ptLength * Math.cos(angleRad));
 		return rawDist / segLength;
 	}
@@ -375,32 +378,37 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		Line2D.Float bestSeg = new Line2D.Float(curPath.get(0), curPath.get(1));
 		int closestSegIndex = 0;
 		double bestProjection = projectHowFarOnSeg(bestSeg, dataLocPt);
+		double shortestDist = Double.MAX_VALUE;
 		if(bestProjection < 0 && bestSeg.getX2() != bestSeg.getX1()) {
 			dataLocPt.setLocation(dataLocPt.getX() + 360. * (bestSeg.getX2()-bestSeg.getX1())/Math.abs(bestSeg.getX2() - bestSeg.getX1()), dataLocPt.getY());
 			bestProjection = projectHowFarOnSeg(bestSeg, dataLocPt);
 		}
-		if(bestProjection < 0) {
+		if(DEBUG && bestProjection < 0) {
 			System.out.println("Initial projection is too low: " + bestProjection);
 			System.out.println("This should NEVER happen. Printing inputs for testing purposes");
 			System.out.println("Line goes from " + curPath.get(0) + " to " + curPath.get(1));
 			System.out.println("Point being projected is " + dataLocPt);
 			System.exit(1);
 		}
+		shortestDist = bestSeg.ptSegDist(dataLocPt);
 		closestSegIndex++;
 		while(bestProjection > 1 && closestSegIndex+1 < curPath.size()) {
 			bestProjection = projectHowFarOnSeg(new Line2D.Float(curPath.get(closestSegIndex), curPath.get(closestSegIndex+1)), dataLocPt);
-			//System.out.println("Current best projection is " + bestProjection + " at index " + closestSegIndex);
 			closestSegIndex++;
 		}
-		System.out.println("First projection that's not too big is " + bestProjection + " at index " + (closestSegIndex-1));
+		if(DEBUG) {
+			System.out.println("First projection that's not too big is " + bestProjection + " at index " + (closestSegIndex-1));
+		}
 		bestSeg = new Line2D.Float(curPath.get(closestSegIndex-1), curPath.get(closestSegIndex));
 		boolean foundBetter = false;
 		for(int curSegIndex = closestSegIndex; curSegIndex+1 < curPath.size(); curSegIndex++) {
 			Line2D.Float curSeg = new Line2D.Float(curPath.get(curSegIndex), curPath.get(curSegIndex+1));
 			double curProj = projectHowFarOnSeg(curSeg, dataLocPt);
-			//System.out.println("Now considering " + curProj + " at index " + curSegIndex);
-			if(Math.abs(curProj - 0.5) < Math.abs(bestProjection - 0.5)) {
+			double curDist = curSeg.ptSegDist(dataLocPt);
+			if(curDist < shortestDist) {
+			//if(Math.abs(curProj - 0.5) < Math.abs(bestProjection - 0.5)) {
 				bestProjection = curProj;
+				shortestDist = curDist;
 				bestSeg = curSeg;
 				closestSegIndex = curSegIndex;
 				foundBetter = true;
@@ -409,13 +417,14 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		if(!foundBetter) {
 			closestSegIndex--;
 		}
-		System.out.println("Best projection seems to be " + bestProjection + " at index " + closestSegIndex);
+		if(DEBUG) {
+			System.out.println("Best projection seems to be " + bestProjection + " at index " + closestSegIndex);
+		}
 		if(bestProjection>1) {
-			datum.rgb = new int[] {closestSegIndex*255/curPath.size(), 0, 0};
-			return 100;
+			return (closestSegIndex+1)*100.0/curPath.size();
 		}
 		if(bestProjection<0) {
-			datum.rgb = new int[] {0, 0, closestSegIndex*255/curPath.size()};
+			//datum.rgb = new int[] {0, 0, closestSegIndex*255/curPath.size()};
 			return (double)closestSegIndex*100/curPath.size();
 		}
 		return (closestSegIndex + bestProjection) * 100./curPath.size();

@@ -83,6 +83,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 	private Shape selectArea;
 	private boolean isStraightLine;
 	private List<UnknownData> selectedData;
+	private List<Point2D> clickPoints;
 	
 	private boolean isLoaded = false, isDataShowing = false, enabled = false;
 	private JPanel contentPane, dataPane, digitizingPane;
@@ -277,14 +278,34 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				new Point2D.Double(lineBelow.getStartLon(), lineBelow.getStartLat()),
 				mainPts.get(0)
 		};
+		final Projection proj = map.getProjection();
+		final Point2D[] mapWaypoints = new Point2D[waypoints.length];
+		final Point2D zeroes = proj.getMapXY(0,0);
+		while(map.getScaledPoint(zeroes).getX() <= 0) {
+			zeroes.setLocation(zeroes.getX() + map.getWrap(), zeroes.getY());
+		}
+		Function<Point2D, Point2D> pointAdjuster = new Function<Point2D, Point2D>() {
+
+			@Override
+			public Point2D apply(Point2D point) {
+				Point2D mapPoint = proj.getMapXY(point);
+				while(mapPoint.getX() < zeroes.getX() && point.getX() > 0) {
+					mapPoint.setLocation(mapPoint.getX() + map.getWrap(), mapPoint.getY());
+				}
+				return mapPoint;
+			}
+			
+		};
+		for(int i = 0; i < mapWaypoints.length; i++) {
+			mapWaypoints[i] = pointAdjuster.apply(waypoints[i]);
+		}
 		GeneralPath path = new GeneralPath();
 		//uds.poly = new Polygon();
-		Projection proj = map.getProjection();
 		for(int i = 0; i < waypoints.length; i++) {
 			if(0 == i%3) {
-				ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath(proj.getMapXY(waypoints[i]), proj.getMapXY(waypoints[i+1]));
+				ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath(mapWaypoints[i], mapWaypoints[i+1]);
 				for(int j = 0; j < curPath.size(); j++) {
-					Point2D pt = proj.getMapXY(curPath.get(j));
+					Point2D pt = pointAdjuster.apply(curPath.get(j));
 					if(0 == i && 0 == j) {
 						path.moveTo(pt.getX(), pt.getY());
 					}
@@ -294,7 +315,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				}
 			}
 			else {
-				Point2D pt = proj.getMapXY(waypoints[i]);
+				Point2D pt = mapWaypoints[i];
 				path.lineTo(pt.getX(), pt.getY());
 			}
 		}
@@ -365,7 +386,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		return rawDist / segLength;
 	}
 	
-	//TODO figure out why this is coming up with incorrect values (probably the projectHowFarOnSeg method)
 	private double getPercentAlongProfile(UnknownData datum) {
 		if(null == mainLine || null == currentDataset || !data.containsKey(currentDataset)) {
 			return -1;
@@ -677,7 +697,11 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		//digitizingState == 0: not digitizing
 		//dig.setCurObjectSelected(true);
 		if(digitizingState > 0) {
+			if(2 == digitizingState) {
+				clickPoints = new ArrayList<Point2D>(2);
+			}
 			digitizingState--;
+			clickPoints.add(e.getPoint());
 			if(0 == digitizingState) {
 				dig.passClickEvent(e);
 				dig.getCurObj().redraw();

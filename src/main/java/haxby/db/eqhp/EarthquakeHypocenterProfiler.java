@@ -269,6 +269,9 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		}
 		UnknownDataSet uds = data.get(currentDataset);
 		uds.dataT.clearSelection();
+		for(UnknownData ud : uds.data) {
+			ud.rgb = null;
+		}
 		List<Point2D> mainPts = ((LineSegmentsObject)mainLine).getCurrentPath();
 		final Point2D[] waypoints = new Point2D[] {
 				new Point2D.Double(lineAbove.getStartLon(), lineAbove.getStartLat()),

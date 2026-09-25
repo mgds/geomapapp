@@ -4,11 +4,14 @@ Java application for exploring geoscience data.
 # Overview
 GeoMapApp is an earth science exploration and visualization application that is continually being expanded as part of the Marine Geoscience Data System (MGDS) at the Lamont-Doherty Earth Observatory of Columbia University. The application provides direct access to the Global Multi-Resolution Topography (GMRT) compilation that hosts high resolution (~100 m node spacing) bathymetry from multibeam data for ocean areas and ASTER (Advanced Spaceborne Thermal Emission and Reflection Radiometer) and NED (National Elevation Dataset) topography datasets for the global land masses.
 
+If you are not interested in the code but somehow found yourself here, go to [our website](https://www.geomapapp.org/) for more information including how to download the most recently released executables.
+
 This code base also includes the code for Virtual Ocean. Virtual Ocean integrated the GeoMapApp tool suite with the NASA World Wind 3-D earth browser to create a powerful platform for interdisciplinary research and education. Virtual Ocean is no longer supported.
 
 The code is implemented in Java.
 
-# Requirements
+# Requirements For Compilation
+*  Maven for dependency management.
 *  Java SE Development Kit 8 or higher.
 *	Developers must have convenient access to the source code as well as modern IDE (Integrated Development Environment) tools to easily participate in the project’s life-cycle. Concurrent editing of the same source should be naturally supported.
 *	The project leader should have robust, industry-standard versioning tools to manage the incoming code from contributors (accept, revert & modify changes). 
@@ -20,6 +23,9 @@ The code is implemented in Java.
     *	Known Application Bugs
 
 # Release History
+* 03/25/2026 v3.7.7 Public release of v3.7.7 of GeoMapApp.
+* 09/15/2025 v3.7.6 Public release of v3.7.6 of GeoMapApp.
+* 04/22/2025 v3.7.5 Public release of v3.7.5 of GeoMapApp.
 * 08/05/2024 v3.7.4 Public release of v3.7.4 of GeoMapApp.
 * 04/15/2024 v3.7.3 Public release of v3.7.3 of GeoMapApp.
 * 03/06/2024 v3.7.2 Public release of v3.7.2 of GeoMapApp.
@@ -48,14 +54,11 @@ The Apache License file for this product.
 ## README.md
 This file.
 
-## build.xml
-The build file used to create the signed Unix and Windows jar files.
+## pom.xml
+The build file used to compile GMA and create the unsigned jar files. Since it's a Maven build, it also manages GMA's dependencies. You should be able to build GMA locally with `mvn clean compile` and make a jar with `mvn clean compile package`.
 
-## buildUnsigned.xml
-The build file used to create the unsigned Apple jar files.
+## src/main/java
+Contains the Java source code for GeoMapApp.
 
-## haxby/ and org/
-Directories that contain the Java source code for GeoMapApp.
-
-## resources/
+## src/main/resources/
 A directory that contains the various resources required by GeoMapApp, e.g. external libraries, images, icons, color look up tables, etc.

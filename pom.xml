@@ -47,7 +47,7 @@
         <version>3.5.1</version>
         <executions>
           <execution>
-	    	<id>shade-my-jar</id>
+	    <id>shade-my-jar</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
@@ -69,9 +69,8 @@
               <transformers>
                 <!-- This bit merges the various GeoTools META-INF/services files  (e.g. referencing plugins) -->
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
-				</transformer>
+		</transformer>
               </transformers>
-              <finalName>GeoMapApp</finalName>
             </configuration>
           </execution>
         </executions>

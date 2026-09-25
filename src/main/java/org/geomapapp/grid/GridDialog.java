@@ -961,7 +961,6 @@ public class GridDialog implements ItemListener, WindowListener {
 		}
 		if ( !gridCBElements.containsKey(mGrid.grid) ) {
 			gridCBElements.put( mGrid.grid.name, mGrid.grid );
-			System.out.println("Adding to combo box");
 		}
 		if ( gridCB.getItemCount() == 0 ) {
 			gridCB.addItem(mGrid.grid);

@@ -40,7 +40,7 @@ else
 		dmg_icon_path="${resource_path}/icons/GMA_dmg_icon.icns"
 		bg_path="dmg_resources/GeoMapApp-background.tiff"
 		echo "Creating $filename"
-		create-dmg --volname GeoMapApp --volicon ${dmg_icon_path} --background ${bg_path} --window-size 605 350 --icon GeoMapApp.app 100 60 --app-drop-link 510 60 ${filename} ${src_dir}
+		create-dmg --volname "GeoMapApp $1" --volicon ${dmg_icon_path} --background ${bg_path} --window-size 605 350 --icon GeoMapApp.app 100 60 --app-drop-link 510 60 ${filename} ${src_dir}
 		if [[ ! -z "${keychain_profile}" ]]
 		then
 		    echo "Now signing ${filename} as ${keychain_profile}."

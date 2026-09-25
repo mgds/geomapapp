@@ -480,7 +480,6 @@ public class ImportGrid implements Runnable {
 						}
 					}
 					showFileProgress(0, currentIndex, 1.0);
-					System.out.println("Z range is " + minZ + " to " + maxZ);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -517,12 +516,10 @@ public class ImportGrid implements Runnable {
 					Duration elapsed = Duration.ofMillis(durMillis);
 					String elapsedStr = "Took " + elapsed.toString().substring(2).replaceAll("([HMS])", ("$1 ")).trim().toLowerCase();
 					appendNewText(elapsedStr.toLowerCase());
-					System.out.println(elapsedStr);
 				}
 				else {
 					String elapsedStr = "Took " + durMillis + "ms";
 					appendNewText(elapsedStr.toLowerCase());
-					System.out.println(elapsedStr);
 				}
 				if(zMin > tmp.getLowest()) zMin = tmp.getLowest();
 				if(zMax < tmp.getHighest()) zMax = tmp.getHighest();

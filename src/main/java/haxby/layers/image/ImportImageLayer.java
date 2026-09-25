@@ -1,0 +1,649 @@
+package haxby.layers.image;
+
+import java.awt.BorderLayout;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.border.TitledBorder;
+import javax.swing.filechooser.FileFilter;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.geomapapp.geom.MapProjection;
+import org.geomapapp.geom.RectangularProjection;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.coverage.grid.io.imageio.geotiff.GeoTiffIIOMetadataDecoder;
+import org.geotools.gce.geotiff.GeoTiffReader;
+import org.opengis.geometry.Envelope;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import haxby.layers.image.ImageProvider.FileImageProvider;
+import haxby.layers.image.ImageProvider.URLImageProvider;
+import haxby.layers.image.ImageProvider.ZipImageProvider;
+import haxby.map.FocusOverlay;
+import haxby.map.MapApp;
+import haxby.util.GTConverter;
+import haxby.util.RotationPanel;
+import haxby.util.WESNPanel;
+
+public class ImportImageLayer {
+	
+	private static double[] wesn = null;
+	private static double geotiffAngle = 0.0;
+
+	public static List<FileFilter> supportedImageSources = new LinkedList<FileFilter>();
+	static {
+		supportedImageSources.add(
+			new FileFilter() {
+			public String getDescription() {
+				return "Google Earth (KML / KMZ)";
+			}
+		
+			public boolean accept(File f) {
+				if (f.isDirectory()) return true;
+				
+				if (f.getName().toLowerCase().endsWith(".kml"))
+					return true;
+				if (f.getName().toLowerCase().endsWith(".kmz"))
+					return true;
+				
+				return false;
+			}
+		});
+		supportedImageSources.add( 
+			new FileFilter() {
+			public String getDescription() {
+				return "Supported Image Files";
+			}
+			
+			public boolean accept(File f) {
+				if (f.isDirectory()) return true;
+				
+				String name = f.getName();
+				String suffix = name.substring(name.lastIndexOf(".")+1);
+				return ImageIO.getImageReadersBySuffix(suffix).hasNext();
+			}
+		});
+	}
+	private static FileFilter allSources = 
+		new FileFilter() {
+			public String getDescription() {
+				return "Supported Image Overlay Sources";
+			}
+			
+			public boolean accept(File f) {
+				if (f.isDirectory()) 
+					return true;
+				for (FileFilter ff : supportedImageSources)
+					if (ff.accept(f)) return true;
+				
+				return false;
+			}
+		};
+	
+	public void importImage(MapApp mapApp) {
+		JFileChooser chooser = MapApp.getFileChooser();
+		for (FileFilter ff : supportedImageSources)
+			chooser.setFileFilter(ff);
+		chooser.setFileFilter(allSources);
+		
+		int c = chooser.showOpenDialog(mapApp.getFrame());
+		if (c == JFileChooser.CANCEL_OPTION) return;
+		
+		File file = chooser.getSelectedFile();
+		if (file == null) return;
+		
+		if (file.getName().toLowerCase().endsWith(".kml"))
+			importKMZ(mapApp, file, false);
+		else if (file.getName().toLowerCase().endsWith(".kmz"))
+			importKMZ(mapApp, file, true);
+		else
+			importImage(mapApp, file);
+	}
+	
+	private void importKMZ(MapApp mapApp, File file, boolean kmz) {
+		try {
+			InputStream in;
+			
+			if (kmz)
+			{
+				ZipInputStream zis = new ZipInputStream(
+						new BufferedInputStream(
+								new FileInputStream(file)));
+				
+				ZipEntry ze = null;
+				while ((ze = zis.getNextEntry()) != null) {
+					if (ze.getName().endsWith(".kml"))
+						break;
+				}
+				
+				if (ze == null) return;
+				
+				in = zis;
+			} else
+				in = new BufferedInputStream( new FileInputStream( file ));
+			
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			dbf.setIgnoringComments(true);
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			Document doc = db.parse( in );
+
+			final Map<GeoRefImage, Integer> drawOrders 
+				= new HashMap<GeoRefImage, Integer>();
+			
+			SortedSet<GeoRefImage> layers = 
+				new TreeSet<GeoRefImage>(new Comparator<GeoRefImage>() {
+					public int compare(GeoRefImage o1, GeoRefImage o2) {
+						Integer i1 = drawOrders.get(o1);
+						Integer i2 = drawOrders.get(o2);
+						int c = i1.compareTo(i2);
+						return c == 0 ? 1 : c;
+					}
+				});
+			
+			List<Node> groundOverlays = findElements(doc, "GroundOverlay");
+			for (Node groundOverlay : groundOverlays) {
+				Node name = findElement(groundOverlay, "name");
+				Node text = findElement(name, "#text");
+				String imageName = null;
+				if (text != null) imageName = text.getNodeValue();
+				else 
+				{
+					Node parent = groundOverlay.getParentNode();
+					while (parent != null)
+					{
+						name = findElement(parent, "name");
+						text = findElement(name, "#text");
+						if (text != null) {
+							imageName = text.getNodeValue();
+							break;
+						}
+					}
+					if (imageName == null)
+						imageName = file.getName();
+				}
+				
+				// Parse drawOrder
+				int drawOrder = 0;
+				Node drawOrderNode = findElement(groundOverlay, "drawOrder");
+				text = findElement(drawOrderNode, "#text");
+				if (text != null)
+					drawOrder = Integer.parseInt(text.getNodeValue());
+				
+				// Parse Icon Element
+				Node icon = findElement(groundOverlay, "Icon");
+				Node href = findElement(icon, "href");
+				text = findElement(href, "#text");
+				if (text == null) continue;
+				String link = text.getNodeValue();
+				
+				double[] wesn = new double[4];
+				
+				// Parse LatLonBox Element
+				Node latLonBox = findElement(groundOverlay, "LatLonBox");
+				Node north = findElement(latLonBox, "north");
+				text = findElement(north, "#text");
+				if (text == null) continue;
+				wesn[3] = Double.parseDouble(text.getNodeValue());
+				
+				Node south = findElement(latLonBox, "south");
+				text = findElement(south, "#text");
+				if (text == null) continue;
+				wesn[2] = Double.parseDouble(text.getNodeValue());
+				
+				Node east = findElement(latLonBox, "east");
+				text = findElement(east, "#text");
+				if (text == null) continue;
+				wesn[1] = Double.parseDouble(text.getNodeValue());
+				
+				Node west = findElement(latLonBox, "west");
+				text = findElement(west, "#text");
+				if (text == null) continue;
+				wesn[0] = Double.parseDouble(text.getNodeValue());
+
+				// Parse Lod if present
+				int minPixels = -1;
+				int maxPixels = -1;
+				Node lod = findElement(groundOverlay, "Lod");
+				Node minLodPixels = findElement(lod, "minLodPixels");
+				text = findElement(minLodPixels, "#text");
+				if (text != null)  
+					minPixels = Integer.parseInt(text.getNodeValue());
+				
+				Node maxLodPixels = findElement(lod, "maxLodPixels");
+				text = findElement(maxLodPixels, "#text");
+				if (text != null) 
+					maxPixels = Integer.parseInt(text.getNodeValue());
+				
+				int minViewRes = 1;
+				int maxViewRes = Integer.MAX_VALUE;
+				if (minLodPixels != null || maxLodPixels != null)
+				{
+					double dLat = wesn[3] - wesn[2];
+					double dLon = wesn[1] - wesn[0];
+					
+					if (minLodPixels != null && minPixels != -1) {
+						double ppdLat = minPixels / dLat;
+						double ppdLon = minPixels / dLon;
+						
+						double ppdImage = Math.max(ppdLat, ppdLon);
+						
+						int zoom = 1;
+						double ppd = 640 / 360.;
+						
+						while (ppd < ppdImage) {
+							zoom *= 2;
+							ppd *= 2;
+						}
+						
+						minViewRes = zoom;
+					}
+					
+					if (maxLodPixels != null && maxPixels != -1) {
+						double ppdLat = maxPixels / dLat;
+						double ppdLon = maxPixels / dLon;
+						
+						double ppdImage = Math.max(ppdLat, ppdLon);
+						
+						int zoom = 1;
+						double ppd = 640 / 360.;
+						
+						while (ppd < ppdImage) {
+							zoom *= 2;
+							ppd *= 2;
+						}
+						
+						maxViewRes = zoom;
+					}
+				}
+				
+				// Figure out our image type
+				ImageProvider image = null;
+				
+				if (link.startsWith("http"))
+					image = new URLImageProvider(link);
+				else {
+					if (kmz)
+					{
+						ZipInputStream zis = new ZipInputStream(
+								new BufferedInputStream(
+										new FileInputStream(file)));
+						
+						ZipEntry ze = null;
+						while ((ze = zis.getNextEntry()) != null) {
+							if (ze.getName().equals(link))
+								break;
+						}
+						
+						zis.close();
+						
+						if (ze != null)
+							image = new ZipImageProvider(link, file);
+					}
+					
+					if (image == null)
+					{
+						File imageF = new File(link);
+						if (!imageF.exists()) 
+							imageF = new File(file.getParent(), link);
+						if (!imageF.exists())
+							continue;
+						
+						image = new FileImageProvider(imageF);
+					}
+				}
+				
+				GeoRefImage geoImage = new GeoRefImage(image, wesn, minViewRes, maxViewRes);
+				drawOrders.put(geoImage, drawOrder);
+				layers.add(geoImage);
+			}
+			
+			ImageOverlaySet layer = new ImageOverlaySet(mapApp.getMap());
+			layer.setName(file.getName());
+			
+			for (GeoRefImage geoImage : layers) {
+				layer.addGeoImage(geoImage);
+			}
+			
+			mapApp.addFocusOverlay(layer, file.getName());
+			
+		}
+		catch (ParserConfigurationException ex) {} 
+		catch (SAXException e) { } 
+		catch (IOException e) { e.printStackTrace(); }
+		catch (NumberFormatException e) { }
+	}
+	
+	private static Pair<Double, Double> getDimsAfterRotating(double initW, double initH, double rads) {
+		double radsModPi = rads % Math.PI;
+		if(radsModPi < 0) radsModPi += Math.PI;
+		
+		double newW = -1, newH = -1;
+
+		if(0 == radsModPi) {
+			newW = initW;
+			newH = initH;
+		}
+		else if(radsModPi*2 < Math.PI) {
+			double diag = Math.sqrt(initW*initW + initH*initH);
+			double vertAngle = Math.atan2(initW, initH);
+			double horizAngle = Math.atan2(initH, initW);
+			newH = diag * Math.cos(vertAngle - radsModPi);
+			newW = diag * Math.cos(horizAngle - radsModPi);
+		}
+		else if (radsModPi*2 == Math.PI) {
+			newW = initH;
+			newH = initW;
+		}
+		else {
+			double reverseAngle = Math.PI - radsModPi;
+			double diag = Math.sqrt(initW*initW + initH*initH);
+			double vertAngle = Math.atan2(initW, initH);
+			double horizAngle = Math.atan2(initH, initW);
+			newH = diag * Math.cos(vertAngle - reverseAngle);
+			newW = diag * Math.cos(horizAngle - reverseAngle);
+		}
+		return Pair.of(newW, newH);
+	}
+	
+	private static BufferedImage rotateImage(BufferedImage image, double degrees) {
+		degrees = ((degrees % 360) + 360) % 360;
+		if (degrees == 0) return image;
+
+		int w = image.getWidth();
+		int h = image.getHeight();
+		//want to rotate counter clockwise
+		double rads = Math.toRadians(degrees);
+		Pair<Double, Double> newSize = getDimsAfterRotating(w, h, rads);
+		int newW = (int)newSize.getLeft().doubleValue(), newH = (int)newSize.getRight().doubleValue();
+
+		//TODO why doesn't this rotate at all when an angle of 180° is specified?
+		AffineTransform tx = new AffineTransform();
+		tx.translate(newW / 2.0, newH / 2.0);
+		tx.rotate(rads);
+		tx.translate(-w / 2.0, -h / 2.0);
+
+		BufferedImage rotated = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = rotated.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		//g.setTransform(tx);
+		g.drawImage(image, tx, null);
+		g.dispose();
+		return rotated;
+	}
+
+	private static List<Node> findElements(Node root, String elementName) {
+		LinkedList<Node> matches = new LinkedList<Node>();
+		if (root == null || elementName == null) return matches;
+
+		NodeList childNodes = root.getChildNodes();
+		for (int i = 0; i < childNodes.getLength(); i++) {
+			Node node = childNodes.item(i);
+			if (node.getNodeName().equals( elementName ))
+				matches.add(node);
+			else 
+			{
+				List<Node> elements = findElements(node, elementName);
+				matches.addAll(elements);
+			}
+		}
+		
+		return matches;
+	}
+	
+	private static Node findElement(Node root, String elementName)
+	{
+		if (root == null || elementName == null) return null;
+		
+		NodeList childNodes = root.getChildNodes();
+		for (int i = 0; i < childNodes.getLength(); i++) {
+			Node node = childNodes.item(i);
+			if (node.getNodeName().equals( elementName ))
+				return node;
+			node = findElement(node, elementName);
+			if (node != null)
+				return node;
+		}
+		
+		return null;
+	}
+	
+	private double[] readWesnFromGeotiff(File geotiffFile) {
+		geotiffAngle = 0.0;
+		try {
+			GeoTiffReader reader = new GeoTiffReader(geotiffFile);
+			GeoTiffIIOMetadataDecoder mdd = reader.getMetadata();
+			GridCoverage2D gridCoverage = reader.read(null);
+			GridGeometry2D geom = gridCoverage.getGridGeometry();
+			geotiffAngle = readRotationFromGridGeometry(geom);
+			Envelope env = geom.getEnvelope();
+			double[] ws = env.getLowerCorner().getCoordinate();
+			double[] en = env.getUpperCorner().getCoordinate();
+			MapProjection proj = GTConverter.getGmaProj(geom);
+			if(!(proj instanceof RectangularProjection)) {
+				Point2D.Double lowCorner = new Point2D.Double(ws[0], ws[1]);
+				Point2D.Double highCorner = new Point2D.Double(en[0], en[1]);
+				Point2D lowLatLon = proj.getRefXY(lowCorner),
+						highLatLon = proj.getRefXY(highCorner);
+				ws[0] = lowLatLon.getX();
+				ws[1] = lowLatLon.getY();
+				en[0] = highLatLon.getX();
+				en[1] = highLatLon.getY();
+			}
+			wesn = new double[] {ws[0], en[0], ws[1], en[1]};
+		} catch (Exception e) {
+			e.printStackTrace();
+			wesn = null;
+		}
+		return wesn;
+	}
+	
+	private static double readRotationFromGridGeometry(GridGeometry2D geom) {
+		org.geotools.referencing.operation.transform.AffineTransform2D gridToCRS = (org.geotools.referencing.operation.transform.AffineTransform2D) geom.getGridToCRS2D();
+		double m00 = gridToCRS.getScaleX(), m10 = gridToCRS.getShearY();
+		if(0 == m00 && 0 == m10) return 0;
+		double rads = Math.atan2(m10, m00);
+		return Math.toDegrees(rads);
+	}
+	
+	public double[] padWesnForRotation(double[] theWesn, double angleRad) {
+		if(null == theWesn || 4 != theWesn.length) {
+			return theWesn;
+		}
+		double width = theWesn[1] - theWesn[0];
+		double height = theWesn[3] - theWesn[2];
+		Pair<Double, Double> newDims = getDimsAfterRotating(width, height, angleRad);
+		double newWidth = newDims.getLeft();
+		double newHeight = newDims.getRight();
+		double centerX = theWesn[0] + width/2;
+		double centerY = theWesn[2] + height/2;
+		double[] newWesn = new double[] {
+				centerX - newWidth/2,
+				centerX + newWidth/2,
+				centerY - newHeight/2,
+				centerY + newHeight/2
+		};
+		return newWesn;
+	}
+	public double[] padWesnForRotation(double[] theWesn, double angle, boolean isRad) {
+		if(!isRad) {
+			angle = Math.toRadians(angle);
+		}
+		return padWesnForRotation(theWesn, angle);
+	}
+
+	protected void importImage(MapApp mapApp, File file) {
+		geotiffAngle = 0.0;
+		String extension = FilenameUtils.getExtension(file.getName());
+		if(extension.toLowerCase().equals("tif") || extension.toLowerCase().equals("tiff")) {
+			readWesnFromGeotiff(file);
+		}
+		ImageWESNProj wesnDialog = showWESNDialog(mapApp.getFrame());
+		if (wesnDialog == null) return;
+		
+		try {
+			BufferedImage image = ImageIO.read(file);
+			double[] realWesn = wesnDialog.wesn;
+			if (geotiffAngle != 0.0) {
+				image = rotateImage(image, geotiffAngle);
+				realWesn = padWesnForRotation(wesnDialog.wesn, geotiffAngle, false);
+			}
+			FocusOverlay overlay;
+			if (wesnDialog.merc)
+				overlay = new MercatorImageOverlay(mapApp.getMap(), image, realWesn);
+			else
+				overlay = new GeographicImageOverlay(mapApp.getMap(), image, realWesn);
+			
+			mapApp.addFocusOverlay(overlay, file.getName());
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (OutOfMemoryError oome) {
+			oome.printStackTrace();
+			JLabel memE = new JLabel("<html>GeoMapApp needs more memory to import this image<br>Continue without image or restart from terminal with more memory<br>java -Xmx2g -jar GeoMapApp.jar</html>");
+			JOptionPane.showMessageDialog(mapApp.getFrame(), memE, "Out Of Memory Error",
+					JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	public static ImageWESNProj showWESNDialog(JFrame owner) 
+	{
+		final JDialog d = new JDialog(owner, "Image Location", true);
+		
+		final WESNPanel wesnP = new WESNPanel();
+		final RotationPanel rotP = new RotationPanel(geotiffAngle);
+		if(null != wesn) {
+			wesnP.setWESN(wesn[0], wesn[1], wesn[2], wesn[3]);
+			wesn = null; //so it doesn't use wrong values on subsequent image imports
+		}
+		TitledBorder border = BorderFactory.createTitledBorder("Image Location (Negatives for Western and Southern Hemisphere)");
+		wesnP.setBorder(border);
+		
+		JPanel p2 = new JPanel();
+		JButton accept = new JButton("Accept");
+		accept.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				double wesn[] =  wesnP.getWESN();
+				if (wesn == null) {
+					Toolkit.getDefaultToolkit().beep();
+					return;
+				}
+				if (wesn[0] > wesn[1] || 
+						wesn[2] > wesn[3])
+				{
+					if (wesn[0] > wesn[1])
+					{
+						
+						wesnP.west.setText("! W > E !");
+						wesnP.east.setText("! E < W !");
+					}
+					if (wesn[2] > wesn[3])
+					{
+						wesnP.north.setText("! N < S !");
+						wesnP.south.setText("! S > N !");
+					}
+					Toolkit.getDefaultToolkit().beep();
+					return;
+				}
+				
+				d.setVisible(false);
+			}
+		});
+		p2.add(accept);
+
+		final JButton cancel = new JButton("Cancel");
+		cancel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				wesnP.setWESN(null);
+				d.setVisible(false);
+			}
+		});
+		p2.add(cancel);
+		
+		JPanel p3 = new JPanel();
+		p3.setBorder( BorderFactory.createTitledBorder("Source Image Projection")) ;
+		ButtonGroup bg = new ButtonGroup();
+		JRadioButton rb = new JRadioButton("Geographic", true);
+		bg.add(rb);
+		p3.add(rb);
+		JRadioButton merc = new JRadioButton("Mercator");
+		bg.add(merc);
+		p3.add(merc);
+		
+		JPanel e = new JPanel();
+		e.setLayout(new BoxLayout(e, BoxLayout.Y_AXIS));
+		e.add(wesnP);
+		e.add(rotP);
+		
+		JPanel c = new JPanel(new BorderLayout());
+		c.add(p3, BorderLayout.NORTH);
+		c.add(e);
+		c.add(p2, BorderLayout.SOUTH);
+		
+		d.addWindowListener( new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				wesnP.setWESN(null);
+			}
+		});
+		d.getContentPane().add(c);
+		d.setLocationRelativeTo(owner);
+		d.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		d.pack();
+		d.setVisible(true);
+		
+		double wesn[] = wesnP.getWESN();
+		geotiffAngle = rotP.getAngle();
+		if (wesn == null) return null;
+		
+		return new ImageWESNProj(wesn, merc.isSelected());
+	}
+	
+	protected static class ImageWESNProj {
+		public double[] wesn;
+		public boolean merc;
+		public ImageWESNProj(double[] wesn, boolean merc) {
+			this.merc = merc;
+			this.wesn = wesn;
+		}
+	}
+}

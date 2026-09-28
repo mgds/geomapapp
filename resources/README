@@ -1,6 +1,0 @@
-Netcdf-Java library
-Version 2.1.10
-Build Date = 2004-07-08 08:59:07
-
-see http://www.unidata.ucar.edu/packages/netcdf-java/
-to build: ant dist

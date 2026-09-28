@@ -13,7 +13,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <geotools.version>28.5</geotools.version>
-    <poi.version>3.16</poi.version>
+    <poi.version>5.4.0</poi.version>
   </properties>
   
   <repositories>

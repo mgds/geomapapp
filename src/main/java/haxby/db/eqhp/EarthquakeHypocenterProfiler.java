@@ -47,6 +47,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 
 import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.geomapapp.util.XML_Menu;
 import org.joda.time.DateTime;
@@ -230,6 +231,27 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 //		});
 	}
 	
+//	private void drawProfile() {
+//		if(null != selectedData) {
+//			int column = -1;
+//			for(int i = 0; i < data.get(currentDataset).header.size(); i++) {
+//				if(data.get(currentDataset).header.get(i).toLowerCase().contains("depth")) {
+//					column = i;
+//					break;
+//				}
+//			}
+//			String yAxis = data.get(currentDataset).header.get(column);
+//			String xAxis = "Distance Along Profile";
+//			MultiValuedMap<Double, Double> toBeGraphed;
+//			for(UnknownData d : selectedData) {
+//				double percent = getPercentAlongProfile(d);
+//				double length = ((LineSegmentsObject)mainLine);
+//				double depth = (Double)d.data.get(column);
+//				toBeGraphed.put(percent, depth);
+//			}
+//		}
+//	}
+	
 	private void finishDigitizing() {
 		setIsDigitizing(false);
 		dig.objects.add(dig.getCurObj());
@@ -241,6 +263,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			System.out.println("(" + percent + ", " + d.data + ")");
 			d.rgb = new int[] {null == d.rgb ? 0 : d.rgb[0], (int)Math.round(percent*255/100), null == d.rgb ? 0 : d.rgb[2]};
 		}
+		//drawProfile();
 		map.repaint();
 	}
 	
@@ -284,17 +307,36 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		final Projection proj = map.getProjection();
 		final Point2D[] mapWaypoints = new Point2D[waypoints.length];
 		final Point2D zeroes = proj.getMapXY(0,0);
-		while(map.getScaledPoint(zeroes).getX() <= 0) {
+		final Point2D oppositeZeroes = proj.getMapXY(180, 0);
+		while(map.getScaledPoint(zeroes).getX() < 0) {
 			zeroes.setLocation(zeroes.getX() + map.getWrap(), zeroes.getY());
+		}
+		if(map.getScaledPoint(zeroes).getX() > map.getWidth()) {
+			zeroes.setLocation(zeroes.getX() - map.getWrap(), zeroes.getY());
+		}
+		while(map.getScaledPoint(oppositeZeroes).getX() < 0) {
+			oppositeZeroes.setLocation(oppositeZeroes.getX() + map.getWrap(), oppositeZeroes.getY());
 		}
 		Function<Point2D, Point2D> pointAdjuster = new Function<Point2D, Point2D>() {
 
 			@Override
 			public Point2D apply(Point2D point) {
 				Point2D mapPoint = proj.getMapXY(point);
-				while(mapPoint.getX() < zeroes.getX() && point.getX() > 0) {
+				double realX = ((mapPoint.getX() % map.getWrap()) + map.getWrap()) % map.getWrap();
+				mapPoint.setLocation(realX, mapPoint.getY());
+				if(point.getX() > 0 && point.getX() < 180) {
 					mapPoint.setLocation(mapPoint.getX() + map.getWrap(), mapPoint.getY());
 				}
+//				if(point.getX() < 0 || point.getX() > 180) {
+//					while(mapPoint.getX() > oppositeZeroes.getX()) {
+//						mapPoint.setLocation(mapPoint.getX() - map.getWrap(), mapPoint.getY());
+//					}
+//				}
+//				else {
+//					while(mapPoint.getX() < zeroes.getX()) {
+//						mapPoint.setLocation(mapPoint.getX() + map.getWrap(), mapPoint.getY());
+//					}
+//				}
 				return mapPoint;
 			}
 			

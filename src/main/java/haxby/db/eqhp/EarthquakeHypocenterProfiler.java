@@ -1,20 +1,15 @@
 package haxby.db.eqhp;
 
-import java.awt.AWTException;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
-import java.awt.Polygon;
-import java.awt.Robot;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.GeneralPath;
@@ -24,17 +19,12 @@ import java.awt.geom.Rectangle2D;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -47,10 +37,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 
 import org.apache.commons.collections4.BidiMap;
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.geomapapp.util.XML_Menu;
-import org.joda.time.DateTime;
 
 import haxby.db.Database;
 import haxby.db.custom.DBDescription;
@@ -69,8 +57,6 @@ import haxby.util.XBTable;
 
 public class EarthquakeHypocenterProfiler implements Database, ActionListener, MouseListener {
 	private static boolean DEBUG = false;
-	
-	private static final int ROUNDING_FACTOR = 10000;
 	
 	private Map<String, UnknownDataSet> data;
 	private BidiMap<String, String> urlToName;
@@ -221,14 +207,14 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		calculateParallellLines(Integer.valueOf(String.valueOf(gapDecider.getValue())), false);
 		selectArea = calcSelectedArea();
 		selectedData = getSelected();
-//		selectedData.stream().forEach(new Consumer<UnknownData>() {
-//
-//			@Override
-//			public void accept(UnknownData t) {
-//				t.rgb = new int[] {200, 0, 0};
-//			}
-//			
-//		});
+		selectedData.stream().forEach(new Consumer<UnknownData>() {
+
+			@Override
+			public void accept(UnknownData t) {
+				t.rgb = new int[] {0, (int)(getPercentAlongProfile(t) * 255 / 100), 0};
+			}
+			
+		});
 	}
 	
 //	private void drawProfile() {
@@ -260,7 +246,7 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		refresh();
 		for(UnknownData d : selectedData) {
 			double percent = getPercentAlongProfile(d);
-			System.out.println("(" + percent + ", " + d.data + ")");
+			//System.out.println("(" + percent + ", " + d.data + ")");
 			d.rgb = new int[] {null == d.rgb ? 0 : d.rgb[0], (int)Math.round(percent*255/100), null == d.rgb ? 0 : d.rgb[2]};
 		}
 		//drawProfile();
@@ -306,51 +292,38 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		};
 		final Projection proj = map.getProjection();
 		final Point2D[] mapWaypoints = new Point2D[waypoints.length];
-		final Point2D zeroes = proj.getMapXY(0,0);
-		final Point2D oppositeZeroes = proj.getMapXY(180, 0);
-		while(map.getScaledPoint(zeroes).getX() < 0) {
-			zeroes.setLocation(zeroes.getX() + map.getWrap(), zeroes.getY());
-		}
-		if(map.getScaledPoint(zeroes).getX() > map.getWidth()) {
-			zeroes.setLocation(zeroes.getX() - map.getWrap(), zeroes.getY());
-		}
-		while(map.getScaledPoint(oppositeZeroes).getX() < 0) {
-			oppositeZeroes.setLocation(oppositeZeroes.getX() + map.getWrap(), oppositeZeroes.getY());
-		}
-		Function<Point2D, Point2D> pointAdjuster = new Function<Point2D, Point2D>() {
-
+		BiFunction<Point2D, Integer, Point2D> pa = new BiFunction<Point2D, Integer, Point2D>() {
 			@Override
-			public Point2D apply(Point2D point) {
+			public Point2D apply(Point2D point, Integer index) {
 				Point2D mapPoint = proj.getMapXY(point);
-				double realX = ((mapPoint.getX() % map.getWrap()) + map.getWrap()) % map.getWrap();
-				mapPoint.setLocation(realX, mapPoint.getY());
-				if(point.getX() > 0 && point.getX() < 180) {
-					mapPoint.setLocation(mapPoint.getX() + map.getWrap(), mapPoint.getY());
+				int whichClickPoint = (1 <= index && 3 >= index)?(1):0;
+				Point2D clickPt = map.getScaledPoint(clickPoints.get(whichClickPoint));
+				double curX = map.getScaledPoint(mapPoint).getX() % map.getWrap();
+				double minXDist = Math.abs(curX - clickPt.getX());
+				int numWrapsForMinXDist = 0;
+				for(int i = 1; curX + i*map.getWrap() <= map.getWidth(); i++) {
+					double curXDist = Math.abs(curX + i*map.getWrap() - clickPt.getX());
+					if(curXDist < minXDist) {
+						numWrapsForMinXDist = i;
+						minXDist = curXDist;
+					}
 				}
-//				if(point.getX() < 0 || point.getX() > 180) {
-//					while(mapPoint.getX() > oppositeZeroes.getX()) {
-//						mapPoint.setLocation(mapPoint.getX() - map.getWrap(), mapPoint.getY());
-//					}
-//				}
-//				else {
-//					while(mapPoint.getX() < zeroes.getX()) {
-//						mapPoint.setLocation(mapPoint.getX() + map.getWrap(), mapPoint.getY());
-//					}
-//				}
+				mapPoint.setLocation(mapPoint.getX() + numWrapsForMinXDist * map.getWrap(), mapPoint.getY());
 				return mapPoint;
 			}
-			
 		};
 		for(int i = 0; i < mapWaypoints.length; i++) {
-			mapWaypoints[i] = pointAdjuster.apply(waypoints[i]);
+			mapWaypoints[i] = pa.apply(waypoints[i], i);
+		}
+		for(int i = 0; i < waypoints.length; i++) {
+			System.out.println(waypoints[i] + " -> " + mapWaypoints[i]);
 		}
 		GeneralPath path = new GeneralPath();
-		//uds.poly = new Polygon();
 		for(int i = 0; i < waypoints.length; i++) {
 			if(0 == i%3) {
 				ArrayList<Point2D> curPath = ((LineSegmentsObject)mainLine).getPath(mapWaypoints[i], mapWaypoints[i+1]);
 				for(int j = 0; j < curPath.size(); j++) {
-					Point2D pt = pointAdjuster.apply(curPath.get(j));
+					Point2D pt = pa.apply(curPath.get(j), j*2<curPath.size() ? i : i+1);
 					if(0 == i && 0 == j) {
 						path.moveTo(pt.getX(), pt.getY());
 					}
@@ -365,7 +338,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 			}
 		}
 		path.closePath();
-		//uds.selectLasso();
 		return path;
 	}
 	
@@ -423,7 +395,6 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 		double segRise = segment.getY2() - segment.getY1(), segRun = segment.getX2() - segment.getX1();
 		double ptRise = point.getY() - segment.getY1(), ptRun = point.getX() - segment.getX1();
 		double segLength = segment.getP1().distance(segment.getP2()), ptLength = segment.getP1().distance(point);
-		double slope = 0 == segRun ? Double.NaN : segRise/segRun;
 		double dotProduct = ptRun*segRun + ptRise*segRise;
 		double cosine = dotProduct / segLength / ptLength;
 		double angleRad = Math.acos(cosine);
@@ -746,6 +717,9 @@ public class EarthquakeHypocenterProfiler implements Database, ActionListener, M
 				clickPoints = new ArrayList<Point2D>(2);
 			}
 			digitizingState--;
+			if(null == clickPoints) {
+				clickPoints = new ArrayList<>();
+			}
 			clickPoints.add(e.getPoint());
 			if(0 == digitizingState) {
 				dig.passClickEvent(e);
